@@ -1,0 +1,493 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../controller/checkout_controller.dart';
+import '../../controller/order_controller.dart';
+import '../../controller/payment_controller.dart';
+import '../../controller/cart_controller.dart';
+import '../../model/order_model.dart';
+import '../../model/payment_model.dart';
+import '../../view/pages/payment_failed.dart';
+import 'order_details.dart';
+
+class PaymentPage extends StatelessWidget {
+  final CheckoutController checkoutCtrl; // ← receive from checkout
+
+  const PaymentPage({super.key, required this.checkoutCtrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => PaymentController(),
+      child: _PaymentView(checkoutCtrl: checkoutCtrl),
+    );
+  }
+}
+
+class _PaymentView extends StatelessWidget {
+
+  final CheckoutController checkoutCtrl;
+  const _PaymentView({required this.checkoutCtrl});
+
+  static const _green      = Color(0xFF1E4620);
+  static const _terracotta = Color(0xFFD95F2B);
+  static const _bg         = Color(0xFFF5F5F0);
+
+  @override
+  Widget build(BuildContext context) {
+    final ctrl = context.watch<PaymentController>();
+    final cart = context.watch<CartController>();
+
+    return Scaffold(
+      backgroundColor: _bg,
+      appBar: AppBar(
+        backgroundColor: _bg,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: _green),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'PAYMENT',
+          style: TextStyle(
+            color: Color(0xFF2C2C2C),
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.4,
+            fontSize: 18,
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Order summary card ──
+            _OrderSummaryCard(total: cart.total, itemCount: cart.totalItemCount),
+            const SizedBox(height: 20),
+
+            // ── Payer details header ──
+            const Text(
+              'Your Details',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 16,
+                color: Color(0xFF2C2C2C),
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Required for payment receipt and updates.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF8A8A8A)),
+            ),
+            const SizedBox(height: 16),
+
+            // ── Name field ──
+            _FormField(
+              label: 'Full Name',
+              hint: 'John Doe',
+              controller: ctrl.nameCtrl,
+              errorText: ctrl.nameError,
+              icon: Icons.person_outline,
+              onChanged: (_) => ctrl.nameError = null,
+            ),
+            const SizedBox(height: 14),
+
+            // ── Email field ──
+            _FormField(
+              label: 'Email Address',
+              hint: 'john@example.com',
+              controller: ctrl.emailCtrl,
+              errorText: ctrl.emailError,
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+              onChanged: (_) => ctrl.emailError = null,
+            ),
+            const SizedBox(height: 14),
+
+            // ── Phone field ──
+            _FormField(
+              label: 'Phone Number',
+              hint: '0123456789',
+              controller: ctrl.phoneCtrl,
+              errorText: ctrl.phoneError,
+              icon: Icons.phone_outlined,
+              keyboardType: TextInputType.phone,
+              onChanged: (_) => ctrl.phoneError = null,
+            ),
+            const SizedBox(height: 24),
+
+            // ── Payment channels info ──
+            _PaymentChannelsCard(),
+            const SizedBox(height: 24),
+
+            // ── Error message ──
+            if (ctrl.errorMessage != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFEEEE),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFFAAAA)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline,
+                        color: Colors.red, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        ctrl.errorMessage!,
+                        style: const TextStyle(
+                            color: Colors.red, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            // ── Pay button ──
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: ctrl.status == PaymentStatus.loading
+                    ? null
+                    : () => _handlePay(context, ctrl, cart),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _terracotta,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: _terracotta.withOpacity(0.6),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+                child: ctrl.status == PaymentStatus.loading
+                    ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2.5,
+                  ),
+                )
+                    : Text(
+                  'PAY RM ${cart.total.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // ── Secure payment note ──
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.lock_outline, size: 13, color: Color(0xFF8A8A8A)),
+                SizedBox(width: 4),
+                Text(
+                  'Secured by Toyyibpay',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handlePay(
+      BuildContext context,
+      PaymentController ctrl,
+      CartController cart,
+      ) async {
+    final payment = PaymentModel(
+      billName:        'Food Order',
+      billDescription: 'Order from NuBurn App',
+      amount:          cart.total,
+      userName:        ctrl.nameCtrl.text.trim(),
+      userEmail:       ctrl.emailCtrl.text.trim(),
+      userPhone:       ctrl.phoneCtrl.text.trim(),
+    );
+
+    await ctrl.createBill(payment);
+
+    if (!context.mounted) return;
+
+    if (ctrl.status == PaymentStatus.success && ctrl.billPaymentUrl != null) {
+      final uri = Uri.parse(ctrl.billPaymentUrl!);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+
+      if (!context.mounted) return;
+      final paid = await _showPaymentResultDialog(context);
+
+      if (paid == true) {
+        final isDelivery =
+            checkoutCtrl.activeTab == CheckoutTab.delivery;
+
+        context.read<OrderController>().placeOrder(
+          cartItems:  cart.items.toList(),
+          subtotal:   cart.subtotal,
+          serviceFee: cart.serviceFee,
+          orderType:  isDelivery ? OrderType.delivery : OrderType.selfCollect,
+
+          // ── Delivery: use user's saved address ──
+          // ── Self Collect: use store address ──
+          toName: isDelivery
+              ? checkoutCtrl.deliveryAddress.name
+              : 'NuBurn - Tanjung Burma',
+          toPhone: isDelivery
+              ? checkoutCtrl.deliveryAddress.phone
+              : '',
+          toAddress: isDelivery
+              ? checkoutCtrl.deliveryAddress.address
+              : '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21, ....',
+        );
+
+        cart.clearCart();
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const OrderDetailsPage()),
+              (route) => route.isFirst,
+        );
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const PaymentFailedPage()),
+        );
+      }
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const PaymentFailedPage()),
+      );
+    }
+  }
+
+// Dialog shown when user returns from browser
+  Future<bool?> _showPaymentResultDialog(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text('Payment Complete?',
+            style: TextStyle(fontWeight: FontWeight.w800)),
+        content: const Text(
+            'Did you successfully complete the payment in the browser?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('No', style: TextStyle(color: Color(0xFFD95F2B))),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes', style: TextStyle(color: Color(0xFF1E4620))),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Order Summary Card ─────────────────────────────────────────────────────────
+
+class _OrderSummaryCard extends StatelessWidget {
+  final double total;
+  final int itemCount;
+
+  const _OrderSummaryCard({required this.total, required this.itemCount});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFDDDDD0)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E4620).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.receipt_long_outlined,
+                color: Color(0xFF1E4620), size: 24),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$itemCount item${itemCount > 1 ? 's' : ''}',
+                  style: const TextStyle(
+                      fontSize: 12, color: Color(0xFF8A8A8A)),
+                ),
+                const SizedBox(height: 2),
+                const Text('Order Total',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 14)),
+              ],
+            ),
+          ),
+          Text(
+            'RM ${total.toStringAsFixed(2)}',
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+              color: Color(0xFF1E4620),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Payment Channels Info ──────────────────────────────────────────────────────
+
+class _PaymentChannelsCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFDDDDD0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Accepted Payment Channels',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _ChannelChip(label: 'FPX Online Banking'),
+              const SizedBox(width: 8),
+              _ChannelChip(label: 'Credit / Debit Card'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'You will be redirected to Toyyibpay to complete your payment securely.',
+            style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChannelChip extends StatelessWidget {
+  final String label;
+  const _ChannelChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEEEBDE),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(label,
+          style: const TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w600)),
+    );
+  }
+}
+
+// ── Form Field ─────────────────────────────────────────────────────────────────
+
+class _FormField extends StatelessWidget {
+  final String label;
+  final String hint;
+  final TextEditingController controller;
+  final String? errorText;
+  final IconData icon;
+  final TextInputType keyboardType;
+  final ValueChanged<String>? onChanged;
+
+  const _FormField({
+    required this.label,
+    required this.hint,
+    required this.controller,
+    required this.icon,
+    this.errorText,
+    this.keyboardType = TextInputType.text,
+    this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: Color(0xFF2C2C2C))),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          onChanged: onChanged,
+          style: const TextStyle(fontSize: 13),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle:
+            const TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
+            prefixIcon:
+            Icon(icon, size: 18, color: const Color(0xFF8A8A8A)),
+            filled: true,
+            fillColor: errorText != null
+                ? const Color(0xFFFFEEEE) // red tint on error
+                : const Color(0xFFEEEBDE),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: errorText != null
+                  ? const BorderSide(color: Colors.red, width: 1.2)
+                  : BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: errorText != null
+                    ? Colors.red
+                    : const Color(0xFF1E4620),
+                width: 1.5,
+              ),
+            ),
+            errorText: errorText,
+            errorStyle: const TextStyle(fontSize: 11),
+            contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          ),
+        ),
+      ],
+    );
+  }
+}

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../controller/checkout_controller.dart';
 import '../../model/address_model.dart';
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nutrition_based_meal_ordering_app/view/pages/payment.dart';
 import 'package:provider/provider.dart';
 import '../../controller/checkout_controller.dart';
 import '../../controller/cart_controller.dart';
@@ -71,8 +72,16 @@ class _CheckoutView extends StatelessWidget {
             label: isDelivery
                 ? 'PLACE DELIVERY ORDER'
                 : 'PLACE SELF COLLECT ORDER',
+            // In _BottomBar's onPressed, update to:
             onPressed: () {
-              // TODO: submit order
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PaymentPage(
+                    checkoutCtrl: context.read<CheckoutController>(), // ← pass it here
+                  ),
+                ),
+              );
             },
           ),
         ],

@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controller/cart_controller.dart';
+import '../controller/order_controller.dart';
 import 'widgets/navigation_bar.dart';
 import '../view/pages/cart.dart';
 
 void main() {
   runApp(
-    // ChangeNotifierProvider makes CartController available to the whole app
-    ChangeNotifierProvider(
-      create: (_) => CartController(),
+    // ChangeNotifierProvider makes Controllers available to the whole app
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CartController()),
+        ChangeNotifierProvider(create: (_) => OrderController()),
+      ],
       child: const MyApp(),
     ),
   );
