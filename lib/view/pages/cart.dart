@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controller/cart_controller.dart';
 import '../../model/cart_item.dart';
+import 'checkout.dart';
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
@@ -47,7 +48,7 @@ class CartPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16, vertical: 8),
                   itemCount: cart.items.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  separatorBuilder: (_, _) => const Divider(height: 1),
                   itemBuilder: (context, index) => _CartItemCard(
                     item: cart.items[index],
                     onIncrement: () => cart.increment(index),
@@ -262,10 +263,13 @@ class _CartSummary extends StatelessWidget {
             height: 50,
             child: ElevatedButton(
               onPressed: () {
-                // TODO: navigate to checkout page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CheckoutPage()),
+                  );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD95F2B),
+                backgroundColor: const Color(0xFFBF5D32),
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
