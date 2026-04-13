@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import '../model/order_model.dart';
 import '../model/cart_item.dart';
+import '../service/order_service.dart';
 
 class OrderController extends ChangeNotifier {
+  final _orderService = OrderService();
+
   OrderModel? currentOrder;
   bool isCancelling = false;
   bool isCancelled  = false;
 
-  void placeOrder({
+  Future<void> placeOrder({
     required List<CartItem> cartItems,
     required double subtotal,
     required double serviceFee,
     required String toName,
     required String toPhone,
     required String toAddress,
-    required OrderType orderType, // ← now required
-  }) {
+    required OrderType orderType,
+  }) async {
     currentOrder = OrderModel(
       orderId:       _generateOrderId(),
       orderDate:     DateTime.now(),
@@ -32,16 +35,19 @@ class OrderController extends ChangeNotifier {
         price:  c.price,
       ))
           .toList(),
-      subtotal:    subtotal,
-      serviceFee:  serviceFee,
-      orderType:   orderType,
-      status:      OrderStatus.submitted,
+      subtotal:   subtotal,
+      serviceFee: serviceFee,
+      orderType:  orderType,
+      status:     OrderStatus.submitted,
     );
+
+    // Persist to Supabase
+    await _orderService.placeOrder(currentOrder!);
+
     isCancelled = false;
     notifyListeners();
   }
 
-  // Called by admin panel later to push status forward
   void updateStatus(OrderStatus newStatus) {
     if (currentOrder == null) return;
     currentOrder!.status = newStatus;
@@ -53,7 +59,7 @@ class OrderController extends ChangeNotifier {
     isCancelling = true;
     notifyListeners();
 
-    await Future.delayed(const Duration(seconds: 1)); // simulate API
+    await _orderService.cancelOrder(currentOrder!.orderId);
 
     isCancelled  = true;
     isCancelling = false;
