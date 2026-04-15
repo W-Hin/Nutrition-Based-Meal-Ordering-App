@@ -22,18 +22,23 @@ class MealCard extends StatelessWidget {
           // Image Section
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Image.asset(
-              meal.imageUrl,
-              height: 200,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                height: 200,
-                color: Colors.grey[300],
-                child: const Icon(Icons.broken_image, size: 50),
-              ),
-            ),
+            child: meal.imageUrl.startsWith('http')
+                ? Image.network(
+                    meal.imageUrl,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
+                  )
+                : Image.asset(
+                    meal.imageUrl,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
+                  ),
           ),
+
           
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -143,6 +148,14 @@ class MealCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildErrorImage() {
+    return Container(
+      height: 200,
+      color: Colors.grey[300],
+      child: const Icon(Icons.broken_image, size: 50),
     );
   }
 }

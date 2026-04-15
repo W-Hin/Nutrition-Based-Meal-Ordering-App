@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../model/meal_model.dart';
+import 'add_menu_item_page.dart';
 
 class AdminMenuManagementPage extends StatefulWidget {
   const AdminMenuManagementPage({super.key});
@@ -9,35 +11,29 @@ class AdminMenuManagementPage extends StatefulWidget {
 }
 
 class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
-  static const _green      = Color(0xFF1E4620);
-  static const _lightGreen = Color(0xFFB5CC30);
-  static const _terracotta = Color(0xFFD95F2B);
+  // Brand Colors synced with MenuPage/CustomBowlCard
+  static const _darkGreen = Color(0xFF1E4620);
+  static const _limeGreen = Color(0xFFABC270);
 
-  // Placeholder menu items
-  final List<_MenuItem> _items = [
-    _MenuItem(
-      name:        'Grilled Salmon Bowl',
+  // Initial list using the new Meal model
+  final List<Meal> _items = [
+    Meal(
+      name: 'Grilled Salmon Bowl',
       description: 'Fresh grilled salmon with quinoa, roasted vegetables, and lemon herb dressing. High in protein and omega-3.',
-      price:       35.00,
-      tags:        ['High Protein', 'Omega-3', 'Gluten-Free'],
+      price: 35.00,
+      imageUrl: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=1000&auto=format&fit=crop',
+      categories: ['Lunch'],
+      dietaryPreferences: ['High Protein', 'Omega-3', 'Gluten-Free'],
+      servingSize: '1 bowl (350g)',
     ),
-    _MenuItem(
-      name:        'Caesar Salad with Chicken Bites',
+    Meal(
+      name: 'Caesar Salad with Chicken Bites',
       description: 'Crispy romaine lettuce with grilled chicken, parmesan, and house caesar dressing.',
-      price:       32.80,
-      tags:        ['High Protein', 'Low Carb'],
-    ),
-    _MenuItem(
-      name:        'Custom Meal Bowl',
-      description: 'Build your own bowl with your choice of base, protein, and toppings.',
-      price:       32.80,
-      tags:        ['Customizable'],
-    ),
-    _MenuItem(
-      name:        'Avocado Veggie Wrap',
-      description: 'Whole wheat wrap with fresh avocado, mixed greens, cherry tomatoes and hummus.',
-      price:       28.00,
-      tags:        ['Vegan', 'High Fibre'],
+      price: 32.80,
+      imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1000&auto=format&fit=crop',
+      categories: ['Lunch'],
+      dietaryPreferences: ['High Protein', 'Low Carb'],
+      servingSize: '1 serving (400g)',
     ),
   ];
 
@@ -45,6 +41,7 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
+        backgroundColor: Colors.white,
         title: const Text('Delete Item?',
             style: TextStyle(fontWeight: FontWeight.w800)),
         content: Text('Remove "${_items[index].name}" from the menu?'),
@@ -68,229 +65,269 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
   }
 
   void _editItem(int index) {
-    // TODO: open edit form
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Edit "${_items[index].name}" — coming soon'),
-        backgroundColor: _green,
-      ),
-    );
+    // navigate to edit
   }
 
-  void _addItem() {
-    // TODO: open add form
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Add new item — coming soon'),
-        backgroundColor: Color(0xFF1E4620),
-      ),
+  void _addItem() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddMenuItemPage()),
     );
+    
+    if (result != null && result is Meal) {
+      setState(() {
+        _items.insert(0, result);
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── Header ──
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Menu Items',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 20,
-                  color: Color(0xFF2C2C2C),
+    return Container(
+      color: const Color(0xFFF5F5F0), 
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-              ),
-              const Text(
-                'Manage your restaurant menu items',
-                style: TextStyle(fontSize: 13, color: Color(0xFF8A8A8A)),
-              ),
-              const SizedBox(height: 14),
-
-              // ── Add button ──
-              SizedBox(
-                width: double.infinity,
-                height: 46,
-                child: ElevatedButton.icon(
-                  onPressed: _addItem,
-                  icon: const Icon(Icons.add, size: 20),
-                  label: const Text(
-                    'Add New Item',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 14),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _lightGreen,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Menu Items',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E4620), 
                   ),
                 ),
-              ),
-              const SizedBox(height: 14),
-            ],
-          ),
-        ),
+                const SizedBox(height: 4),
+                Text(
+                  'Manage your restaurant menu items',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 20),
 
-        // ── Item list ──
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _items.length,
-            itemBuilder: (context, index) => _MenuItemCard(
-              item:     _items[index],
-              onDelete: () => _deleteItem(index),
-              onEdit:   () => _editItem(index),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: _addItem,
+                    icon: const Icon(Icons.add, size: 20),
+                    label: const Text(
+                      'Add New Item',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _limeGreen,
+                      foregroundColor: _darkGreen,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-      ],
+
+          // ── Item list ──
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              itemCount: _items.length,
+              itemBuilder: (context, index) => _MenuItemCard(
+                meal:     _items[index],
+                onDelete: () => _deleteItem(index),
+                onEdit:   () => _editItem(index),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
+
 // ── Menu Item Card ─────────────────────────────────────────────────────────────
 
 class _MenuItemCard extends StatelessWidget {
-  final _MenuItem item;
+  final Meal meal;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
 
-  static const _terracotta = Color(0xFFD95F2B);
-  static const _lightGreen = Color(0xFFB5CC30);
-  static const _green      = Color(0xFF1E4620);
+  static const _darkGreen  = Color(0xFF1E4620);
+  static const _limeGreen  = Color(0xFFABC270);
+  static const _pink       = Color(0xFFFFDDE2); // Delete background
+  static const _redAccent  = Color(0xFFD32F2F); // Delete text/icon
 
   const _MenuItemCard({
-    required this.item,
+    required this.meal,
     required this.onDelete,
     required this.onEdit,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFEEEBDE)),
-      ),
+    return Card(
+      margin: const EdgeInsets.only(bottom: 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 4,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Placeholder image ──
-          Container(
-            height: 160,
-            decoration: const BoxDecoration(
-              color: Color(0xFFD9D5C5),
-              borderRadius:
-              BorderRadius.vertical(top: Radius.circular(14)),
-            ),
-            child: const Center(
-              child: Icon(Icons.fastfood_outlined,
-                  color: Color(0xFF9E9880), size: 48),
-            ),
+          // ── Image Section ──
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: meal.imageUrl.startsWith('http')
+                ? Image.network(
+                    meal.imageUrl,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
+                  )
+                : Image.asset(
+                    meal.imageUrl,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
+                  ),
           ),
 
           Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Name + price ──
+                // ── Title and Price ──
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
                       child: Text(
-                        item.name,
+                        meal.name,
                         style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                          color: Color(0xFF2C2C2C),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E4620),
                         ),
                       ),
                     ),
                     Text(
-                      'RM ${item.price.toStringAsFixed(0)}',
+                      'RM ${meal.price.toStringAsFixed(0)}',
                       style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                         color: Color(0xFF1E4620),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
 
                 // ── Description ──
                 Text(
-                  item.description,
-                  style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF6B6B6B),
-                      height: 1.4),
+                  meal.description,
+                  style: TextStyle(color: Colors.grey[700], height: 1.4, fontSize: 14),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 16),
 
-                // ── Tags ──
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: item.tags
-                      .map((tag) => Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _green.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(6),
+                // ── Dietary and Category Labels ──
+                Row(
+                  children: [
+                    if (meal.dietaryPreferences.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 28),
+                        child: Text(
+                          meal.dietaryPreferences.first,
+                          style: const TextStyle(
+                            color: Color(0xFF4CAF50), // Green tag from screenshot
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    if (meal.categories.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 28),
+                        child: Text(
+                          meal.categories.first,
+                          style: const TextStyle(
+                            color: Color(0xFF3F51B5), // Indigo tag from screenshot
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    const Text(
+                      'Natural',
+                      style: TextStyle(
+                        color: Color(0xFF9C27B0), // Purple tag from screenshot
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    child: Text(tag,
-                        style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: _green)),
-                  ))
-                      .toList(),
+                  ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 20),
 
                 // ── Action buttons ──
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: onDelete,
-                        icon: const Icon(Icons.delete_outline,
-                            size: 16, color: Colors.red),
-                        label: const Text('Delete',
-                            style: TextStyle(color: Colors.red)),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.red),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
+                      child: SizedBox(
+                        height: 44,
+                        child: ElevatedButton.icon(
+                          onPressed: onDelete,
+                          icon: const Icon(Icons.delete, size: 18, color: _redAccent),
+                          label: const Text('Delete',
+                              style: TextStyle(color: _redAccent, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _pink,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: onEdit,
-                        icon: const Icon(Icons.edit_outlined,
-                            size: 16),
-                        label: const Text('Edit'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _lightGreen,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
+                      child: SizedBox(
+                        height: 44,
+                        child: ElevatedButton.icon(
+                          onPressed: onEdit,
+                          icon: const Icon(Icons.edit, size: 18, color: _darkGreen),
+                          label: const Text('Edit',
+                              style: TextStyle(color: _darkGreen, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _limeGreen,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
                         ),
                       ),
                     ),
@@ -303,18 +340,13 @@ class _MenuItemCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildErrorImage() {
+    return Container(
+      height: 200,
+      color: Colors.grey[300],
+      child: const Icon(Icons.broken_image, size: 50),
+    );
+  }
 }
 
-class _MenuItem {
-  final String name;
-  final String description;
-  final double price;
-  final List<String> tags;
-
-  const _MenuItem({
-    required this.name,
-    required this.description,
-    required this.price,
-    required this.tags,
-  });
-}

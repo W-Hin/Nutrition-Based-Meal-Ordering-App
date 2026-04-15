@@ -50,18 +50,23 @@ class NutritionDialog extends StatelessWidget {
               // Image
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  meal.imageUrl,
-                  width: double.infinity,
-                  height: 180,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 180,
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                  ),
-                ),
+                child: meal.imageUrl.startsWith('http')
+                    ? Image.network(
+                        meal.imageUrl,
+                        width: double.infinity,
+                        height: 180,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
+                      )
+                    : Image.asset(
+                        meal.imageUrl,
+                        width: double.infinity,
+                        height: 180,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
+                      ),
               ),
+
               const SizedBox(height: 16),
 
               // Name and Price
@@ -207,6 +212,14 @@ class NutritionDialog extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildErrorImage() {
+    return Container(
+      height: 180,
+      color: Colors.grey[200],
+      child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
     );
   }
 }
