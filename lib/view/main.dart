@@ -85,6 +85,14 @@ class _MainShellState extends State<MainShell> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF1E4620),
+        child: const Icon(Icons.admin_panel_settings, color: Colors.white),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminShell()),
+        ),
+      ),
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: _selectedIndex,
         onItemTapped: (index) => setState(() => _selectedIndex = index),
