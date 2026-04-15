@@ -1,19 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
-import '../controller/cart_controller.dart';
-import '../controller/order_controller.dart';
-import '../controller/menu_controller.dart';
-import '../controller/bowl_controller.dart';
-import 'widgets/navigation_bar.dart';
-import '../view/pages/cart.dart';
-import '../view/pages/menu_page.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../controller/store_controller.dart';
+// Controllers
+import 'package:nutrition_based_meal_ordering_app/controller/cart_controller.dart';
+import 'package:nutrition_based_meal_ordering_app/controller/order_controller.dart';
+import 'package:nutrition_based_meal_ordering_app/controller/menu_controller.dart';
+import 'package:nutrition_based_meal_ordering_app/controller/bowl_controller.dart';
+import 'package:nutrition_based_meal_ordering_app/controller/store_controller.dart';
 
-void main() {
+// Widgets & Pages
+import 'package:nutrition_based_meal_ordering_app/view/widgets/navigation_bar.dart';
+import 'package:nutrition_based_meal_ordering_app/view/pages/cart.dart';
+import 'package:nutrition_based_meal_ordering_app/view/pages/menu_page.dart';
+import 'package:nutrition_based_meal_ordering_app/view/admin/admin_shell.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://cjsxgpiahswppkyackpk.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqc3hncGlhaHN3cHBreWFja3BrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTE0MDksImV4cCI6MjA5MTY2NzQwOX0.E_2q_i5PqmuY2Csx06e7U0In-DAoLak_n_KC-IgKOkc',
+  );
+
   runApp(
-    // ChangeNotifierProvider makes Controllers available to the whole app
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CartController()),
@@ -42,7 +53,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Food App',
+      debugShowCheckedModeBanner: false,
+      title: 'NuBurn',
       scrollBehavior: AppScrollBehavior(),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E4620)),
@@ -64,7 +76,7 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget> _pages = [
     const Center(child: Text('Home Page')),
-    const MenuPage(), // Explore Page
+    const MenuPage(),
     const Center(child: Text('Order Page')),
     const Center(child: Text('Profile Page')),
   ];
@@ -74,10 +86,7 @@ class _MainShellState extends State<MainShell> {
     return Scaffold(
       body: Stack(
         children: [
-          // ── Page content ──
           IndexedStack(index: _selectedIndex, children: _pages),
-
-          // ── Floating cart button (top-right) ──
           Positioned(
             top: 48,
             right: 16,
@@ -101,8 +110,6 @@ class _MainShellState extends State<MainShell> {
   }
 }
 
-// ── Cart FAB — green circle with badge ────────────────────────────────────────
-
 class _CartFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -116,12 +123,11 @@ class _CartFab extends StatelessWidget {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              // Green circle
               Container(
                 width: 56,
                 height: 56,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF285430),
+                  color: Color(0xFF1E4620),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -130,8 +136,6 @@ class _CartFab extends StatelessWidget {
                   size: 26,
                 ),
               ),
-
-              // Red badge — only shows when cart has items
               if (cart.totalItemCount > 0)
                 Positioned(
                   top: -4,
@@ -139,7 +143,7 @@ class _CartFab extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: const BoxDecoration(
-                      color: Color(0xFFBF5D32),
+                      color: Color(0xFFCC4E2A),
                       shape: BoxShape.circle,
                     ),
                     constraints: const BoxConstraints(
@@ -147,7 +151,6 @@ class _CartFab extends StatelessWidget {
                       minHeight: 20,
                     ),
                     child: Text(
-                      // Cap display at 99, show 99+ beyond that
                       cart.totalItemCount > 99
                           ? '99+'
                           : '${cart.totalItemCount}',
