@@ -16,6 +16,8 @@ import 'package:nutrition_based_meal_ordering_app/view/pages/cart.dart';
 import 'package:nutrition_based_meal_ordering_app/view/pages/menu_page.dart';
 import 'package:nutrition_based_meal_ordering_app/view/admin/admin_shell.dart';
 
+import 'pages/my_orders.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -77,7 +79,7 @@ class _MainShellState extends State<MainShell> {
   final List<Widget> _pages = [
     const Center(child: Text('Home Page')),
     const MenuPage(),
-    const Center(child: Text('Order Page')),
+    const MyOrdersPage(),
     const Center(child: Text('Profile Page')),
   ];
 
