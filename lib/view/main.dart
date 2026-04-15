@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../controller/cart_controller.dart';
 import '../controller/order_controller.dart';
 import '../view/widgets/navigation_bar.dart';
+import 'admin/admin_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -71,6 +72,14 @@ class _MainShellState extends State<MainShell> {
             child: _CartFab(),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF1E4620),
+        child: const Icon(Icons.admin_panel_settings, color: Colors.white),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminShell()),
+        ),
       ),
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: _selectedIndex,
