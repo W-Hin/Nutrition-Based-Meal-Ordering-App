@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import '../controller/cart_controller.dart';
 import '../controller/order_controller.dart';
+import '../controller/menu_controller.dart';
+import '../controller/bowl_controller.dart';
 import 'widgets/navigation_bar.dart';
 import '../view/pages/cart.dart';
+import '../view/pages/menu_page.dart';
+
+import '../controller/store_controller.dart';
 
 void main() {
   runApp(
@@ -12,10 +18,22 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => CartController()),
         ChangeNotifierProvider(create: (_) => OrderController()),
+        ChangeNotifierProvider(create: (_) => FoodMenuController()), 
+        ChangeNotifierProvider(create: (_) => BowlController()),
+        ChangeNotifierProvider(create: (_) => StoreController()),
       ],
       child: const MyApp(),
     ),
   );
+}
+
+class AppScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+      };
 }
 
 class MyApp extends StatelessWidget {
@@ -25,6 +43,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Food App',
+      scrollBehavior: AppScrollBehavior(),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E4620)),
       ),
@@ -45,7 +64,7 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget> _pages = [
     const Center(child: Text('Home Page')),
-    const Center(child: Text('Explore Page')),
+    const MenuPage(), // Explore Page
     const Center(child: Text('Order Page')),
     const Center(child: Text('Profile Page')),
   ];
