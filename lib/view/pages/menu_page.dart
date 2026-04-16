@@ -89,24 +89,42 @@ class MenuPage extends StatelessWidget {
           Expanded(
             child: Consumer2<FoodMenuController, StoreController>(
               builder: (context, menu, storeController, _) {
-                // Filter out meals that are sold out at the current store
-                final meals = menu.filteredMeals.where((meal) {
-                  return storeController.isMealAvailable(meal.name);
-                }).toList();
+                final meals = menu.filteredMeals;
                 
                 if (meals.isEmpty) {
-                  return const Center(child: Text('No meals available at this store matching your filters.'));
+                  return const Center(child: Text('No meals available matching your filters.'));
                 }
+
+                // Sort meals sold out at the bottom
+                final sortedMeals = List.from(meals)..sort((a, b) {
+                  final aSoldOut = !a.isAvailable || !storeController.isMealAvailable(a.name);
+                  final bSoldOut = !b.isAvailable || !storeController.isMealAvailable(b.name);
+                  if (aSoldOut == bSoldOut) return 0;
+                  return aSoldOut ? 1 : -1;
+                });
                 
-                return Scrollbar(
-                  thumbVisibility: true,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    itemCount: meals.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == 0) return const CustomBowlCard();
-                      return MealCard(meal: meals[index - 1]);
-                    },
+                return RefreshIndicator(
+                  onRefresh: () => menu.fetchMeals(),
+                  color: const Color(0xFF1E4620), 
+                  child: Scrollbar(
+                    thumbVisibility: true,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 24),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount: sortedMeals.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == 0) return const CustomBowlCard();
+                        final meal = sortedMeals[index - 1];
+                        
+                        // sold out check
+                        final isSoldOut = !meal.isAvailable || !storeController.isMealAvailable(meal.name);
+                        
+                        return MealCard(
+                          meal: meal, 
+                          isSoldOut: isSoldOut,
+                        );
+                      },
+                    ),
                   ),
                 );
               },

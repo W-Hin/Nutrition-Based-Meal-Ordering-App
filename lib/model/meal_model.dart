@@ -1,4 +1,5 @@
 class Meal {
+  final String? id; // Supabase UUID
   final String name;
   final double price;
   final String description;
@@ -6,6 +7,7 @@ class Meal {
   final List<String> categories;
   final List<String> dietaryPreferences;
   final String servingSize;
+  final bool isAvailable;
   
   // Nutrition Data
   final double calories;
@@ -22,6 +24,7 @@ class Meal {
   final String remarks;
 
   Meal({
+    this.id,
     required this.name,
     required this.price,
     required this.description,
@@ -29,6 +32,7 @@ class Meal {
     required this.categories,
     required this.dietaryPreferences,
     required this.servingSize,
+    this.isAvailable = true,
     this.calories = 0,
     this.protein = 0,
     this.carbs = 0,
@@ -66,6 +70,7 @@ class Meal {
   }
 
   Meal copyWith({
+    String? id,
     String? name,
     double? price,
     String? description,
@@ -73,6 +78,7 @@ class Meal {
     List<String>? categories,
     List<String>? dietaryPreferences,
     String? servingSize,
+    bool? isAvailable,
     double? calories,
     double? protein,
     double? carbs,
@@ -85,6 +91,7 @@ class Meal {
     String? remarks,
   }) {
     return Meal(
+      id: id ?? this.id,
       name: name ?? this.name,
       price: price ?? this.price,
       description: description ?? this.description,
@@ -92,6 +99,7 @@ class Meal {
       categories: categories ?? this.categories,
       dietaryPreferences: dietaryPreferences ?? this.dietaryPreferences,
       servingSize: servingSize ?? this.servingSize,
+      isAvailable: isAvailable ?? this.isAvailable,
       calories: calories ?? this.calories,
       protein: protein ?? this.protein,
       carbs: carbs ?? this.carbs,
@@ -103,6 +111,53 @@ class Meal {
       allergens: allergens ?? this.allergens,
       remarks: remarks ?? this.remarks,
     );
+  }
+
+  factory Meal.fromMap(Map<String, dynamic> map) {
+    return Meal(
+      id:          map['food_id'], // Matches 'food_id' in dashboard
+      name:        map['name'] ?? '',
+      price:       (map['price'] ?? 0).toDouble(),
+      description: map['description'] ?? '',
+      imageUrl:    map['image_url'] ?? '',
+      categories:  List<String>.from(map['categories'] ?? []),
+      dietaryPreferences: List<String>.from(map['dietary_preferences'] ?? []),
+      servingSize: map['serving_size'] ?? '',
+      isAvailable: map['is_available'] ?? true,
+      calories:    (map['calories'] ?? 0).toDouble(),
+      protein:     (map['protein'] ?? 0).toDouble(),
+      carbs:       (map['carbs'] ?? 0).toDouble(),
+      fat:         (map['fats'] ?? 0).toDouble(), // Matches 'fats' in dashboard
+      fiber:       (map['fiber'] ?? 0).toDouble(),
+      sugar:       (map['sugar'] ?? 0).toDouble(),
+      sodium:      (map['sodium'] ?? 0).toDouble(),
+      cholesterol: (map['cholesterol'] ?? 0).toDouble(),
+      allergens:   List<String>.from(map['allergen'] ?? []), // Matches 'allergen' in dashboard
+      remarks:     map['remarks'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name':                name,
+      'price':               price,
+      'description':         description,
+      'image_url':           imageUrl,
+      'categories':          categories,
+      'dietary_preferences': dietaryPreferences,
+      'serving_size':        servingSize,
+      'is_available':        isAvailable,
+      'calories':            calories,
+      'protein':             protein,
+      'carbs':               carbs,
+      'fats':                fat, // Maps back to 'fats'
+      'fiber':               fiber,
+      'sugar':               sugar,
+      'sodium':              sodium,
+      'cholesterol':         cholesterol,
+      'allergen':            allergens, // Maps back to 'allergen'
+      'remarks':             remarks,
+    };
   }
 }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../model/meal_model.dart';
+import '../../service/meal_service.dart';
 import 'add_menu_item_page.dart';
 
 class AdminMenuManagementPage extends StatefulWidget {
@@ -15,27 +16,32 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
   static const _darkGreen = Color(0xFF1E4620);
   static const _limeGreen = Color(0xFFABC270);
 
-  // Initial list using the new Meal model
-  final List<Meal> _items = [
-    Meal(
-      name: 'Grilled Salmon Bowl',
-      description: 'Fresh grilled salmon with quinoa, roasted vegetables, and lemon herb dressing. High in protein and omega-3.',
-      price: 35.00,
-      imageUrl: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=1000&auto=format&fit=crop',
-      categories: ['Lunch'],
-      dietaryPreferences: ['High Protein', 'Omega-3', 'Gluten-Free'],
-      servingSize: '1 bowl (350g)',
-    ),
-    Meal(
-      name: 'Caesar Salad with Chicken Bites',
-      description: 'Crispy romaine lettuce with grilled chicken, parmesan, and house caesar dressing.',
-      price: 32.80,
-      imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1000&auto=format&fit=crop',
-      categories: ['Lunch'],
-      dietaryPreferences: ['High Protein', 'Low Carb'],
-      servingSize: '1 serving (400g)',
-    ),
-  ];
+  List<Meal> _items = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMeals();
+  }
+
+  Future<void> _loadMeals() async {
+    setState(() => _isLoading = true);
+    try {
+      final meals = await MealService.fetchMeals();
+      setState(() {
+        _items = meals;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading meals: $e')),
+        );
+      }
+    }
+  }
 
   void _deleteItem(int index) {
     final deletedItem = _items[index];
@@ -67,25 +73,42 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
           SizedBox(
             width: 100,
             child: ElevatedButton(
-              onPressed: () {
-                setState(() => _items.removeAt(index));
+              onPressed: () async {
                 Navigator.pop(context);
+                final mealId = deletedItem.id;
                 
-                // Show SnackBar with Undo
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${deletedItem.name} has been deleted'),
-                    action: SnackBarAction(
-                      label: 'Undo',
-                      textColor: Colors.white,
-                      onPressed: () {
-                        setState(() {
-                          _items.insert(originalIndex, deletedItem);
-                        });
-                      },
-                    ),
-                  ),
-                );
+                try {
+                  if (mealId != null) {
+                    await MealService.deleteMeal(mealId);
+                  }
+                  
+                  setState(() => _items.removeAt(index));
+                  
+                  // Show SnackBar with Undo
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${deletedItem.name} has been deleted'),
+                        action: SnackBarAction(
+                          label: 'Undo',
+                          textColor: Colors.white,
+                          onPressed: () async {
+                            final restored = await MealService.addMeal(deletedItem);
+                            setState(() {
+                              _items.insert(originalIndex, restored);
+                            });
+                          },
+                        ),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error deleting: $e')),
+                    );
+                  }
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFD25432),
@@ -101,19 +124,41 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
     );
   }
 
+  void _toggleAvailability(int index, bool value) async {
+    final mealId = _items[index].id;
+    if (mealId != null) {
+      try {
+        await MealService.updateAvailability(mealId, value);
+        setState(() {
+          _items[index] = _items[index].copyWith(isAvailable: value);
+        });
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error updating availability: $e')),
+          );
+        }
+      }
+    }
+  }
+
   void _editItem(int index) async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => AddMenuItemPage(initialMeal: _items[index])),
+      MaterialPageRoute(
+        builder: (context) => AddMenuItemPage(initialMeal: _items[index]),
+      ),
     );
-    
+
     if (result != null && result is Meal) {
       setState(() {
         _items[index] = result;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${result.name} updated')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${result.name} updated')),
+        );
+      }
     }
   }
 
@@ -122,14 +167,16 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
       context,
       MaterialPageRoute(builder: (context) => const AddMenuItemPage()),
     );
-    
+
     if (result != null && result is Meal) {
       setState(() {
         _items.insert(0, result);
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${result.name} added successfully')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${result.name} added successfully')),
+        );
+      }
     }
   }
 
@@ -205,15 +252,20 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
 
           // ── Item list ──
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-              itemCount: _items.length,
-              itemBuilder: (context, index) => _MenuItemCard(
-                meal:     _items[index],
-                onDelete: () => _deleteItem(index),
-                onEdit:   () => _editItem(index),
-              ),
-            ),
+            child: _isLoading 
+              ? const Center(child: CircularProgressIndicator(color: _darkGreen))
+              : _items.isEmpty
+                ? Center(child: Text('No menu items found.', style: TextStyle(color: Colors.grey[600])))
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                    itemCount: _items.length,
+                    itemBuilder: (context, index) => _MenuItemCard(
+                      meal:     _items[index],
+                      onDelete: () => _deleteItem(index),
+                      onEdit:   () => _editItem(index),
+                      onToggleAvailability: (val) => _toggleAvailability(index, val),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -228,6 +280,7 @@ class _MenuItemCard extends StatelessWidget {
   final Meal meal;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
+  final Function(bool) onToggleAvailability;
 
   static const _darkGreen  = Color(0xFF1E4620);
   static const _limeGreen  = Color(0xFFABC270);
@@ -238,6 +291,7 @@ class _MenuItemCard extends StatelessWidget {
     required this.meal,
     required this.onDelete,
     required this.onEdit,
+    required this.onToggleAvailability,
   });
 
   @override
@@ -336,7 +390,29 @@ class _MenuItemCard extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      meal.isAvailable ? 'In Stock' : 'Out of Stock',
+                      style: TextStyle(
+                        color: meal.isAvailable ? const Color(0xFF1E4620) : Colors.red,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Transform.scale(
+                      scale: 0.8,
+                      child: Switch(
+                        value: meal.isAvailable,
+                        activeColor: const Color(0xFF1E4620),
+                        onChanged: onToggleAvailability,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
 
                 // ── Action buttons ──
                 Row(

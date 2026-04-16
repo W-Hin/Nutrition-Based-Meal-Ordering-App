@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../model/meal_model.dart';
 import '../widgets/meal_confirmation_dialog.dart';
+import '../../service/meal_service.dart';
 
 class AddMenuItemPage extends StatefulWidget {
   final Meal? initialMeal;
@@ -15,8 +18,8 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
   int _currentStep = 0;
 
   static const _green      = Color(0xFF1E4620);
-  static const _lightGreen = Color(0xFFABC270); // Lime green
-  static const _bgColor    = Color(0xFFF5F5F0); // Creamy background
+  static const _lightGreen = Color(0xFFB5CC30);
+  static const _bgColor    = Color(0xFFF9F9F4); // Creamy background
 
   // Form State
   final _nameController = TextEditingController();
@@ -61,6 +64,8 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
 
   // Image State
   String? _currentImageUrl;
+  File? _imageFile;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -143,40 +148,151 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     }
   }
 
-  void _saveMeal() async {
-    final meal = Meal(
-      name: _nameController.text,
-      description: _descriptionController.text,
-      price: double.tryParse(_priceController.text) ?? 0.0,
-      imageUrl: _currentImageUrl ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1000&auto=format&fit=crop', // Default placeholder
-      categories: [_selectedCategory ?? 'Other'],
-      dietaryPreferences: _dietaryRestrictions.entries
-          .where((e) => e.value)
-          .map((e) => e.key)
-          .toList(),
-      servingSize: _servingSizeController.text,
-      calories: double.tryParse(_caloriesController.text) ?? 0,
-      protein: double.tryParse(_proteinController.text) ?? 0,
-      carbs: double.tryParse(_carbsController.text) ?? 0,
-      fat: double.tryParse(_fatController.text) ?? 0,
-      fiber: double.tryParse(_fiberController.text) ?? 0,
-      sugar: double.tryParse(_sugarController.text) ?? 0,
-      sodium: double.tryParse(_sodiumController.text) ?? 0,
-      cholesterol: double.tryParse(_cholesterolController.text) ?? 0,
-      allergens: _allergens.entries
-          .where((e) => e.value)
-          .map((e) => e.key)
-          .toList(),
-      remarks: _remarksController.text,
-    );
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        maxWidth: 1000,
+        maxHeight: 1000,
+        imageQuality: 85,
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _imageFile = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+    }
+  }
 
-    final confirmed = await showDialog<bool>(
+  void _showImageSourceActionSheet() {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => MealConfirmationDialog(meal: meal),
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Add a photo',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ListTile(
+                  leading: const Icon(Icons.camera_alt_outlined),
+                  title: const Text('Take a photo'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.camera);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.image_outlined),
+                  title: const Text('Select from Gallery (or Library)'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.gallery);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.folder_open_outlined),
+                  title: const Text('Choose from Files'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.gallery); // On mobile, Gallery usually covers files too
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
+  }
 
-    if (confirmed == true) {
-      if (mounted) Navigator.pop(context, meal);
+  void _saveMeal() async {
+    // small loading indicator
+    if (_imageFile != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Uploading image...'), duration: Duration(seconds: 2)),
+      );
+    }
+
+    String finalImageUrl = _currentImageUrl ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1000&auto=format&fit=crop';
+    
+    try {
+      // if a new image was picked, upload it first
+      if (_imageFile != null) {
+        finalImageUrl = await MealService.uploadImage(_imageFile!);
+      }
+
+      final meal = Meal(
+        name: _nameController.text,
+        description: _descriptionController.text,
+        price: double.tryParse(_priceController.text) ?? 0.0,
+        imageUrl: finalImageUrl,
+        categories: [_selectedCategory ?? 'Other'],
+        dietaryPreferences: _dietaryRestrictions.entries
+            .where((e) => e.value)
+            .map((e) => e.key)
+            .toList(),
+        servingSize: _servingSizeController.text,
+        calories: double.tryParse(_caloriesController.text) ?? 0,
+        protein: double.tryParse(_proteinController.text) ?? 0,
+        carbs: double.tryParse(_carbsController.text) ?? 0,
+        fat: double.tryParse(_fatController.text) ?? 0,
+        fiber: double.tryParse(_fiberController.text) ?? 0,
+        sugar: double.tryParse(_sugarController.text) ?? 0,
+        sodium: double.tryParse(_sodiumController.text) ?? 0,
+        cholesterol: double.tryParse(_cholesterolController.text) ?? 0,
+        allergens: _allergens.entries
+            .where((e) => e.value)
+            .map((e) => e.key)
+            .toList(),
+        remarks: _remarksController.text,
+        isAvailable: widget.initialMeal?.isAvailable ?? true,
+      );
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => MealConfirmationDialog(meal: meal),
+      );
+
+      if (confirmed == true) {
+        Meal savedMeal;
+        if (widget.initialMeal != null) {
+          savedMeal = await MealService.updateMeal(meal.copyWith(id: widget.initialMeal!.id));
+        } else {
+          savedMeal = await MealService.addMeal(meal);
+        }
+        
+        if (mounted) Navigator.pop(context, savedMeal);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     }
   }
 
@@ -554,9 +670,9 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
   }
 
   Widget _buildPhotoPlaceholder() {
-    if (_currentImageUrl != null) {
+    if (_imageFile != null || _currentImageUrl != null) {
       return GestureDetector(
-        onTap: _deletePhoto,
+        onTap: _showImageSourceActionSheet,
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -566,9 +682,11 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 image: DecorationImage(
-                  image: _currentImageUrl!.startsWith('http')
-                      ? NetworkImage(_currentImageUrl!) as ImageProvider
-                      : AssetImage(_currentImageUrl!),
+                  image: _imageFile != null 
+                      ? FileImage(_imageFile!) as ImageProvider
+                      : (_currentImageUrl!.startsWith('http')
+                          ? NetworkImage(_currentImageUrl!) as ImageProvider
+                          : AssetImage(_currentImageUrl!) as ImageProvider),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -587,21 +705,24 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
       );
     }
 
-    return Container(
-      width: 100,
-      height: 100,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.camera_alt, color: Colors.black, size: 28),
-          const SizedBox(height: 4),
-          const Text('Add a photo', style: TextStyle(fontSize: 10, color: Colors.grey)),
-        ],
+    return GestureDetector(
+      onTap: _showImageSourceActionSheet,
+      child: Container(
+        width: 100,
+        height: 100,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.camera_alt, color: Colors.black, size: 28),
+            const SizedBox(height: 4),
+            const Text('Add a photo', style: TextStyle(fontSize: 10, color: Colors.grey)),
+          ],
+        ),
       ),
     );
   }

@@ -133,7 +133,8 @@ class StoreDetailBottomSheet extends StatelessWidget {
                     itemCount: meals.length,
                     itemBuilder: (context, index) {
                       final meal = meals[index];
-                      final isInStock = !store.soldOutMealNames.contains(meal.name);
+                      // Item is In Stock only if it's globally available AND not specifically sold out at this store
+                      final isInStock = meal.isAvailable && !store.soldOutMealNames.contains(meal.name);
                       
                       return Container(
                         margin: const EdgeInsets.only(bottom: 16),
@@ -185,18 +186,21 @@ class StoreDetailBottomSheet extends StatelessWidget {
                             const SizedBox(width: 12),
                             ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: Image.asset(
-                                meal.imageUrl,
-                                width: 100,
-                                height: 80,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) => Container(
-                                  width: 100,
-                                  height: 80,
-                                  color: Colors.grey[100],
-                                  child: const Icon(Icons.lunch_dining, color: Colors.grey),
-                                ),
-                              ),
+                              child: meal.imageUrl.startsWith('http')
+                                  ? Image.network(
+                                      meal.imageUrl,
+                                      width: 100,
+                                      height: 80,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
+                                    )
+                                  : Image.asset(
+                                      meal.imageUrl,
+                                      width: 100,
+                                      height: 80,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
+                                    ),
                             ),
                           ],
                         ),
@@ -242,6 +246,15 @@ class StoreDetailBottomSheet extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildErrorImage() {
+    return Container(
+      width: 100,
+      height: 80,
+      color: Colors.grey[100],
+      child: const Icon(Icons.lunch_dining, color: Colors.grey),
     );
   }
 }
