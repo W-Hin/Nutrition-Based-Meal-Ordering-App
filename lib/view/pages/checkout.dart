@@ -12,7 +12,6 @@ class CheckoutPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      // CheckoutController is local to this flow — not app-wide
       create: (_) => CheckoutController(),
       child: const _CheckoutView(),
     );
@@ -22,14 +21,15 @@ class CheckoutPage extends StatelessWidget {
 class _CheckoutView extends StatelessWidget {
   const _CheckoutView();
 
-  static const _green      = Color(0xFF1E4620);
-  static const _bg         = Color(0xFFF5F5F0);
+  static const _green = Color(0xFF1E4620);
+  static const _bg    = Color(0xFFF5F5F0);
 
   @override
   Widget build(BuildContext context) {
-    final ctrl  = context.watch<CheckoutController>();
-    final cart  = context.watch<CartController>();
+    final ctrl       = context.watch<CheckoutController>();
+    final cart       = context.watch<CartController>();
     final isDelivery = ctrl.activeTab == CheckoutTab.delivery;
+    final grandTotal = cart.total + ctrl.deliveryFee;
 
     return Scaffold(
       backgroundColor: _bg,
@@ -53,10 +53,7 @@ class _CheckoutView extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // ── Tab bar ──
           _TabBar(active: ctrl.activeTab, onSwitch: ctrl.setTab),
-
-          // ── Scrollable content ──
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -65,20 +62,19 @@ class _CheckoutView extends StatelessWidget {
                   : _SelfCollectContent(ctrl: ctrl),
             ),
           ),
-
-          // ── Bottom total + CTA ──
           _BottomBar(
-            total: cart.total,
+            subtotal:    cart.total,
+            deliveryFee: ctrl.deliveryFee,
+            isDelivery:  isDelivery,
             label: isDelivery
                 ? 'PLACE DELIVERY ORDER'
                 : 'PLACE SELF COLLECT ORDER',
-            // In _BottomBar's onPressed, update to:
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => PaymentPage(
-                    checkoutCtrl: context.read<CheckoutController>(), // ← pass it here
+                    checkoutCtrl: context.read<CheckoutController>(),
                   ),
                 ),
               );
@@ -105,14 +101,14 @@ class _TabBar extends StatelessWidget {
       child: Row(
         children: [
           _Tab(
-            label: 'Delivery',
+            label:    'Delivery',
             isActive: active == CheckoutTab.delivery,
-            onTap: () => onSwitch(CheckoutTab.delivery),
+            onTap:    () => onSwitch(CheckoutTab.delivery),
           ),
           _Tab(
-            label: 'Self Collect',
+            label:    'Self Collect',
             isActive: active == CheckoutTab.selfCollect,
-            onTap: () => onSwitch(CheckoutTab.selfCollect),
+            onTap:    () => onSwitch(CheckoutTab.selfCollect),
           ),
         ],
       ),
@@ -127,11 +123,7 @@ class _Tab extends StatelessWidget {
 
   static const _green = Color(0xFF1E4620);
 
-  const _Tab({
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-  });
+  const _Tab({required this.label, required this.isActive, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -153,10 +145,9 @@ class _Tab extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontWeight:
-              isActive ? FontWeight.w700 : FontWeight.w500,
-              color: isActive ? _green : const Color(0xFF8A8A8A),
-              fontSize: 14,
+              fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+              color:      isActive ? _green : const Color(0xFF8A8A8A),
+              fontSize:   14,
             ),
           ),
         ),
@@ -165,7 +156,7 @@ class _Tab extends StatelessWidget {
   }
 }
 
-// ── Delivery Tab Content ───────────────────────────────────────────────────────
+// ── Delivery Content ───────────────────────────────────────────────────────────
 
 class _DeliveryContent extends StatelessWidget {
   final CheckoutController ctrl;
@@ -173,45 +164,79 @@ class _DeliveryContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final slots = ctrl.generateTimeSlots();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Address card — tappable, goes to EditAddressPage
         _SectionHeader(icon: Icons.location_on_outlined, title: 'Delivery Address'),
         const SizedBox(height: 8),
         _AddressCard(
           address: ctrl.deliveryAddress,
           onTap: () => Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => EditAddressPage(ctrl: ctrl), // ← pass ctrl here
-            ),
+            MaterialPageRoute(builder: (_) => EditAddressPage(ctrl: ctrl)),
           ),
         ),
         const SizedBox(height: 16),
 
         _SectionHeader(icon: Icons.directions_bike_outlined, title: 'Delivery Options'),
         const SizedBox(height: 8),
-        _RadioOption(
-          label: 'Standard - 20 mins',
-          value: DeliveryOption.standard,
+
+        // Eco
+        _DeliveryOptionTile(
+          label:      'Eco',
+          subtitle:   '~40 mins',
+          fee:        'RM 2.00',
+          value:      DeliveryOption.eco,
           groupValue: ctrl.deliveryOption,
-          onChanged: ctrl.setDeliveryOption,
+          onChanged:  ctrl.setDeliveryOption,
         ),
         const SizedBox(height: 8),
-        _RadioOption(
-          label: 'Order For Later',
-          value: DeliveryOption.orderLater,
+
+        // Standard
+        _DeliveryOptionTile(
+          label:      'Standard',
+          subtitle:   '~20 mins',
+          fee:        'RM 4.00',
+          value:      DeliveryOption.standard,
           groupValue: ctrl.deliveryOption,
-          onChanged: ctrl.setDeliveryOption,
+          onChanged:  ctrl.setDeliveryOption,
         ),
-        const SizedBox(height: 16),
-
-        _SectionHeader(icon: Icons.attach_money, title: 'Payment Method'),
         const SizedBox(height: 8),
-        _PaymentCard(),
-        const SizedBox(height: 16),
 
+        // Fast
+        _DeliveryOptionTile(
+          label:      'Fast',
+          subtitle:   '~10 mins',
+          fee:        'RM 8.00',
+          value:      DeliveryOption.fast,
+          groupValue: ctrl.deliveryOption,
+          onChanged:  ctrl.setDeliveryOption,
+        ),
+        const SizedBox(height: 8),
+
+        // Order For Later
+        _DeliveryOptionTile(
+          label:      'Order For Later',
+          subtitle:   'Choose your preferred time',
+          fee:        'RM 4.00',
+          value:      DeliveryOption.orderLater,
+          groupValue: ctrl.deliveryOption,
+          onChanged:  ctrl.setDeliveryOption,
+        ),
+
+        // Time dropdown — only shows when Order For Later is selected
+        if (ctrl.deliveryOption == DeliveryOption.orderLater) ...[
+          const SizedBox(height: 8),
+          _TimeDropdown(
+            slots:       slots,
+            selected:    ctrl.selectedLaterTime,
+            onChanged:   ctrl.setLaterTime,
+          ),
+        ],
+
+        const SizedBox(height: 16),
         _SectionHeader(icon: Icons.sticky_note_2_outlined, title: 'Remarks'),
         const SizedBox(height: 8),
         _RemarksField(onChanged: ctrl.setRemarks),
@@ -220,7 +245,7 @@ class _DeliveryContent extends StatelessWidget {
   }
 }
 
-// ── Self Collect Tab Content ───────────────────────────────────────────────────
+// ── Self Collect Content ───────────────────────────────────────────────────────
 
 class _SelfCollectContent extends StatelessWidget {
   final CheckoutController ctrl;
@@ -228,45 +253,61 @@ class _SelfCollectContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final slots = ctrl.generateTimeSlots();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(icon: Icons.location_on_outlined, title: 'Self Collection Address'),
         const SizedBox(height: 8),
-        // Static card — not tappable for self collect
         _AddressCard(
           address: AddressModel(
-            name: 'NuBurn - Tanjung Burma',
-            phone: '',
+            name:    'NuBurn - Tanjung Burma',
+            phone:   '',
             address: '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21, ...',
           ),
-          showArrow: false,
+          showArrow:     false,
           showSetCustom: false,
         ),
         const SizedBox(height: 16),
 
         _SectionHeader(icon: Icons.shopping_basket_outlined, title: 'Self Collection Options'),
         const SizedBox(height: 8),
-        _RadioOption(
-          label: 'Pick Up Now - After 9 mins',
-          value: DeliveryOption.standard,
+
+        // Pick Up Now
+        _DeliveryOptionTile(
+          label:      'Pick Up Now',
+          subtitle:   'Ready in ~9 mins',
+          fee:        'Free',
+          value:      DeliveryOption.pickUpNow,
           groupValue: ctrl.selfCollectOption,
-          onChanged: ctrl.setSelfCollectOption,
+          onChanged:  ctrl.setSelfCollectOption,
+          feeIsGreen: true,
         ),
         const SizedBox(height: 8),
-        _RadioOption(
-          label: 'Order For Later',
-          value: DeliveryOption.orderLater,
+
+        // Order For Later
+        _DeliveryOptionTile(
+          label:      'Order For Later',
+          subtitle:   'Choose your preferred time',
+          fee:        'Free',
+          value:      DeliveryOption.selfLater,
           groupValue: ctrl.selfCollectOption,
-          onChanged: ctrl.setSelfCollectOption,
+          onChanged:  ctrl.setSelfCollectOption,
+          feeIsGreen: true,
         ),
-        const SizedBox(height: 16),
 
-        _SectionHeader(icon: Icons.attach_money, title: 'Payment Method'),
-        const SizedBox(height: 8),
-        _PaymentCard(),
-        const SizedBox(height: 16),
+        // Time dropdown
+        if (ctrl.selfCollectOption == DeliveryOption.selfLater) ...[
+          const SizedBox(height: 8),
+          _TimeDropdown(
+            slots:     slots,
+            selected:  ctrl.selectedSelfLaterTime,
+            onChanged: ctrl.setSelfLaterTime,
+          ),
+        ],
 
+        const SizedBox(height: 16),
         _SectionHeader(icon: Icons.sticky_note_2_outlined, title: 'Remarks'),
         const SizedBox(height: 8),
         _RemarksField(onChanged: ctrl.setRemarks),
@@ -275,7 +316,174 @@ class _SelfCollectContent extends StatelessWidget {
   }
 }
 
-// ── Shared small widgets ───────────────────────────────────────────────────────
+// ── Delivery Option Tile (replaces old _RadioOption) ──────────────────────────
+
+class _DeliveryOptionTile extends StatelessWidget {
+  final String label;
+  final String subtitle;
+  final String fee;
+  final DeliveryOption value;
+  final DeliveryOption groupValue;
+  final ValueChanged<DeliveryOption> onChanged;
+  final bool feeIsGreen;
+
+  static const _green = Color(0xFF1E4620);
+
+  const _DeliveryOptionTile({
+    required this.label,
+    required this.subtitle,
+    required this.fee,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
+    this.feeIsGreen = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = value == groupValue;
+    return GestureDetector(
+      onTap: () => onChanged(value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color:        Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? _green : const Color(0xFFDDDDD0),
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            // Radio circle
+            Container(
+              width:  20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape:  BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? _green : const Color(0xFFAAAAAA),
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? Center(
+                child: Container(
+                  width:  10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                    color: _green,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              )
+                  : null,
+            ),
+            const SizedBox(width: 12),
+
+            // Label + subtitle
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: TextStyle(
+                        fontSize:   13,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color:      const Color(0xFF2C2C2C),
+                      )),
+                  Text(subtitle,
+                      style: const TextStyle(
+                          fontSize: 11, color: Color(0xFF8A8A8A))),
+                ],
+              ),
+            ),
+
+            // Fee badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color:        feeIsGreen
+                    ? _green.withOpacity(0.08)
+                    : const Color(0xFFEEEBDE),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                fee,
+                style: TextStyle(
+                  fontSize:   11,
+                  fontWeight: FontWeight.w700,
+                  color:      feeIsGreen ? _green : const Color(0xFF5C4A1E),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Time Dropdown ──────────────────────────────────────────────────────────────
+
+class _TimeDropdown extends StatelessWidget {
+  final List<String> slots;
+  final String? selected;
+  final ValueChanged<String?> onChanged;
+
+  static const _green = Color(0xFF1E4620);
+
+  const _TimeDropdown({
+    required this.slots,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (slots.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color:        const Color(0xFFFFEEEE),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: const Text(
+          'No available time slots today (orders close at 9:00 PM).',
+          style: TextStyle(fontSize: 12, color: Colors.red),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      decoration: BoxDecoration(
+        color:        Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border:       Border.all(color: const Color(0xFFDDDDD0)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value:       selected,
+          isExpanded:  true,
+          hint: const Text('Select a time',
+              style: TextStyle(color: Color(0xFFAAAAAA), fontSize: 13)),
+          icon: const Icon(Icons.access_time, color: Color(0xFF8A8A8A), size: 18),
+          style: const TextStyle(
+              fontSize: 13, color: Color(0xFF2C2C2C)),
+          items: slots
+              .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+              .toList(),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Shared widgets (unchanged from original) ───────────────────────────────────
 
 class _SectionHeader extends StatelessWidget {
   final IconData icon;
@@ -309,7 +517,7 @@ class _AddressCard extends StatelessWidget {
   const _AddressCard({
     required this.address,
     this.onTap,
-    this.showArrow = true,
+    this.showArrow    = true,
     this.showSetCustom = true,
   });
 
@@ -320,9 +528,9 @@ class _AddressCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color:        Colors.white,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFDDDDD0)),
+          border:       Border.all(color: const Color(0xFFDDDDD0)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,11 +575,10 @@ class _AddressCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            // Map placeholder
             Container(
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFFD9D5C5),
+                color:        const Color(0xFFD9D5C5),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Center(
@@ -386,112 +593,6 @@ class _AddressCard extends StatelessWidget {
   }
 }
 
-class _RadioOption extends StatelessWidget {
-  final String label;
-  final DeliveryOption value;
-  final DeliveryOption groupValue;
-  final ValueChanged<DeliveryOption> onChanged;
-
-  static const _green = Color(0xFF1E4620);
-
-  const _RadioOption({
-    required this.label,
-    required this.value,
-    required this.groupValue,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isSelected = value == groupValue;
-    return GestureDetector(
-      onTap: () => onChanged(value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFDDDDD0)),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(label,
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF2C2C2C))),
-            ),
-            // Outer ring
-            Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                    color: isSelected ? _green : const Color(0xFFAAAAAA),
-                    width: 2),
-              ),
-              // Inner dot when selected
-              child: isSelected
-                  ? Center(
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: const BoxDecoration(
-                    color: _green,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              )
-                  : null,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PaymentCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFDDDDD0)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E4620),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Icon(Icons.credit_card, color: Colors.white, size: 18),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Credit / Debit Card',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 13)),
-                Text('**** **** **** 1234',
-                    style: TextStyle(
-                        fontSize: 11, color: Color(0xFF8A8A8A))),
-              ],
-            ),
-          ),
-          const Icon(Icons.chevron_right,
-              color: Color(0xFF6B6B6B), size: 20),
-        ],
-      ),
-    );
-  }
-}
-
 class _RemarksField extends StatelessWidget {
   final ValueChanged<String> onChanged;
   const _RemarksField({required this.onChanged});
@@ -501,14 +602,13 @@ class _RemarksField extends StatelessWidget {
     onChanged: onChanged,
     style: const TextStyle(fontSize: 13),
     decoration: InputDecoration(
-      hintText: 'Leave a Note... (Optional)',
-      hintStyle:
-      const TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
-      filled: true,
+      hintText:  'Leave a Note... (Optional)',
+      hintStyle: const TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
+      filled:    true,
       fillColor: const Color(0xFFEEEBDE),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide.none,
+        borderSide:   BorderSide.none,
       ),
       contentPadding:
       const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -517,62 +617,94 @@ class _RemarksField extends StatelessWidget {
 }
 
 class _BottomBar extends StatelessWidget {
-  final double total;
+  final double subtotal;
+  final double deliveryFee;
+  final bool isDelivery;
   final String label;
   final VoidCallback onPressed;
 
   static const _terracotta = Color(0xFFD95F2B);
+  static const _green      = Color(0xFF1E4620);
 
   const _BottomBar({
-    required this.total,
+    required this.subtotal,
+    required this.deliveryFee,
+    required this.isDelivery,
     required this.label,
     required this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
+    final grandTotal = subtotal + deliveryFee;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color:     Colors.white,
         boxShadow: [
           BoxShadow(
-              color: Color(0x18000000),
+              color:  Color(0x18000000),
               blurRadius: 12,
               offset: Offset(0, -4))
         ],
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Total: RM ${total.toStringAsFixed(2)}',
-            style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 15,
-                color: Color(0xFF2C2C2C)),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: SizedBox(
-              height: 48,
-              child: ElevatedButton(
-                onPressed: onPressed,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _terracotta,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                ),
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                      letterSpacing: 0.8),
+          // Show delivery fee breakdown if delivery
+          if (isDelivery && deliveryFee > 0) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Delivery Fee',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF8A8A8A))),
+                Text('RM ${deliveryFee.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                        fontSize: 12, color: Color(0xFF8A8A8A))),
+              ],
+            ),
+            const SizedBox(height: 4),
+          ],
+          Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Total',
+                      style: TextStyle(
+                          fontSize: 11, color: Color(0xFF8A8A8A))),
+                  Text(
+                    'RM ${grandTotal.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        color: Color(0xFF2C2C2C)),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: onPressed,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _terracotta,
+                      foregroundColor: Colors.white,
+                      elevation:       0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text(label,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize:   12,
+                            letterSpacing: 0.8)),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),

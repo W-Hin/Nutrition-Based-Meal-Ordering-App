@@ -218,7 +218,6 @@ class _PaymentView extends StatelessWidget {
     );
 
     await ctrl.createBill(payment);
-
     if (!context.mounted) return;
 
     if (ctrl.status == PaymentStatus.success && ctrl.billPaymentUrl != null) {
@@ -226,55 +225,141 @@ class _PaymentView extends StatelessWidget {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
-
       if (!context.mounted) return;
       final paid = await _showPaymentResultDialog(context);
 
       if (paid == true) {
-        final isDelivery =
-            checkoutCtrl.activeTab == CheckoutTab.delivery;
-
+        final isDelivery = checkoutCtrl.activeTab == CheckoutTab.delivery;
         context.read<OrderController>().placeOrder(
           cartItems:  cart.items.toList(),
           subtotal:   cart.subtotal,
           serviceFee: cart.serviceFee,
           orderType:  isDelivery ? OrderType.delivery : OrderType.selfCollect,
-
-          // ── Delivery: use user's saved address ──
-          // ── Self Collect: use store address ──
-          toName: isDelivery
+          toName:     isDelivery
               ? checkoutCtrl.deliveryAddress.name
               : 'NuBurn - Tanjung Burma',
-          toPhone: isDelivery
-              ? checkoutCtrl.deliveryAddress.phone
-              : '',
-          toAddress: isDelivery
+          toPhone:    isDelivery ? checkoutCtrl.deliveryAddress.phone : '',
+          toAddress:  isDelivery
               ? checkoutCtrl.deliveryAddress.address
               : '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21, ....',
         );
-
         cart.clearCart();
+        if (!context.mounted) return;
 
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const OrderDetailsPage()),
-              (route) => route.isFirst,
-        );
+        // ── Show success dialog — navigates to OrderDetailsPage on Continue ──
+        await _showPaymentSuccessDialog(context);
+
       } else {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const PaymentFailedPage()),
-        );
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const PaymentFailedPage()));
       }
     } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const PaymentFailedPage()),
-      );
+      Navigator.push(context,
+          MaterialPageRoute(builder: (_) => const PaymentFailedPage()));
     }
   }
 
-// Dialog shown when user returns from browser
+  Future<void> _showPaymentSuccessDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Green check circle ──
+              Container(
+                width:  80,
+                height: 80,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE8F5E9),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_rounded,
+                    color: Color(0xFF1E4620), size: 44),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Order Accepted!',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize:   20,
+                  color:      Color(0xFF2C2C2C),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'NuBurn - Tanjung Burma',
+                style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize:   13,
+                    color:      Color(0xFF2C2C2C)),
+              ),
+              const Text(
+                '012-345 6789',
+                style: TextStyle(fontSize: 12, color: Color(0xFF6B6B6B)),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.check_circle,
+                      color: Color(0xFF1E4620), size: 18),
+                  SizedBox(width: 6),
+                  Text(
+                    'Your payment was successful',
+                    style: TextStyle(
+                        fontSize: 13, color: Color(0xFF1E4620)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 8),
+              const Text(
+                'Your order will be prepared shortly.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: Color(0xFF6B6B6B)),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width:  double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context); // close dialog
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const OrderDetailsPage()),
+                          (route) => route.isFirst,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1E4620),
+                    foregroundColor: Colors.white,
+                    elevation:       0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text(
+                    'Continue',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w800, fontSize: 15),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<bool?> _showPaymentResultDialog(BuildContext context) {
     return showDialog<bool>(
       context: context,
@@ -287,11 +372,13 @@ class _PaymentView extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('No', style: TextStyle(color: Color(0xFFD95F2B))),
+            child: const Text('No',
+                style: TextStyle(color: Color(0xFFD95F2B))),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Yes', style: TextStyle(color: Color(0xFF1E4620))),
+            child: const Text('Yes',
+                style: TextStyle(color: Color(0xFF1E4620))),
           ),
         ],
       ),

@@ -159,15 +159,26 @@ class _MyOrdersPageState extends State<MyOrdersPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
 
+  final _searchCtrl = TextEditingController();
+  String _searchQuery = '';
+
   static const _green      = Color(0xFF1E4620);
   static const _terracotta = Color(0xFFD95F2B);
   static const _bg         = Color(0xFFF5F5F0);
 
-  List<_Order> get _activeOrders =>
-      _mockOrders.where((o) => o.isActive).toList();
+  List<_Order> get _activeOrders => _mockOrders.where((o) {
+    final matchesActive = o.isActive;
+    final matchesSearch = _searchQuery.isEmpty ||
+        o.statusLabel.toLowerCase().contains(_searchQuery.toLowerCase());
+    return matchesActive && matchesSearch;
+  }).toList();
 
-  List<_Order> get _historyOrders =>
-      _mockOrders.where((o) => !o.isActive).toList();
+  List<_Order> get _historyOrders => _mockOrders.where((o) {
+    final matchesHistory = !o.isActive;
+    final matchesSearch  = _searchQuery.isEmpty ||
+        o.statusLabel.toLowerCase().contains(_searchQuery.toLowerCase());
+    return matchesHistory && matchesSearch;
+  }).toList();
 
   @override
   void initState() {
@@ -178,6 +189,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
   @override
   void dispose() {
     _tabCtrl.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -214,65 +226,78 @@ class _MyOrdersPageState extends State<MyOrdersPage>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabCtrl,
+      body: Column(
         children: [
-          // ── Track Order ──
-          _activeOrders.isEmpty
-              ? _EmptyState(
-            icon:    Icons.receipt_long_outlined,
-            message: 'No active orders right now.',
-          )
-              : ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: _activeOrders.length,
-            itemBuilder: (context, i) => _OrderCard(
-              order:     _activeOrders[i],
-              showRate:  false,
-              onExpand:  () => setState(() =>
-              _activeOrders[i].expanded =
-              !_activeOrders[i].expanded),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: (v) => setState(() => _searchQuery = v.trim()),
+              style: const TextStyle(fontSize: 13),
+              decoration: InputDecoration(
+                hintText:  'Search by status or restaurant',
+                hintStyle: const TextStyle(color: Color(0xFFAAAAAA), fontSize: 12),
+                prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF8A8A8A)),
+                filled:    true,
+                fillColor: const Color(0xFFEEEBDE),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide:   BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              ),
             ),
           ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabCtrl,
+              children: [
+                // ── Track Order ──
+                _activeOrders.isEmpty
+                    ? _EmptyState(
+                  icon:    Icons.receipt_long_outlined,
+                  message: _searchQuery.isEmpty 
+                      ? 'No active orders right now.'
+                      : 'No active orders match your search.',
+                )
+                    : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _activeOrders.length,
+                  itemBuilder: (context, i) => _OrderCard(
+                    order:     _activeOrders[i],
+                    showRate:  false,
+                    onExpand:  () => setState(() =>
+                    _activeOrders[i].expanded =
+                    !_activeOrders[i].expanded),
+                  ),
+                ),
 
-          // ── Order History ──
-          _historyOrders.isEmpty
-              ? _EmptyState(
-            icon:    Icons.history,
-            message: 'No past orders yet.',
-          )
-              : ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: _historyOrders.length,
-            itemBuilder: (context, i) => _OrderCard(
-              order:    _historyOrders[i],
-              showRate: _historyOrders[i].status ==
-                  _OrderStatus.completed,
-              onExpand: () => setState(() =>
-              _historyOrders[i].expanded =
-              !_historyOrders[i].expanded),
+                // ── Order History ──
+                _historyOrders.isEmpty
+                    ? _EmptyState(
+                  icon:    Icons.history,
+                  message: _searchQuery.isEmpty
+                      ? 'No past orders yet.'
+                      : 'No past orders match your search.',
+                )
+                    : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _historyOrders.length,
+                  itemBuilder: (context, i) => _OrderCard(
+                    order:    _historyOrders[i],
+                    showRate: _historyOrders[i].status ==
+                        _OrderStatus.completed,
+                    onExpand: () => setState(() =>
+                    _historyOrders[i].expanded =
+                    !_historyOrders[i].expanded),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
-
-    // TODO: Replace _mockOrders with Supabase queries below
-    // ── Fetch active orders (submitted, preparing, readyOrOut) ──
-    // final activeData = await supabase
-    //     .from('orders')
-    //     .select('*, order_items(*)')
-    //     .eq('user_id', supabase.auth.currentUser!.id)
-    //     .inFilter('status', ['submitted', 'preparing', 'readyOrOut'])
-    //     .order('created_at', ascending: false);
-    //
-    // ── Fetch history orders (completed, cancelled) ──
-    // final historyData = await supabase
-    //     .from('orders')
-    //     .select('*, order_items(*)')
-    //     .eq('user_id', supabase.auth.currentUser!.id)
-    //     .inFilter('status', ['completed', 'cancelled'])
-    //     .order('created_at', ascending: false);
   }
 }
 
@@ -369,40 +394,43 @@ class _OrderCard extends StatelessWidget {
           ],
 
           // ── Show more / show less bar ──
+          // ── Show more / show less bar — white background, gray top border ──
           if (hasMore) ...[
-            const SizedBox(height: 8),
-            GestureDetector(
-              onTap: onExpand,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF0EDE0),
-                  borderRadius: BorderRadius.vertical(
-                      bottom: Radius.circular(0)),
+            Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,  // ← same white as card
+                border: Border(
+                  top: BorderSide(color: Color(0xFFEEEBDE), width: 1), // ← gray separator
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      order.expanded
-                          ? 'Show less'
-                          : '+$extraCount more item${extraCount > 1 ? 's' : ''}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1E4620),
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
+              ),
+              child: GestureDetector(
+                onTap: onExpand,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        order.expanded
+                            ? 'Show less'
+                            : '+$extraCount more item${extraCount > 1 ? 's' : ''}',
+                        style: const TextStyle(
+                          fontSize:   12,
+                          fontWeight: FontWeight.w600,
+                          color:      Color(0xFF1E4620),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      order.expanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      size: 16,
-                      color: const Color(0xFF1E4620),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Icon(
+                        order.expanded
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
+                        size:  16,
+                        color: const Color(0xFF1E4620),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
