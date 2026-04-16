@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../model/meal_model.dart';
+import '../widgets/meal_confirmation_dialog.dart';
 
 class AddMenuItemPage extends StatefulWidget {
-  const AddMenuItemPage({super.key});
+  final Meal? initialMeal;
+  const AddMenuItemPage({super.key, this.initialMeal});
 
   @override
   State<AddMenuItemPage> createState() => _AddMenuItemPageState();
@@ -13,8 +15,8 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
   int _currentStep = 0;
 
   static const _green      = Color(0xFF1E4620);
-  static const _lightGreen = Color(0xFFB5CC30);
-  static const _bgColor    = Color(0xFFF9F9F4); // Creamy background
+  static const _lightGreen = Color(0xFFABC270); // Lime green
+  static const _bgColor    = Color(0xFFF5F5F0); // Creamy background
 
   // Form State
   final _nameController = TextEditingController();
@@ -56,6 +58,47 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     'Post-workout',
     'Snacks'
   ];
+
+  // Image State
+  String? _currentImageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialMeal != null) {
+      final meal = widget.initialMeal!;
+      _nameController.text = meal.name;
+      _selectedCategory = meal.categories.isNotEmpty ? meal.categories.first : null;
+      _descriptionController.text = meal.description;
+      _priceController.text = meal.price.toStringAsFixed(2);
+      _servingSizeController.text = meal.servingSize;
+      
+      _caloriesController.text = meal.calories.toStringAsFixed(0);
+      _proteinController.text = meal.protein.toStringAsFixed(1);
+      _carbsController.text = meal.carbs.toStringAsFixed(1);
+      _fatController.text = meal.fat.toStringAsFixed(1);
+      _fiberController.text = meal.fiber.toStringAsFixed(1);
+      _sugarController.text = meal.sugar.toStringAsFixed(1);
+      _sodiumController.text = meal.sodium.toStringAsFixed(0);
+      _cholesterolController.text = meal.cholesterol.toStringAsFixed(0);
+
+      // Populate dietary state
+      meal.dietaryPreferences.forEach((pref) {
+        if (_dietaryRestrictions.containsKey(pref)) {
+          _dietaryRestrictions[pref] = true;
+        }
+      });
+      // Populate allergens
+      meal.allergens.forEach((allergen) {
+        if (_allergens.containsKey(allergen)) {
+          _allergens[allergen] = true;
+        }
+      });
+
+      _remarksController.text = meal.remarks;
+      _currentImageUrl = meal.imageUrl;
+    }
+  }
 
   @override
   void dispose() {
@@ -100,12 +143,12 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     }
   }
 
-  void _saveMeal() {
+  void _saveMeal() async {
     final meal = Meal(
       name: _nameController.text,
       description: _descriptionController.text,
       price: double.tryParse(_priceController.text) ?? 0.0,
-      imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1000&auto=format&fit=crop', // Default placeholder
+      imageUrl: _currentImageUrl ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1000&auto=format&fit=crop', // Default placeholder
       categories: [_selectedCategory ?? 'Other'],
       dietaryPreferences: _dietaryRestrictions.entries
           .where((e) => e.value)
@@ -127,37 +170,102 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
       remarks: _remarksController.text,
     );
 
-    Navigator.pop(context, meal);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => MealConfirmationDialog(meal: meal),
+    );
+
+    if (confirmed == true) {
+      if (mounted) Navigator.pop(context, meal);
+    }
+  }
+
+  Future<bool> _showDiscardDialog() async {
+    final bool? result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actionsAlignment: MainAxisAlignment.center,
+        title: const Text('Discard Changes?',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+        content: const Text('Are you sure you want to discard your changes?'),
+        actions: [
+          SizedBox(
+            width: 130, 
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(context, false),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFD25432),
+                side: const BorderSide(color: Color(0xFFD25432)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Keep Editing', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 100,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD25432),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Discard', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _bgColor,
-      appBar: AppBar(
-        backgroundColor: _green,
-        foregroundColor: Colors.white,
-        title: const Text('Add New Item', style: TextStyle(fontWeight: FontWeight.w800)),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _showDiscardDialog();
+        if (shouldPop && mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: _bgColor,
+        appBar: AppBar(
+          backgroundColor: _green,
+          foregroundColor: Colors.white,
+          title: Text(widget.initialMeal != null ? 'Edit Item' : 'Add New Item', style: const TextStyle(fontWeight: FontWeight.w800)),
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () async {
+              final shouldPop = await _showDiscardDialog();
+              if (shouldPop && mounted) {
+                Navigator.pop(context);
+              }
+            },
+          ),
         ),
-      ),
-      body: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        onPageChanged: (index) => setState(() => _currentStep = index),
-        children: [
-          _buildStep1BasicInfo(),
-          _buildStep2Nutrition(),
-          _buildStep3Dietary(),
-        ],
+        body: PageView(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          onPageChanged: (index) => setState(() => _currentStep = index),
+          children: [
+            _buildStep1BasicInfo(),
+            _buildStep2Nutrition(),
+            _buildStep3Dietary(),
+          ],
+        ),
       ),
     );
   }
 
-  // ── Step 1: Basic Information ──────────────────────────────────────────────
+  // Step 1: Basic Information
 
   Widget _buildStep1BasicInfo() {
     return SingleChildScrollView(
@@ -194,7 +302,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     );
   }
 
-  // ── Step 2: Nutrition Information ──────────────────────────────────────────
+  // Step 2: Nutrition Information
 
   Widget _buildStep2Nutrition() {
     return SingleChildScrollView(
@@ -202,7 +310,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionHeader(Icons.favorite_outline, 'Nutrition Information'),
+          _buildSectionHeader(Icons.monitor_heart_outlined, 'Nutrition Information'),
           const SizedBox(height: 20),
           Row(
             children: [
@@ -254,7 +362,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     );
   }
 
-  // ── Step 3: Dietary Information ────────────────────────────────────────────
+  // Step 3: Dietary Information
 
   Widget _buildStep3Dietary() {
     return SingleChildScrollView(
@@ -284,10 +392,10 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
                   child: ElevatedButton.icon(
                     onPressed: _saveMeal,
                     icon: const Icon(Icons.save_outlined),
-                    label: const Text('Save Menu Item', style: TextStyle(fontWeight: FontWeight.w700)),
+                    label: const Text('Save Menu Item', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _lightGreen,
-                      foregroundColor: Colors.white,
+                      foregroundColor: _green,
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
@@ -301,7 +409,6 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     );
   }
 
-  // ── Common UI Components ───────────────────────────────────────────────────
 
   Widget _buildSectionHeader(IconData icon, String title) {
     return Row(
@@ -397,7 +504,89 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     );
   }
 
+  void _deletePhoto() async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Delete photo?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        content: const Text('Are you sure to delete and add a new photo?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFD25432),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Delete', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final String? deletedUrl = _currentImageUrl;
+      setState(() {
+        _currentImageUrl = null;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Photo deleted'),
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () {
+                setState(() {
+                  _currentImageUrl = deletedUrl;
+                });
+              },
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   Widget _buildPhotoPlaceholder() {
+    if (_currentImageUrl != null) {
+      return GestureDetector(
+        onTap: _deletePhoto,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: 130,
+              height: 100,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                image: DecorationImage(
+                  image: _currentImageUrl!.startsWith('http')
+                      ? NetworkImage(_currentImageUrl!) as ImageProvider
+                      : AssetImage(_currentImageUrl!),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            Container(
+              width: 130,
+              height: 100,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.black.withValues(alpha: 0.2),
+              ),
+            ),
+            const Icon(Icons.edit_note, color: Colors.white, size: 36),
+          ],
+        ),
+      );
+    }
+
     return Container(
       width: 100,
       height: 100,
@@ -451,7 +640,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
         style: ElevatedButton.styleFrom(
           backgroundColor: _lightGreen,
           disabledBackgroundColor: _lightGreen.withValues(alpha: 0.5),
-          foregroundColor: Colors.white,
+          foregroundColor: _green,
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),

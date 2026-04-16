@@ -38,34 +38,83 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
   ];
 
   void _deleteItem(int index) {
+    final deletedItem = _items[index];
+    final originalIndex = index;
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actionsAlignment: MainAxisAlignment.center,
         title: const Text('Delete Item?',
-            style: TextStyle(fontWeight: FontWeight.w800)),
-        content: Text('Remove "${_items[index].name}" from the menu?'),
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+        content: const Text('Are you sure to delete the item?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel',
-                style: TextStyle(color: Color(0xFF6B6B6B))),
+          SizedBox(
+            width: 100,
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFD25432),
+                side: const BorderSide(color: Color(0xFFD25432)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
           ),
-          TextButton(
-            onPressed: () {
-              setState(() => _items.removeAt(index));
-              Navigator.pop(context);
-            },
-            child: const Text('Delete',
-                style: TextStyle(color: Colors.red)),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 100,
+            child: ElevatedButton(
+              onPressed: () {
+                setState(() => _items.removeAt(index));
+                Navigator.pop(context);
+                
+                // Show SnackBar with Undo
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${deletedItem.name} has been deleted'),
+                    action: SnackBarAction(
+                      label: 'Undo',
+                      textColor: Colors.white,
+                      onPressed: () {
+                        setState(() {
+                          _items.insert(originalIndex, deletedItem);
+                        });
+                      },
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD25432),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _editItem(int index) {
-    // navigate to edit
+  void _editItem(int index) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AddMenuItemPage(initialMeal: _items[index])),
+    );
+    
+    if (result != null && result is Meal) {
+      setState(() {
+        _items[index] = result;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${result.name} updated')),
+      );
+    }
   }
 
   void _addItem() async {
@@ -78,6 +127,9 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
       setState(() {
         _items.insert(0, result);
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${result.name} added successfully')),
+      );
     }
   }
 
@@ -264,7 +316,7 @@ class _MenuItemCard extends StatelessWidget {
                         child: Text(
                           meal.dietaryPreferences.first,
                           style: const TextStyle(
-                            color: Color(0xFF4CAF50), // Green tag from screenshot
+                            color: Color(0xFF4CAF50), 
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                           ),
@@ -276,20 +328,12 @@ class _MenuItemCard extends StatelessWidget {
                         child: Text(
                           meal.categories.first,
                           style: const TextStyle(
-                            color: Color(0xFF3F51B5), // Indigo tag from screenshot
+                            color: Color(0xFF3F51B5), 
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
-                    const Text(
-                      'Natural',
-                      style: TextStyle(
-                        color: Color(0xFF9C27B0), // Purple tag from screenshot
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 20),

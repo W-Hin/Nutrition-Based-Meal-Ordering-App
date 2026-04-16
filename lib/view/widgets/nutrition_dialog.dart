@@ -162,12 +162,12 @@ class NutritionDialog extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Dietary Preferences (e.g., Vegetarian)
+              // Dietary Preferences
               if (meal.dietaryPreferences.isNotEmpty)
                 Text(
                   meal.dietaryPreferences.join(', '),
                   style: const TextStyle(
-                    color: Color(0xFF9C4DB1), // Purple color from mockup
+                    color: Color(0xFF9C4DB1),
                     fontWeight: FontWeight.w500,
                     fontSize: 15,
                   ),
