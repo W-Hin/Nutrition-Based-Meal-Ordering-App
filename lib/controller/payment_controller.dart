@@ -5,8 +5,7 @@ import '../model/payment_model.dart';
 
 class PaymentController extends ChangeNotifier {
   // ── Stripe keys ───────────────────────────────────────────────
-  static const _publishableKey =
-      'pk_test_51TMrO1AwDwRCAOhEWqQejM3jhLwBpAKuGgKkBgtajtvXzu0vLshRm0FJxs2Mt7B5sCP9oXue0VOVNtUzHOQcbw5W00crERJXIQ';
+
   static const _secretKey =
       'sk_test_51TMrO1AwDwRCAOhEI0czbU40xYK9Xj6yDvZeQnTaWxmHGSA1TvQ21D2oxxlWZIlhydOkpvaO8xkSKCLDTtimOL4w00qr04ZbXo';
 
