@@ -273,6 +273,13 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                       ),
                       const SizedBox(height: 14),
 
+                      Row(
+                        children: [
+                          // ── Height ────────────────────────────────────────
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                                 _label('Height (cm) *'),
                                 const SizedBox(height: 6),
                                 _dropdown(
@@ -432,10 +439,10 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
 class StepIndicator extends StatelessWidget {
   final int current;
   final int total;
-  const StepIndicator({required this.current, required this.total});
+  const StepIndicator({super.key, required this.current, required this.total});
 
   static const _green  = Color(0xFF1E4620);
-  static const _orange = Color(0xFFD95B2B);
+  static const _dark   = Color(0xFF2D2D2D);
 
   @override
   Widget build(BuildContext context) {
