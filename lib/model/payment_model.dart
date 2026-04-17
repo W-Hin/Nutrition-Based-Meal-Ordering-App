@@ -1,3 +1,5 @@
+enum PaymentStatus { idle, loading, success, failed }
+
 class PaymentModel {
   final String billName;
   final String billDescription;

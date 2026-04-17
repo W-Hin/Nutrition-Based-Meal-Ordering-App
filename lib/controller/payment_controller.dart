@@ -1,39 +1,35 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
-import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
 import '../model/payment_model.dart';
 
-enum PaymentStatus { idle, loading, success, failed }
-
 class PaymentController extends ChangeNotifier {
-  // ── Stripe keys ───────────────────────────────────────────────
-  // Publishable key — safe to expose in app (starts with pk_test_)
-  // Get from: https://dashboard.stripe.com → Developers → API Keys
-  static const _publishableKey = 'pk_test_YOUR_KEY_HERE';
+  // ── Toyyibpay sandbox credentials ──────────────────────────
+  // Replace these with your actual sandbox values from dev.toyyibpay.com
+  static const _secretKey    = 'w5zadc8m-hyes-7ung-evp8-pgvssvjewkqy';
+  static const _categoryCode = 'crwmzegp';
+  static const _baseUrl      = 'https://dev.toyyibpay.com';
 
-  // !! IMPORTANT: Secret key must NEVER go in Flutter code in production !!
-  // For your assignment demo only, paste it here temporarily.
-  // In a real app this lives on a backend server only.
-  static const _secretKey      = 'sk_test_YOUR_KEY_HERE';
+  // ── State ───────────────────────────────────────────────────
+  PaymentStatus status = PaymentStatus.idle;
+  String? billPaymentUrl; // URL to open for payment
+  String? errorMessage;
 
-  // ── State ─────────────────────────────────────────────────────
-  PaymentStatus status       = PaymentStatus.idle;
-  String?       errorMessage;
+  // ── Form field controllers (owned here, disposed here) ─────
+  final nameCtrl    = TextEditingController();
+  final emailCtrl   = TextEditingController();
+  final phoneCtrl   = TextEditingController();
 
-  // ── Form controllers ──────────────────────────────────────────
-  final nameCtrl  = TextEditingController();
-  final emailCtrl = TextEditingController();
-  final phoneCtrl = TextEditingController();
-
-  // ── Validation errors ─────────────────────────────────────────
+  // ── Validation errors ───────────────────────────────────────
   String? nameError;
   String? emailError;
   String? phoneError;
 
-  // ── Validate ──────────────────────────────────────────────────
+  // ── Validate all fields, returns true if all pass ───────────
   bool validate() {
     bool valid = true;
 
+    // Name — required, min 3 chars
     if (nameCtrl.text.trim().isEmpty) {
       nameError = 'Name is required';
       valid = false;
@@ -44,6 +40,7 @@ class PaymentController extends ChangeNotifier {
       nameError = null;
     }
 
+    // Email — required, basic format check
     final emailRegex = RegExp(r'^[\w.-]+@[\w.-]+\.\w{2,}$');
     if (emailCtrl.text.trim().isEmpty) {
       emailError = 'Email is required';
@@ -55,8 +52,9 @@ class PaymentController extends ChangeNotifier {
       emailError = null;
     }
 
+    // Phone — required, Malaysian format (01X-XXXXXXX)
     final phoneRegex = RegExp(r'^01[0-9]{8,9}$');
-    final rawPhone   = phoneCtrl.text.replaceAll(RegExp(r'[\s\-]'), '');
+    final rawPhone = phoneCtrl.text.replaceAll(RegExp(r'[\s\-]'), '');
     if (rawPhone.isEmpty) {
       phoneError = 'Phone number is required';
       valid = false;
@@ -71,100 +69,62 @@ class PaymentController extends ChangeNotifier {
     return valid;
   }
 
-  // ── Main payment flow ─────────────────────────────────────────
-  Future<bool> processPayment(PaymentModel payment) async {
-    if (!validate()) return false;
+  // ── Create bill on Toyyibpay and get payment URL ────────────
+  Future<void> createBill(PaymentModel payment) async {
+    if (!validate()) return;
 
-    status       = PaymentStatus.loading;
+    status = PaymentStatus.loading;
     errorMessage = null;
     notifyListeners();
 
     try {
-      // Step 1: Create PaymentIntent via Stripe API
-      // In production this call goes to YOUR backend, not directly to Stripe
-      final clientSecret = await _createPaymentIntent(
-        amountInCents: (payment.amount * 100).toInt(),
-        currency:      'myr',
-        customerEmail: payment.userEmail,
-      );
+      // Amount in cents (Toyyibpay expects integer, e.g. RM13.50 = 1350)
+      final amountInCents = (payment.amount * 100).toInt();
 
-      // Step 2: Initialize Stripe payment sheet
-      await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(
-          paymentIntentClientSecret: clientSecret,
-          merchantDisplayName:       'NuBurn',
-          billingDetails: BillingDetails(
-            name:  payment.userName,
-            email: payment.userEmail,
-            phone: payment.userPhone,
-          ),
-          // Pre-fills billing info so user doesn't retype it
-          billingDetailsCollectionConfiguration:
-          const BillingDetailsCollectionConfiguration(
-            name:  CollectionMode.always,
-            email: CollectionMode.always,
-            phone: CollectionMode.always,
-          ),
-          style: ThemeMode.light,
-        ),
-      );
-
-      // Step 3: Show Stripe's built-in payment sheet UI
-      // This handles card input, validation, 3D secure etc automatically
-      await Stripe.instance.presentPaymentSheet();
-
-      // If we reach here without exception, payment succeeded
-      status = PaymentStatus.success;
-      notifyListeners();
-      return true;
-
-    } on StripeException catch (e) {
-      // User cancelled or card declined
-      if (e.error.code == FailureCode.Canceled) {
-        // User tapped X to close — not an error, just go back
-        status       = PaymentStatus.idle;
-        errorMessage = null;
-      } else {
-        status       = PaymentStatus.failed;
-        errorMessage = e.error.localizedMessage ?? 'Payment failed. Please try again.';
-      }
-      notifyListeners();
-      return false;
-
-    } catch (e) {
-      status       = PaymentStatus.failed;
-      errorMessage = 'Something went wrong. Please try again.';
-      notifyListeners();
-      return false;
-    }
-  }
-
-  // ── Create PaymentIntent directly with Stripe API ─────────────
-  // !! Assignment only — in production, call your own backend here !!
-  Future<String> _createPaymentIntent({
-    required int    amountInCents,
-    required String currency,
-    required String customerEmail,
-  }) async {
-    final dio      = Dio();
-    final response = await dio.post(
-      'https://api.stripe.com/v1/payment_intents',
-      data: {
-        'amount':               amountInCents,
-        'currency':             currency,
-        'receipt_email':        customerEmail,
-        'automatic_payment_methods[enabled]': true,
-      },
-      options: Options(
-        headers: {
-          // Basic auth with secret key
-          'Authorization': 'Bearer $_secretKey',
-          'Content-Type':  'application/x-www-form-urlencoded',
+      final response = await http.post(
+        Uri.parse('$_baseUrl/index.php/api/createBill'),
+        body: {
+          'userSecretKey':          _secretKey,
+          'categoryCode':           _categoryCode,
+          'billName':               payment.billName,
+          'billDescription':        payment.billDescription,
+          'billPriceSetting':       '1',         // fixed price
+          'billPayorInfo':          '1',         // collect payer info
+          'billAmount':             '$amountInCents',
+          'billReturnUrl':          'myapp://payment-return', // deep link
+          'billCallbackUrl':        '',          // optional webhook
+          'billExternalReferenceNo': DateTime.now().millisecondsSinceEpoch.toString(),
+          'billTo':                 payment.userName,
+          'billEmail':              payment.userEmail,
+          'billPhone':              payment.userPhone,
+          'billSplitPayment':       '0',
+          'billSplitPaymentArgs':   '',
+          'billPaymentChannel':     '0',         // 0 = all channels (FPX + card)
+          'billContentEmail':       'Thank you for your order!',
+          'billChargeToCustomer':   '1',         // customer absorbs charges
         },
-      ),
-    );
+      );
 
-    return response.data['client_secret'] as String;
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // Toyyibpay returns a list with one object containing BillCode
+        if (data is List && data.isNotEmpty && data[0]['BillCode'] != null) {
+          final billCode = data[0]['BillCode'];
+          billPaymentUrl = '$_baseUrl/$billCode';
+          status = PaymentStatus.success;
+        } else {
+          throw Exception('Invalid response: ${response.body}');
+        }
+      } else {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+    } catch (e) {
+      status = PaymentStatus.failed;
+      errorMessage = 'Payment setup failed. Please try again.\n$e';
+    }
+
+    notifyListeners();
   }
 
   @override
