@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 
 // ── Controllers ────────────────────────────────────────────────────────────────
 import 'package:nutrition_based_meal_ordering_app/controller/cart_controller.dart';
@@ -37,6 +38,9 @@ void main() async {
     url: 'https://cjsxgpiahswppkyackpk.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqc3hncGlhaHN3cHBreWFja3BrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTE0MDksImV4cCI6MjA5MTY2NzQwOX0.E_2q_i5PqmuY2Csx06e7U0In-DAoLak_n_KC-IgKOkc',
   );
+
+  Stripe.publishableKey = 'pk_test_51TMrO1AwDwRCAOhEWqQejM3jhLwBpAKuGgKkBgtajtvXzu0vLshRm0FJxs2Mt7B5sCP9oXue0VOVNtUzHOQcbw5W00crERJXIQ';
+  await Stripe.instance.applySettings();
 
   runApp(
     MultiProvider(
