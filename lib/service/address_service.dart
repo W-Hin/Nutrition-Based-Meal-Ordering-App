@@ -5,7 +5,7 @@ class AddressService {
   // ── Save address ─────────────────────────────────────────────
   Future<void> saveAddress(AddressModel address) async {
     await supabase.from('addresses').insert({
-      'user_id':    supabase.auth.currentUser!.id,
+      'user_id':    supabase.auth.currentUser?.id ?? 'test_user_ui_mode',
       'name':       address.name,
       'phone':      address.phone,
       'address':    address.address,
@@ -19,7 +19,7 @@ class AddressService {
     return await supabase
         .from('addresses')
         .select()
-        .eq('user_id', supabase.auth.currentUser!.id)
+        .eq('user_id', supabase.auth.currentUser?.id ?? 'test_user_ui_mode')
         .order('created_at', ascending: false);
   }
 
