@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -20,6 +21,10 @@ import 'pages/my_orders.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ── Initialize Stripe ──
+  Stripe.publishableKey = 'pk_test_51TMrO1AwDwRCAOhEWqQejM3jhLwBpAKuGgKkBgtajtvXzu0vLshRm0FJxs2Mt7B5sCP9oXue0VOVNtUzHOQcbw5W00crERJXIQ';
+  await Stripe.instance.applySettings();
 
   await Supabase.initialize(
     url: 'https://cjsxgpiahswppkyackpk.supabase.co',
