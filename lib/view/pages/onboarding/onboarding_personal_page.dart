@@ -1,0 +1,474 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../controller/onboarding_controller.dart';
+
+class OnboardingPersonalPage extends StatefulWidget {
+  const OnboardingPersonalPage({super.key});
+
+  @override
+  State<OnboardingPersonalPage> createState() => _OnboardingPersonalPageState();
+}
+
+class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
+  static const _cream  = Color(0xFFF5F0E8);
+  static const _green  = Color(0xFF1E4620);
+  static const _orange = Color(0xFFD95B2B);
+  static const _dark   = Color(0xFF2D2D2D);
+
+  final _formKey    = GlobalKey<FormState>();
+  final _nameCtrl   = TextEditingController();
+  final _phoneCtrl  = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDob(BuildContext context, OnboardingController ctrl) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: ctrl.dob ?? DateTime(2000, 1, 1),
+      firstDate: DateTime(1930),
+      lastDate: DateTime.now().subtract(const Duration(days: 365 * 10)),
+      builder: (context, child) => Theme(
+        data: ThemeData.light().copyWith(
+          colorScheme: const ColorScheme.light(primary: _green, onPrimary: Colors.white),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) ctrl.setDob(picked);
+  }
+
+  void _goToBmi(OnboardingController ctrl) {
+    if (!_formKey.currentState!.validate()) return;
+    ctrl.fullName = _nameCtrl.text.trim();
+    ctrl.phone    = _phoneCtrl.text.trim();
+    ctrl.calculateBmiAndCalories();
+    Navigator.pushNamed(context, '/onboarding/bmi');
+  }
+
+  void _skipToHome(OnboardingController ctrl) async {
+    ctrl.fullName = _nameCtrl.text.trim();
+    ctrl.phone    = _phoneCtrl.text.trim();
+
+    // Show congratulations dialog
+    final proceed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Congratulations !',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _dark),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'You finished the register process successfully!',
+                    style: TextStyle(fontSize: 14, color: _dark, fontWeight: FontWeight.w600),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              right: 12, top: 12,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(ctx, true),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 16),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (proceed == true && mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ctrl = context.watch<OnboardingController>();
+
+    final List<String> heights = List.generate(121, (i) => '${130 + i} cm');
+    final List<String> weights = List.generate(151, (i) => '${30 + i} kg');
+
+    return Scaffold(
+      backgroundColor: _cream,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ── App Bar Area ───────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    decoration: const BoxDecoration(color: _green, shape: BoxShape.circle),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Health Onboarding',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _dark),
+                    ),
+                  ),
+                  const SizedBox(width: 48), // Balance for back button
+                ],
+              ),
+            ),
+
+            // ── Step indicator ─────────────────────────────────────────────
+            StepIndicator(current: 1, total: 2),
+            const SizedBox(height: 8),
+
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Personal Details',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _dark),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // ── Full Name ─────────────────────────────────────────
+                      _label('Full Name *'),
+                      const SizedBox(height: 6),
+                      _textField(
+                        ctrl: _nameCtrl,
+                        hint: 'Yang',
+                        validator: (v) => v!.isEmpty ? 'Full name is required' : null,
+                      ),
+                      const SizedBox(height: 14),
+
+                      // ── Phone ─────────────────────────────────────────────
+                      _label('Phone *'),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: _dark.withOpacity(0.12)),
+                            ),
+                            child: const Text('+60', style: TextStyle(fontSize: 14, color: _dark)),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _textField(
+                              ctrl: _phoneCtrl,
+                              hint: '186632510',
+                              type: TextInputType.phone,
+                              validator: (v) => v!.isEmpty ? 'Phone number is required' : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      // ── DOB & Gender Row ──────────────────────────────────
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 4,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _label('Date of Birth *'),
+                                const SizedBox(height: 6),
+                                GestureDetector(
+                                  onTap: () => _selectDob(context, ctrl),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: _dark.withOpacity(0.12)),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          ctrl.dob != null
+                                              ? '${ctrl.dob!.day.toString().padLeft(2,'0')}-${ctrl.dob!.month.toString().padLeft(2,'0')}-${ctrl.dob!.year}'
+                                              : 'DD-MM-YYYY',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: ctrl.dob != null ? _dark : _dark.withOpacity(0.35),
+                                          ),
+                                        ),
+                                        Icon(Icons.calendar_month, color: _dark.withOpacity(0.4), size: 18),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 5,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _label('Gender *'),
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: ['Male', 'Female'].map((g) {
+                                    final selected = ctrl.gender == g;
+                                    return GestureDetector(
+                                      onTap: () => ctrl.setGender(g),
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(right: 12),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                                              color: selected ? _green : _dark.withOpacity(0.4),
+                                              size: 18,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(g, style: const TextStyle(fontSize: 13, color: _dark)),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                                _label('Height (cm) *'),
+                                const SizedBox(height: 6),
+                                _dropdown(
+                                  items: heights,
+                                  value: '${ctrl.heightCm.toInt()} cm',
+                                  onChanged: (v) {
+                                    if (v != null) {
+                                      ctrl.heightCm = double.parse(v.replaceAll(' cm', ''));
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // ── Weight ────────────────────────────────────────
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _label('Weight (kg) *'),
+                                const SizedBox(height: 6),
+                                _dropdown(
+                                  items: weights,
+                                  value: '${ctrl.weightKg.toInt()} kg',
+                                  onChanged: (v) {
+                                    if (v != null) {
+                                      ctrl.weightKg = double.parse(v.replaceAll(' kg', ''));
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      const SizedBox(height: 28),
+
+                      // ── Calculate BMI button ──────────────────────────────
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: ctrl.isSaving ? null : () => _goToBmi(ctrl),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _orange,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Calculate BMI & Calories',
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // ── Skip button ───────────────────────────────────────
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: () => _skipToHome(ctrl),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFA0C850),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Skip Calculation and Start',
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _label(String text) {
+    return RichText(
+      text: TextSpan(
+        text: text.replaceAll(' *', ''),
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _dark),
+        children: text.contains('*')
+            ? const [TextSpan(text: ' *', style: TextStyle(color: Colors.red))]
+            : [],
+      ),
+    );
+  }
+
+  Widget _textField({
+    required TextEditingController ctrl,
+    required String hint,
+    IconData? icon,
+    TextInputType type = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller:   ctrl,
+      keyboardType: type,
+      validator:    validator,
+      decoration: InputDecoration(
+        hintText:   hint,
+        hintStyle:  TextStyle(color: _dark.withOpacity(0.35), fontSize: 14),
+        prefixIcon: icon != null ? Icon(icon, color: _dark.withOpacity(0.4), size: 20) : null,
+        filled:     true,
+        fillColor:  Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border:         OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _dark.withOpacity(0.1))),
+        enabledBorder:  OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _dark.withOpacity(0.12))),
+        focusedBorder:  OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _orange, width: 1.5)),
+        errorBorder:    OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red)),
+        focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red, width: 1.5)),
+      ),
+    );
+  }
+
+  Widget _dropdown({
+    required List<String> items,
+    required String value,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _dark.withOpacity(0.12)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: items.contains(value) ? value : items.first,
+          isExpanded: true,
+          style: const TextStyle(fontSize: 14, color: _dark),
+          icon: Icon(Icons.arrow_drop_down, color: _dark.withOpacity(0.4)),
+          items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Step Indicator (public so BMI & Address pages can import it) ────────────
+class StepIndicator extends StatelessWidget {
+  final int current;
+  final int total;
+  const StepIndicator({required this.current, required this.total});
+
+  static const _green  = Color(0xFF1E4620);
+  static const _orange = Color(0xFFD95B2B);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildCircle(1, current >= 1),
+        _buildLine(current >= 2),
+        _buildCircle(2, current >= 2),
+      ],
+    );
+  }
+
+  Widget _buildCircle(int num, bool active) {
+    return Container(
+      width: 24, height: 24,
+      decoration: BoxDecoration(
+        color: active ? _green : const Color(0xFFE0E0E0),
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          '$num',
+          style: TextStyle(color: active ? Colors.white : _dark.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLine(bool active) {
+    return Container(
+      width: 32, height: 2,
+      color: active ? _green : const Color(0xFFE0E0E0),
+    );
+  }
+}

@@ -1,38 +1,39 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_conn.dart';
 
-// SIGN UP + LOG IN SUPABASE CONNECTION
+// SIGN UP + LOG IN — SUPABASE CONNECTION
 
 class AuthService {
-  // ── Current session ──────────────────────────────────────────
+  // ── Current session ──────────────────────────────────────────────────────
   User? get currentUser => supabase.auth.currentUser;
-  bool get isLoggedIn   => currentUser != null;
+  bool  get isLoggedIn  => currentUser != null;
 
-  // ── Register ─────────────────────────────────────────────────
+  // ── Register ─────────────────────────────────────────────────────────────
+  /// Creates auth user + inserts row in public.users (name, phone, role='user').
+  /// Does NOT create a profiles row — that happens during onboarding.
   Future<AuthResponse> register({
     required String email,
     required String password,
-    required String name,
-    required String phone,
   }) async {
     final response = await supabase.auth.signUp(
       email:    email,
       password: password,
     );
 
-    // Create profile row after signup
     if (response.user != null) {
-      await supabase.from('profiles').insert({
-        'id':    response.user!.id,
-        'name':  name,
-        'phone': phone,
+      await supabase.from('users').insert({
+        'id':        response.user!.id,
+        'email':     email,
+        'full_name': '',
+        'phone':     '',
+        'role':      'user',
       });
     }
 
     return response;
   }
 
-  // ── Login ─────────────────────────────────────────────────────
+  // ── Login ─────────────────────────────────────────────────────────────────
   Future<AuthResponse> login({
     required String email,
     required String password,
@@ -43,12 +44,35 @@ class AuthService {
     );
   }
 
-  // ── Logout ────────────────────────────────────────────────────
+  // ── Logout ────────────────────────────────────────────────────────────────
   Future<void> logout() async {
     await supabase.auth.signOut();
   }
 
-  // ── Listen to auth state changes ──────────────────────────────
-  Stream<AuthState> get authStateChanges =>
-      supabase.auth.onAuthStateChange;
+  // ── Fetch role from public.users ─────────────────────────────────────────
+  Future<String?> getUserRole() async {
+    final uid = currentUser?.id;
+    if (uid == null) return null;
+    final row = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', uid)
+        .maybeSingle();
+    return row?['role'] as String?;
+  }
+
+  // ── Check if onboarding profile exists ───────────────────────────────────
+  Future<bool> hasProfile() async {
+    final uid = currentUser?.id;
+    if (uid == null) return false;
+    final row = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', uid)
+        .maybeSingle();
+    return row != null;
+  }
+
+  // ── Listen to auth state changes ─────────────────────────────────────────
+  Stream<AuthState> get authStateChanges => supabase.auth.onAuthStateChange;
 }

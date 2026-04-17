@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../controller/auth_controller.dart';
 import 'admin_dashboard.dart';
 import 'admin_menu_management.dart';
 import 'admin_order_tracking.dart';
+import 'admin_reviews_page.dart';
 
 class AdminShell extends StatefulWidget {
   const AdminShell({super.key});
@@ -20,12 +23,14 @@ class _AdminShellState extends State<AdminShell> {
     _DrawerItem(icon: Icons.dashboard_outlined,    label: 'Dashboard'),
     _DrawerItem(icon: Icons.restaurant_menu,        label: 'Menu Management'),
     _DrawerItem(icon: Icons.receipt_long_outlined,  label: 'Order Tracking'),
+    _DrawerItem(icon: Icons.rate_review_outlined,   label: 'Customer Reviews'),
   ];
 
   final List<Widget> _pages = [
     const AdminDashboardPage(),
     const AdminMenuManagementPage(),
     const AdminOrderTrackingPage(),
+    const AdminReviewsPage(),
   ];
 
   String get _currentTitle => _drawerItems[_selectedIndex].label;
@@ -183,9 +188,12 @@ class _AdminDrawer extends StatelessWidget {
               title: const Text('Logout',
                   style: TextStyle(
                       color: Colors.red, fontWeight: FontWeight.w600)),
-              onTap: () {
-                // TODO: auth logout
-                Navigator.pop(context);
+              onTap: () async {
+                Navigator.pop(context); // close drawer
+                await context.read<AuthController>().logout();
+                if (context.mounted) {
+                  Navigator.pushNamedAndRemoveUntil(context, '/auth', (_) => false);
+                }
               },
             ),
           ),

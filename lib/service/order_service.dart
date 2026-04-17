@@ -8,7 +8,7 @@ class OrderService {
     final orderResponse = await supabase
         .from('orders')
         .insert({
-      'user_id':        supabase.auth.currentUser!.id,
+      'user_id':        supabase.auth.currentUser?.id ?? 'test_user_ui_mode',
       'order_type':     order.orderType.name,
       'status':         order.status.name,
       'to_name':        order.toName,
@@ -52,7 +52,7 @@ class OrderService {
     return await supabase
         .from('orders')
         .select('*, order_items(*)')
-        .eq('user_id', supabase.auth.currentUser!.id)
+        .eq('user_id', supabase.auth.currentUser?.id ?? 'test_user_ui_mode')
         .order('created_at', ascending: false);
   }
 
