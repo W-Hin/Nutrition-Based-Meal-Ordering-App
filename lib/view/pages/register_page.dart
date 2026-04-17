@@ -14,10 +14,10 @@ class _RegisterPageState extends State<RegisterPage> {
   static const _cream  = Color(0xFFF5F0E8);
   static const _orange = Color(0xFFD95B2B);
   static const _dark   = Color(0xFF2D2D2D);
+  static const _green  = Color(0xFF1E4620);
 
   final _formKey         = GlobalKey<FormState>();
   final _emailCtrl       = TextEditingController();
-  final _passwordCtrl    = TextEditingController();
   final _passwordCtrl    = TextEditingController();
   final _confirmPassCtrl = TextEditingController();
 
