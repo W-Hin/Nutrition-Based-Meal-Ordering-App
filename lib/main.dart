@@ -85,7 +85,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Roboto',
       ),
       // Bypassed Auth for UI testing — switch back to `const AuthWrapper()` when done
-      home: const OnboardingPersonalPage(),
+      home: const MainShell(),
       // Named routes
       routes: {
         '/auth':              (_) => const AuthWrapper(),
@@ -193,7 +193,7 @@ class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    const DashboardPage(),
+    const HomeDashboardPage(),
     const MenuPage(),
     const MyOrdersPage(),
     const ProfilePage(),

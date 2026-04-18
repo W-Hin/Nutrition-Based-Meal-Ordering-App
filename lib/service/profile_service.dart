@@ -92,4 +92,18 @@ class ProfileService {
 
     return List<Map<String, dynamic>>.from(rows);
   }
+
+  // ── Fetch current month for the monthly chart ─────────────────────────────
+  Future<List<Map<String, dynamic>>> fetchMonthlyHistory() async {
+    final now       = DateTime.now();
+    final firstDay  = '${now.year}-${now.month.toString().padLeft(2, '0')}-01';
+    final rows = await supabase
+        .from('calorie_logs')
+        .select()
+        .eq('user_id', _uid)
+        .gte('log_date', firstDay)
+        .order('log_date', ascending: true);
+
+    return List<Map<String, dynamic>>.from(rows);
+  }
 }

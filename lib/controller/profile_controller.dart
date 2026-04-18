@@ -11,7 +11,8 @@ class ProfileController extends ChangeNotifier {
 
   // Dashboard data
   Map<String, dynamic>?    todayLog;
-  List<Map<String, dynamic>> weeklyHistory = [];
+  List<Map<String, dynamic>> weeklyHistory  = [];
+  List<Map<String, dynamic>> monthlyHistory = [];
 
   // ── Load Profile ──────────────────────────────────────────────────────────
   Future<void> loadProfile() async {
@@ -53,6 +54,7 @@ class ProfileController extends ChangeNotifier {
         _loadProfile(),
         _loadTodayLog(),
         _loadWeeklyHistory(),
+        _loadMonthlyHistory(),
       ]);
     } finally {
       isLoading = false;
@@ -70,6 +72,10 @@ class ProfileController extends ChangeNotifier {
 
   Future<void> _loadWeeklyHistory() async {
     weeklyHistory = await _profileService.fetchWeeklyHistory();
+  }
+
+  Future<void> _loadMonthlyHistory() async {
+    monthlyHistory = await _profileService.fetchMonthlyHistory();
   }
 
   // ── Computed dashboard helpers ────────────────────────────────────────────
