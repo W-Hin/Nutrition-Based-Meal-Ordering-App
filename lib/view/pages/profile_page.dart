@@ -79,7 +79,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       onPressed: () => Navigator.pop(ctx),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _dark,
-                        side: BorderSide(color: _dark.withOpacity(0.2)),
+                        side: BorderSide(color: _dark.withValues(alpha: 0.2)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                       child: const Text('Cancel'),
@@ -138,7 +138,7 @@ class _ProfilePageState extends State<ProfilePage> {
       keyboardType: type,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, size: 20, color: _dark.withOpacity(0.4)),
+        prefixIcon: Icon(icon, size: 20, color: _dark.withValues(alpha: 0.4)),
         filled: true,
         fillColor: const Color(0xFFF8F6F2),
         border:         OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
@@ -193,7 +193,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           Text(
                             user?.email ?? '',
-                            style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.65)),
+                            style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.65)),
                           ),
                         ],
                       ),
@@ -237,7 +237,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
-                            boxShadow: [BoxShadow(color: _dark.withOpacity(0.05), blurRadius: 10)],
+                            boxShadow: [BoxShadow(color: _dark.withValues(alpha: 0.05), blurRadius: 10)],
                           ),
                           child: Column(
                             children: [
@@ -315,7 +315,7 @@ class _ProfilePageState extends State<ProfilePage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: [BoxShadow(color: _dark.withOpacity(0.05), blurRadius: 8)],
+          boxShadow: [BoxShadow(color: _dark.withValues(alpha: 0.05), blurRadius: 8)],
         ),
         child: Column(
           children: [
@@ -325,14 +325,14 @@ class _ProfilePageState extends State<ProfilePage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: badgeColor?.withOpacity(0.12),
+                  color: badgeColor?.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(badge, style: TextStyle(fontSize: 9, color: badgeColor, fontWeight: FontWeight.w700)),
               ),
             ],
             const SizedBox(height: 4),
-            Text(label, style: TextStyle(fontSize: 11, color: _dark.withOpacity(0.45))),
+            Text(label, style: TextStyle(fontSize: 11, color: _dark.withValues(alpha: 0.45))),
           ],
         ),
       ),
@@ -346,11 +346,11 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           Container(
             padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
             child: Icon(icon, color: color, size: 16),
           ),
           const SizedBox(width: 12),
-          Text(label, style: TextStyle(fontSize: 14, color: _dark.withOpacity(0.7))),
+          Text(label, style: TextStyle(fontSize: 14, color: _dark.withValues(alpha: 0.7))),
           const Spacer(),
           Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _dark)),
         ],
@@ -365,7 +365,7 @@ class _ProfilePageState extends State<ProfilePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: _dark.withOpacity(0.05), blurRadius: 8)],
+        boxShadow: [BoxShadow(color: _dark.withValues(alpha: 0.05), blurRadius: 8)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,15 +378,15 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
           ),
           const SizedBox(height: 6),
-          Text(review.comment, style: TextStyle(fontSize: 12, color: _dark.withOpacity(0.65))),
+          Text(review.comment, style: TextStyle(fontSize: 12, color: _dark.withValues(alpha: 0.65))),
           if (review.adminReply != null) ...[
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: _green.withOpacity(0.06),
+                color: _green.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: _green.withOpacity(0.15)),
+                border: Border.all(color: _green.withValues(alpha: 0.15)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -410,9 +410,9 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.rate_review_outlined, color: _dark.withOpacity(0.25), size: 36),
+            Icon(Icons.rate_review_outlined, color: _dark.withValues(alpha: 0.25), size: 36),
             const SizedBox(height: 8),
-            Text('No reviews yet', style: TextStyle(color: _dark.withOpacity(0.4), fontSize: 13)),
+            Text('No reviews yet', style: TextStyle(color: _dark.withValues(alpha: 0.4), fontSize: 13)),
           ],
         ),
       ),

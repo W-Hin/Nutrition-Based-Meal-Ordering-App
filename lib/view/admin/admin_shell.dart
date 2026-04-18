@@ -146,7 +146,7 @@ class _AdminDrawer extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
                 tileColor: isSelected
-                    ? _green.withOpacity(0.1)
+                    ? _green.withValues(alpha: 0.1)
                     : Colors.transparent,
                 leading: Icon(
                   item.icon,

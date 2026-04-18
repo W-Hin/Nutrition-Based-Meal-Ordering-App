@@ -89,7 +89,7 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
                       const SizedBox(height: 4),
                       Text(
                         'Where should we deliver your healthy meals?',
-                        style: TextStyle(fontSize: 13, color: _dark.withOpacity(0.55)),
+                        style: TextStyle(fontSize: 13, color: _dark.withValues(alpha: 0.55)),
                       ),
                       const SizedBox(height: 20),
 
@@ -99,7 +99,7 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: _dark.withOpacity(0.1)),
+                          border: Border.all(color: _dark.withValues(alpha: 0.1)),
                         ),
                         child: Row(
                           children: [
@@ -245,7 +245,7 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
                       Center(
                         child: TextButton(
                           onPressed: () => Navigator.pop(context),
-                          child: Text('← Back', style: TextStyle(color: _green.withOpacity(0.7), fontWeight: FontWeight.w600)),
+                          child: Text('← Back', style: TextStyle(color: _green.withValues(alpha: 0.7), fontWeight: FontWeight.w600)),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -280,13 +280,13 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
       validator:    validator,
       decoration: InputDecoration(
         hintText:   hint,
-        hintStyle:  TextStyle(color: _dark.withOpacity(0.35), fontSize: 14),
-        prefixIcon: Icon(icon, color: _dark.withOpacity(0.4), size: 20),
+        hintStyle:  TextStyle(color: _dark.withValues(alpha: 0.35), fontSize: 14),
+        prefixIcon: Icon(icon, color: _dark.withValues(alpha: 0.4), size: 20),
         filled:     true,
         fillColor:  Colors.white,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border:         OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _dark.withOpacity(0.1))),
-        enabledBorder:  OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _dark.withOpacity(0.12))),
+        border:         OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _dark.withValues(alpha: 0.1))),
+        enabledBorder:  OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _dark.withValues(alpha: 0.12))),
         focusedBorder:  OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _orange, width: 1.5)),
         errorBorder:    OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red)),
         focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red, width: 1.5)),
@@ -300,14 +300,14 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _dark.withOpacity(0.12)),
+        border: Border.all(color: _dark.withValues(alpha: 0.12)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
           style: const TextStyle(fontSize: 14, color: _dark),
-          icon: Icon(Icons.arrow_drop_down, color: _dark.withOpacity(0.4)),
+          icon: Icon(Icons.arrow_drop_down, color: _dark.withValues(alpha: 0.4)),
           items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, overflow: TextOverflow.ellipsis))).toList(),
           onChanged: onChanged,
         ),

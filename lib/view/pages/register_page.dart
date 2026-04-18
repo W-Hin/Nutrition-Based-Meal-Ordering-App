@@ -98,7 +98,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 4),
                 Text(
                   'Fill the details to create account.',
-                  style: TextStyle(fontSize: 13, color: _dark.withOpacity(0.55)),
+                  style: TextStyle(fontSize: 13, color: _dark.withValues(alpha: 0.55)),
                 ),
                 const SizedBox(height: 24),
 
@@ -169,7 +169,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     Expanded(
                       child: RichText(
                         text: TextSpan(
-                          style: TextStyle(color: _dark.withOpacity(0.7), fontSize: 13),
+                          style: TextStyle(color: _dark.withValues(alpha: 0.7), fontSize: 13),
                           children: [
                             const TextSpan(text: 'I agree with the '),
                             TextSpan(
@@ -203,13 +203,13 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     child: auth.isLoading
                         ? const SizedBox(
-                            width: 22, height: 22,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-                          )
+                      width: 22, height: 22,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                    )
                         : const Text(
-                            'Register',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                          ),
+                      'Register',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -218,7 +218,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 Center(
                   child: RichText(
                     text: TextSpan(
-                      style: TextStyle(fontSize: 14, color: _dark.withOpacity(0.6)),
+                      style: TextStyle(fontSize: 14, color: _dark.withValues(alpha: 0.6)),
                       children: [
                         const TextSpan(text: 'Already have an account? '),
                         TextSpan(
@@ -282,7 +282,7 @@ class _RegisterPageState extends State<RegisterPage> {
         suffixIcon: IconButton(
           icon: Icon(
             obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-            color: _dark.withOpacity(0.4),
+            color: _dark.withValues(alpha: 0.4),
             size: 20,
           ),
           onPressed: onToggle,
@@ -294,13 +294,13 @@ class _RegisterPageState extends State<RegisterPage> {
   InputDecoration _deco({required String hint, required IconData icon}) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: _dark.withOpacity(0.35), fontSize: 14),
-      prefixIcon: Icon(icon, color: _dark.withOpacity(0.4), size: 20),
+      hintStyle: TextStyle(color: _dark.withValues(alpha: 0.35), fontSize: 14),
+      prefixIcon: Icon(icon, color: _dark.withValues(alpha: 0.4), size: 20),
       filled: true,
       fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border:         OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _dark.withOpacity(0.1))),
-      enabledBorder:  OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _dark.withOpacity(0.12))),
+      border:         OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _dark.withValues(alpha: 0.1))),
+      enabledBorder:  OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _dark.withValues(alpha: 0.12))),
       focusedBorder:  OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _orange, width: 1.5)),
       errorBorder:    OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red)),
       focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red, width: 1.5)),

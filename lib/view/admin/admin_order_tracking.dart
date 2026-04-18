@@ -532,7 +532,7 @@ class _AdminActiveOrderDetailState extends State<_AdminActiveOrderDetail> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor:        _green,
                         foregroundColor:        Colors.white,
-                        disabledBackgroundColor: _green.withOpacity(0.4),
+                        disabledBackgroundColor: _green.withValues(alpha: 0.4),
                         elevation:              0,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),

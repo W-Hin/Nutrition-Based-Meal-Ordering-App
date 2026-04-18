@@ -55,7 +55,7 @@ class TermsPage extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     'Effective Date: 1 January 2025',
-                    style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12),
                   ),
                 ],
               ),
@@ -98,9 +98,9 @@ class TermsPage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _orange.withOpacity(0.08),
+                color: _orange.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _orange.withOpacity(0.25)),
+                border: Border.all(color: _orange.withValues(alpha: 0.25)),
               ),
               child: Row(
                 children: [
@@ -157,12 +157,12 @@ class TermsPage extends StatelessWidget {
             body,
             style: TextStyle(
               fontSize: 13,
-              color: _dark.withOpacity(0.7),
+              color: _dark.withValues(alpha: 0.7),
               height: 1.6,
             ),
           ),
           const SizedBox(height: 4),
-          Divider(color: _dark.withOpacity(0.08)),
+          Divider(color: _dark.withValues(alpha: 0.08)),
         ],
       ),
     );

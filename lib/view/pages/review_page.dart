@@ -116,7 +116,7 @@ class _ReviewPageState extends State<ReviewPage> {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), shape: BoxShape.circle),
                     child: const Icon(Icons.store_rounded, color: Colors.white, size: 22),
                   ),
                   const SizedBox(width: 14),
@@ -146,7 +146,7 @@ class _ReviewPageState extends State<ReviewPage> {
                     child: Icon(
                       i < _rating ? Icons.star_rounded : Icons.star_outline_rounded,
                       size: 44,
-                      color: i < _rating ? Colors.amber.shade400 : _dark.withOpacity(0.2),
+                      color: i < _rating ? Colors.amber.shade400 : _dark.withValues(alpha: 0.2),
                     ),
                   ),
                 );
@@ -164,7 +164,7 @@ class _ReviewPageState extends State<ReviewPage> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: _rating == 0 ? _dark.withOpacity(0.35) : Colors.amber.shade700,
+                  color: _rating == 0 ? _dark.withValues(alpha: 0.35) : Colors.amber.shade700,
                 ),
               ),
             ),
@@ -179,11 +179,11 @@ class _ReviewPageState extends State<ReviewPage> {
               maxLength:   300,
               decoration: InputDecoration(
                 hintText:  'Share your experience with this store and meal...',
-                hintStyle: TextStyle(color: _dark.withOpacity(0.35), fontSize: 13),
+                hintStyle: TextStyle(color: _dark.withValues(alpha: 0.35), fontSize: 13),
                 filled:    true,
                 fillColor: Colors.white,
-                border:         OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: _dark.withOpacity(0.1))),
-                enabledBorder:  OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: _dark.withOpacity(0.12))),
+                border:         OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: _dark.withValues(alpha: 0.1))),
+                enabledBorder:  OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: _dark.withValues(alpha: 0.12))),
                 focusedBorder:  OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _orange, width: 1.5)),
               ),
             ),
@@ -193,13 +193,13 @@ class _ReviewPageState extends State<ReviewPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: _orange.withOpacity(0.07),
+                color: _orange.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Tips for a helpful review:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _orange.withOpacity(0.8))),
+                  Text('Tips for a helpful review:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _orange.withValues(alpha: 0.8))),
                   const SizedBox(height: 4),
                   ...[
                     'How was the food quality and freshness?',
@@ -209,9 +209,9 @@ class _ReviewPageState extends State<ReviewPage> {
                     padding: const EdgeInsets.only(top: 3),
                     child: Row(
                       children: [
-                        Icon(Icons.circle, size: 4, color: _orange.withOpacity(0.5)),
+                        Icon(Icons.circle, size: 4, color: _orange.withValues(alpha: 0.5)),
                         const SizedBox(width: 6),
-                        Text(tip, style: TextStyle(fontSize: 11, color: _dark.withOpacity(0.55))),
+                        Text(tip, style: TextStyle(fontSize: 11, color: _dark.withValues(alpha: 0.55))),
                       ],
                     ),
                   )),

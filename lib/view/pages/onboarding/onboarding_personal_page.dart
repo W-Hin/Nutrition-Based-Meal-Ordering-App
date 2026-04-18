@@ -15,9 +15,9 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
   static const _orange = Color(0xFFD95B2B);
   static const _dark   = Color(0xFF2D2D2D);
 
-  final _formKey    = GlobalKey<FormState>();
-  final _nameCtrl   = TextEditingController();
-  final _phoneCtrl  = TextEditingController();
+  final _formKey   = GlobalKey<FormState>();
+  final _nameCtrl  = TextEditingController();
+  final _phoneCtrl = TextEditingController();
 
   @override
   void dispose() {
@@ -34,7 +34,10 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
       lastDate: DateTime.now().subtract(const Duration(days: 365 * 10)),
       builder: (context, child) => Theme(
         data: ThemeData.light().copyWith(
-          colorScheme: const ColorScheme.light(primary: _green, onPrimary: Colors.white),
+          colorScheme: const ColorScheme.light(
+            primary: _green,
+            onPrimary: Colors.white,
+          ),
         ),
         child: child!,
       ),
@@ -54,7 +57,6 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
     ctrl.fullName = _nameCtrl.text.trim();
     ctrl.phone    = _phoneCtrl.text.trim();
 
-    // Show congratulations dialog
     final proceed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -66,23 +68,32 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
+                children: const [
+                  Text(
                     'Congratulations !',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _dark),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: _dark,
+                    ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
+                  SizedBox(height: 16),
+                  Text(
                     'You finished the register process successfully!',
-                    style: TextStyle(fontSize: 14, color: _dark, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: _dark,
+                      fontWeight: FontWeight.w600,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
               ),
             ),
             Positioned(
-              right: 12, top: 12,
+              right: 12,
+              top: 12,
               child: GestureDetector(
                 onTap: () => Navigator.pop(ctx, true),
                 child: Container(
@@ -109,23 +120,29 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
   Widget build(BuildContext context) {
     final ctrl = context.watch<OnboardingController>();
 
-    final List<String> heights = List.generate(121, (i) => '${130 + i} cm');
-    final List<String> weights = List.generate(151, (i) => '${30 + i} kg');
+    final List<String> heights =
+    List.generate(121, (i) => '${130 + i} cm');
+    final List<String> weights =
+    List.generate(151, (i) => '${30 + i} kg');
 
     return Scaffold(
       backgroundColor: _cream,
       body: SafeArea(
         child: Column(
           children: [
-            // ── App Bar Area ───────────────────────────────────────────────
+            // ── App Bar ──────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               child: Row(
                 children: [
                   Container(
-                    decoration: const BoxDecoration(color: _green, shape: BoxShape.circle),
+                    decoration: const BoxDecoration(
+                      color: _green,
+                      shape: BoxShape.circle,
+                    ),
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                      icon: const Icon(Icons.arrow_back,
+                          color: Colors.white, size: 20),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),
@@ -133,21 +150,27 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                     child: Text(
                       'Health Onboarding',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _dark),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: _dark,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 48), // Balance for back button
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
 
-            // ── Step indicator ─────────────────────────────────────────────
+            // ── Step Indicator ───────────────────────────────────────────
             StepIndicator(current: 1, total: 2),
             const SizedBox(height: 8),
 
+            // ── Scrollable Form ──────────────────────────────────────────
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -155,33 +178,42 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                     children: [
                       const Text(
                         'Personal Details',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _dark),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: _dark,
+                        ),
                       ),
                       const SizedBox(height: 20),
 
-                      // ── Full Name ─────────────────────────────────────────
+                      // ── Full Name ────────────────────────────────────
                       _label('Full Name *'),
                       const SizedBox(height: 6),
                       _textField(
                         ctrl: _nameCtrl,
                         hint: 'Yang',
-                        validator: (v) => v!.isEmpty ? 'Full name is required' : null,
+                        validator: (v) =>
+                        v!.isEmpty ? 'Full name is required' : null,
                       ),
                       const SizedBox(height: 14),
 
-                      // ── Phone ─────────────────────────────────────────────
+                      // ── Phone ────────────────────────────────────────
                       _label('Phone *'),
                       const SizedBox(height: 6),
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 14),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: _dark.withOpacity(0.12)),
+                              border: Border.all(
+                                  color: _dark.withOpacity(0.12)),
                             ),
-                            child: const Text('+60', style: TextStyle(fontSize: 14, color: _dark)),
+                            child: const Text('+60',
+                                style:
+                                TextStyle(fontSize: 14, color: _dark)),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -189,17 +221,20 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                               ctrl: _phoneCtrl,
                               hint: '186632510',
                               type: TextInputType.phone,
-                              validator: (v) => v!.isEmpty ? 'Phone number is required' : null,
+                              validator: (v) => v!.isEmpty
+                                  ? 'Phone number is required'
+                                  : null,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 14),
 
-                      // ── DOB & Gender Row ──────────────────────────────────
+                      // ── DOB & Gender ─────────────────────────────────
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Date of Birth
                           Expanded(
                             flex: 4,
                             child: Column(
@@ -208,27 +243,39 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                                 _label('Date of Birth *'),
                                 const SizedBox(height: 6),
                                 GestureDetector(
-                                  onTap: () => _selectDob(context, ctrl),
+                                  onTap: () =>
+                                      _selectDob(context, ctrl),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 14),
                                     decoration: BoxDecoration(
                                       color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: _dark.withOpacity(0.12)),
+                                      borderRadius:
+                                      BorderRadius.circular(12),
+                                      border: Border.all(
+                                          color:
+                                          _dark.withOpacity(0.12)),
                                     ),
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
                                           ctrl.dob != null
-                                              ? '${ctrl.dob!.day.toString().padLeft(2,'0')}-${ctrl.dob!.month.toString().padLeft(2,'0')}-${ctrl.dob!.year}'
+                                              ? '${ctrl.dob!.day.toString().padLeft(2, '0')}-'
+                                              '${ctrl.dob!.month.toString().padLeft(2, '0')}-'
+                                              '${ctrl.dob!.year}'
                                               : 'DD-MM-YYYY',
                                           style: TextStyle(
                                             fontSize: 14,
-                                            color: ctrl.dob != null ? _dark : _dark.withOpacity(0.35),
+                                            color: ctrl.dob != null
+                                                ? _dark
+                                                : _dark.withOpacity(0.35),
                                           ),
                                         ),
-                                        Icon(Icons.calendar_month, color: _dark.withOpacity(0.4), size: 18),
+                                        Icon(Icons.calendar_month,
+                                            color: _dark.withOpacity(0.4),
+                                            size: 18),
                                       ],
                                     ),
                                   ),
@@ -237,6 +284,7 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                             ),
                           ),
                           const SizedBox(width: 12),
+                          // Gender
                           Expanded(
                             flex: 5,
                             child: Column(
@@ -245,21 +293,32 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                                 _label('Gender *'),
                                 const SizedBox(height: 10),
                                 Row(
-                                  children: ['Male', 'Female'].map((g) {
+                                  children:
+                                  ['Male', 'Female'].map((g) {
                                     final selected = ctrl.gender == g;
                                     return GestureDetector(
                                       onTap: () => ctrl.setGender(g),
                                       child: Padding(
-                                        padding: const EdgeInsets.only(right: 12),
+                                        padding: const EdgeInsets.only(
+                                            right: 12),
                                         child: Row(
                                           children: [
                                             Icon(
-                                              selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                                              color: selected ? _green : _dark.withOpacity(0.4),
+                                              selected
+                                                  ? Icons
+                                                  .radio_button_checked
+                                                  : Icons
+                                                  .radio_button_unchecked,
+                                              color: selected
+                                                  ? _green
+                                                  : _dark.withOpacity(0.4),
                                               size: 18,
                                             ),
                                             const SizedBox(width: 4),
-                                            Text(g, style: const TextStyle(fontSize: 13, color: _dark)),
+                                            Text(g,
+                                                style: const TextStyle(
+                                                    fontSize: 13,
+                                                    color: _dark)),
                                           ],
                                         ),
                                       ),
@@ -273,9 +332,11 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                       ),
                       const SizedBox(height: 14),
 
+                      // ── Height & Weight ──────────────────────────────
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // ── Height ────────────────────────────────────────
+                          // Height
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,7 +348,8 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                                   value: '${ctrl.heightCm.toInt()} cm',
                                   onChanged: (v) {
                                     if (v != null) {
-                                      ctrl.heightCm = double.parse(v.replaceAll(' cm', ''));
+                                      ctrl.heightCm = double.parse(
+                                          v.replaceAll(' cm', ''));
                                     }
                                   },
                                 ),
@@ -295,7 +357,7 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          // ── Weight ────────────────────────────────────────
+                          // Weight
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,7 +369,8 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                                   value: '${ctrl.weightKg.toInt()} kg',
                                   onChanged: (v) {
                                     if (v != null) {
-                                      ctrl.weightKg = double.parse(v.replaceAll(' kg', ''));
+                                      ctrl.weightKg = double.parse(
+                                          v.replaceAll(' kg', ''));
                                     }
                                   },
                                 ),
@@ -316,31 +379,34 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 14),
-
                       const SizedBox(height: 28),
 
-                      // ── Calculate BMI button ──────────────────────────────
+                      // ── Calculate BMI button ─────────────────────────
                       SizedBox(
                         width: double.infinity,
                         height: 52,
                         child: ElevatedButton(
-                          onPressed: ctrl.isSaving ? null : () => _goToBmi(ctrl),
+                          onPressed: ctrl.isSaving
+                              ? null
+                              : () => _goToBmi(ctrl),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _orange,
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                             elevation: 0,
                           ),
                           child: const Text(
                             'Calculate BMI & Calories',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                            style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700),
                           ),
                         ),
                       ),
                       const SizedBox(height: 12),
 
-                      // ── Skip button ───────────────────────────────────────
+                      // ── Skip button ──────────────────────────────────
                       SizedBox(
                         width: double.infinity,
                         height: 48,
@@ -349,12 +415,15 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFA0C850),
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                             elevation: 0,
                           ),
                           child: const Text(
                             'Skip Calculation and Start',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600),
                           ),
                         ),
                       ),
@@ -370,13 +439,20 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
     );
   }
 
+  // ── Helper Widgets ─────────────────────────────────────────────────────────
+
   Widget _label(String text) {
     return RichText(
       text: TextSpan(
         text: text.replaceAll(' *', ''),
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _dark),
+        style: const TextStyle(
+            fontSize: 13, fontWeight: FontWeight.w600, color: _dark),
         children: text.contains('*')
-            ? const [TextSpan(text: ' *', style: TextStyle(color: Colors.red))]
+            ? const [
+          TextSpan(
+              text: ' *',
+              style: TextStyle(color: Colors.red))
+        ]
             : [],
       ),
     );
@@ -390,21 +466,36 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
     String? Function(String?)? validator,
   }) {
     return TextFormField(
-      controller:   ctrl,
+      controller: ctrl,
       keyboardType: type,
-      validator:    validator,
+      validator: validator,
       decoration: InputDecoration(
-        hintText:   hint,
-        hintStyle:  TextStyle(color: _dark.withOpacity(0.35), fontSize: 14),
-        prefixIcon: icon != null ? Icon(icon, color: _dark.withOpacity(0.4), size: 20) : null,
-        filled:     true,
-        fillColor:  Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border:         OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _dark.withOpacity(0.1))),
-        enabledBorder:  OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _dark.withOpacity(0.12))),
-        focusedBorder:  OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _orange, width: 1.5)),
-        errorBorder:    OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red)),
-        focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red, width: 1.5)),
+        hintText: hint,
+        hintStyle:
+        TextStyle(color: _dark.withOpacity(0.35), fontSize: 14),
+        prefixIcon: icon != null
+            ? Icon(icon, color: _dark.withOpacity(0.4), size: 20)
+            : null,
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: _dark.withOpacity(0.1))),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: _dark.withOpacity(0.12))),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: _orange, width: 1.5)),
+        errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.red)),
+        focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide:
+            const BorderSide(color: Colors.red, width: 1.5)),
       ),
     );
   }
@@ -427,7 +518,9 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
           isExpanded: true,
           style: const TextStyle(fontSize: 14, color: _dark),
           icon: Icon(Icons.arrow_drop_down, color: _dark.withOpacity(0.4)),
-          items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+          items: items
+              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+              .toList(),
           onChanged: onChanged,
         ),
       ),
@@ -435,14 +528,14 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
   }
 }
 
-// ── Step Indicator (public so BMI & Address pages can import it) ────────────
+// ── Step Indicator ─────────────────────────────────────────────────────────
 class StepIndicator extends StatelessWidget {
   final int current;
   final int total;
   const StepIndicator({super.key, required this.current, required this.total});
 
-  static const _green  = Color(0xFF1E4620);
-  static const _dark   = Color(0xFF2D2D2D);
+  static const _green = Color(0xFF1E4620);
+  static const _dark  = Color(0xFF2D2D2D);
 
   @override
   Widget build(BuildContext context) {
@@ -458,7 +551,8 @@ class StepIndicator extends StatelessWidget {
 
   Widget _buildCircle(int num, bool active) {
     return Container(
-      width: 24, height: 24,
+      width: 24,
+      height: 24,
       decoration: BoxDecoration(
         color: active ? _green : const Color(0xFFE0E0E0),
         shape: BoxShape.circle,
@@ -466,7 +560,11 @@ class StepIndicator extends StatelessWidget {
       child: Center(
         child: Text(
           '$num',
-          style: TextStyle(color: active ? Colors.white : _dark.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: active ? Colors.white : _dark.withOpacity(0.5),
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
@@ -474,7 +572,8 @@ class StepIndicator extends StatelessWidget {
 
   Widget _buildLine(bool active) {
     return Container(
-      width: 32, height: 2,
+      width: 32,
+      height: 2,
       color: active ? _green : const Color(0xFFE0E0E0),
     );
   }

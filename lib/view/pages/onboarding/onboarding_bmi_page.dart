@@ -33,7 +33,32 @@ class OnboardingBmiPage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
+            // ── App Bar Area ───────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    decoration: const BoxDecoration(color: _green, shape: BoxShape.circle),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Health Onboarding',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _dark),
+                    ),
+                  ),
+                  const SizedBox(width: 48), // Balance for back button
+                ],
+              ),
+            ),
+
             StepIndicator(current: 2, total: 3),
+            const SizedBox(height: 8),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -46,7 +71,7 @@ class OnboardingBmiPage extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       'Based on your body metrics using BMR formula.',
-                      style: TextStyle(fontSize: 13, color: _dark.withOpacity(0.55)),
+                      style: TextStyle(fontSize: 13, color: _dark.withValues(alpha: 0.55)),
                     ),
                     const SizedBox(height: 24),
 
@@ -58,7 +83,7 @@ class OnboardingBmiPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: _dark.withOpacity(0.06),
+                            color: _dark.withValues(alpha: 0.06),
                             blurRadius: 16,
                             offset: const Offset(0, 4),
                           ),
@@ -105,7 +130,7 @@ class OnboardingBmiPage extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                             decoration: BoxDecoration(
-                              color: bmiColor.withOpacity(0.1),
+                              color: bmiColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -189,11 +214,6 @@ class OnboardingBmiPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text('← Back', style: TextStyle(color: _green.withOpacity(0.7), fontWeight: FontWeight.w600)),
-                    ),
-                    const SizedBox(height: 16),
                   ],
                 ),
               ),
@@ -211,7 +231,7 @@ class OnboardingBmiPage extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: [BoxShadow(color: _dark.withOpacity(0.05), blurRadius: 8)],
+          boxShadow: [BoxShadow(color: _dark.withValues(alpha: 0.05), blurRadius: 8)],
         ),
         child: Column(
           children: [
@@ -219,7 +239,7 @@ class OnboardingBmiPage extends StatelessWidget {
             const SizedBox(height: 8),
             Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _dark)),
             const SizedBox(height: 2),
-            Text(label, style: TextStyle(fontSize: 12, color: _dark.withOpacity(0.5))),
+            Text(label, style: TextStyle(fontSize: 12, color: _dark.withValues(alpha: 0.5))),
           ],
         ),
       ),
@@ -232,20 +252,20 @@ class OnboardingBmiPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: _dark.withOpacity(0.05), blurRadius: 8)],
+        boxShadow: [BoxShadow(color: _dark.withValues(alpha: 0.05), blurRadius: 8)],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
             child: Icon(icon, color: color, size: 18),
           ),
           const SizedBox(width: 14),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: TextStyle(fontSize: 12, color: _dark.withOpacity(0.5))),
+              Text(title, style: TextStyle(fontSize: 12, color: _dark.withValues(alpha: 0.5))),
               Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _dark)),
             ],
           ),
@@ -261,7 +281,7 @@ class OnboardingBmiPage extends StatelessWidget {
         children: [
           Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
           const SizedBox(width: 10),
-          Text(label, style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 13)),
+          Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 13)),
           const Spacer(),
           Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
         ],

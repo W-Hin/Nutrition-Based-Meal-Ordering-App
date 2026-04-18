@@ -97,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
                       : 'Fill the details to sign in account.',
                   style: TextStyle(
                     fontSize: 13,
-                    color: _dark.withOpacity(0.55),
+                    color: _dark.withValues(alpha: 0.55),
                   ),
                 ),
                 const SizedBox(height: 28),
@@ -108,9 +108,9 @@ class _LoginPageState extends State<LoginPage> {
                     margin: const EdgeInsets.only(bottom: 16),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      color: _green.withOpacity(0.08),
+                      color: _green.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: _green.withOpacity(0.3)),
+                      border: Border.all(color: _green.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       children: [
@@ -157,7 +157,7 @@ class _LoginPageState extends State<LoginPage> {
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                        color: _dark.withOpacity(0.4),
+                        color: _dark.withValues(alpha: 0.4),
                         size: 20,
                       ),
                       onPressed: () => setState(() => _obscurePass = !_obscurePass),
@@ -195,7 +195,7 @@ class _LoginPageState extends State<LoginPage> {
                 Center(
                   child: RichText(
                     text: TextSpan(
-                      style: TextStyle(fontSize: 14, color: _dark.withOpacity(0.6)),
+                      style: TextStyle(fontSize: 14, color: _dark.withValues(alpha: 0.6)),
                       children: [
                         const TextSpan(text: "Don't have an account? "),
                         TextSpan(
@@ -266,18 +266,18 @@ class _LoginPageState extends State<LoginPage> {
   InputDecoration _inputDeco({required String hint, required IconData icon}) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: _dark.withOpacity(0.35), fontSize: 14),
-      prefixIcon: Icon(icon, color: _dark.withOpacity(0.4), size: 20),
+      hintStyle: TextStyle(color: _dark.withValues(alpha: 0.35), fontSize: 14),
+      prefixIcon: Icon(icon, color: _dark.withValues(alpha: 0.4), size: 20),
       filled: true,
       fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: _dark.withOpacity(0.1)),
+        borderSide: BorderSide(color: _dark.withValues(alpha: 0.1)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: _dark.withOpacity(0.12)),
+        borderSide: BorderSide(color: _dark.withValues(alpha: 0.12)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

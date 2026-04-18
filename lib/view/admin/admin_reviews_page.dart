@@ -46,7 +46,7 @@ class _AdminReviewsPageState extends State<AdminReviewsPage> {
               ),
               const SizedBox(height: 6),
               if (review.userName != null)
-                Text('Customer: ${review.userName}', style: TextStyle(fontSize: 12, color: _dark.withOpacity(0.5))),
+                Text('Customer: ${review.userName}', style: TextStyle(fontSize: 12, color: _dark.withValues(alpha: 0.5))),
               const SizedBox(height: 14),
 
               // Customer's original review
@@ -92,7 +92,7 @@ class _AdminReviewsPageState extends State<AdminReviewsPage> {
                       onPressed: () => Navigator.pop(ctx),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _dark,
-                        side: BorderSide(color: _dark.withOpacity(0.2)),
+                        side: BorderSide(color: _dark.withValues(alpha: 0.2)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                       child: const Text('Cancel'),
@@ -146,9 +146,9 @@ class _AdminReviewsPageState extends State<AdminReviewsPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.rate_review_outlined, size: 60, color: _dark.withOpacity(0.2)),
+            Icon(Icons.rate_review_outlined, size: 60, color: _dark.withValues(alpha: 0.2)),
             const SizedBox(height: 12),
-            Text('No reviews yet', style: TextStyle(color: _dark.withOpacity(0.4), fontSize: 15)),
+            Text('No reviews yet', style: TextStyle(color: _dark.withValues(alpha: 0.4), fontSize: 15)),
           ],
         ),
       );
@@ -189,7 +189,7 @@ class _ReviewAdminCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: _dark.withOpacity(0.05), blurRadius: 10)],
+        boxShadow: [BoxShadow(color: _dark.withValues(alpha: 0.05), blurRadius: 10)],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -201,7 +201,7 @@ class _ReviewAdminCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: _green.withOpacity(0.12),
+                  backgroundColor: _green.withValues(alpha: 0.12),
                   child: Text(
                     (review.userName?.isNotEmpty == true) ? review.userName![0].toUpperCase() : '?',
                     style: const TextStyle(color: _green, fontWeight: FontWeight.w800, fontSize: 14),
@@ -218,7 +218,7 @@ class _ReviewAdminCard extends StatelessWidget {
                       ),
                       Text(
                         review.storeName ?? '',
-                        style: TextStyle(fontSize: 11, color: _dark.withOpacity(0.45)),
+                        style: TextStyle(fontSize: 11, color: _dark.withValues(alpha: 0.45)),
                       ),
                     ],
                   ),
@@ -233,7 +233,7 @@ class _ReviewAdminCard extends StatelessWidget {
                     if (review.createdAt != null)
                       Text(
                         '${review.createdAt!.day}/${review.createdAt!.month}/${review.createdAt!.year}',
-                        style: TextStyle(fontSize: 10, color: _dark.withOpacity(0.35)),
+                        style: TextStyle(fontSize: 10, color: _dark.withValues(alpha: 0.35)),
                       ),
                   ],
                 ),
@@ -242,7 +242,7 @@ class _ReviewAdminCard extends StatelessWidget {
             const SizedBox(height: 10),
 
             // ── Comment ──────────────────────────────────────────────────────
-            Text(review.comment, style: TextStyle(fontSize: 13, color: _dark.withOpacity(0.8), height: 1.4)),
+            Text(review.comment, style: TextStyle(fontSize: 13, color: _dark.withValues(alpha: 0.8), height: 1.4)),
 
             // ── Admin reply ───────────────────────────────────────────────────
             if (review.adminReply != null) ...[
@@ -250,9 +250,9 @@ class _ReviewAdminCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: _green.withOpacity(0.06),
+                  color: _green.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: _green.withOpacity(0.15)),
+                  border: Border.all(color: _green.withValues(alpha: 0.15)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,8 +292,8 @@ class _ReviewAdminCard extends StatelessWidget {
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   backgroundColor: review.adminReply != null
-                      ? _orange.withOpacity(0.07)
-                      : _green.withOpacity(0.07),
+                      ? _orange.withValues(alpha: 0.07)
+                      : _green.withValues(alpha: 0.07),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
