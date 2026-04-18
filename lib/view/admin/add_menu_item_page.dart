@@ -7,7 +7,8 @@ import '../../service/meal_service.dart';
 
 class AddMenuItemPage extends StatefulWidget {
   final Meal? initialMeal;
-  const AddMenuItemPage({super.key, this.initialMeal});
+  final String storeId;
+  const AddMenuItemPage({super.key, this.initialMeal, required this.storeId});
 
   @override
   State<AddMenuItemPage> createState() => _AddMenuItemPageState();
@@ -270,6 +271,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
             .toList(),
         remarks: _remarksController.text,
         isAvailable: widget.initialMeal?.isAvailable ?? true,
+        storeId: widget.storeId,
       );
 
       final confirmed = await showDialog<bool>(

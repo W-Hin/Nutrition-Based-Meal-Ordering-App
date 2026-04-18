@@ -5,18 +5,29 @@ import '../service/meal_service.dart';
 class FoodMenuController extends ChangeNotifier {
   List<Meal> _allMeals = [];
   bool _isLoading = false;
+  String? _lastFetchedStoreId;
 
   FoodMenuController() {
-    fetchMeals(); // background fetch
+    // Initial fetch handled by ProxyProvider or UI
   }
 
   bool get isLoading => _isLoading;
   List<Meal> get meals => _allMeals;
 
-  Future<void> fetchMeals() async {
+  /// Fetch meals for a specific store. 
+  /// If storeId is null, it refreshes the last fetched store.
+  Future<void> fetchMeals({String? storeId}) async {
+    final targetStoreId = storeId ?? _lastFetchedStoreId;
+
+    // Prevent redundant fetches only if we are browsing (storeId != null) and the ID hasn't changed.
+    if (storeId != null && storeId == _lastFetchedStoreId && _allMeals.isNotEmpty) return;
+    
+    _lastFetchedStoreId = targetStoreId;
     _isLoading = true;
+    notifyListeners(); 
+    
     try {
-      _allMeals = await MealService.fetchMeals();
+      _allMeals = await MealService.fetchMeals(storeId: targetStoreId);
     } catch (e) {
       debugPrint('Error fetching meals: $e');
     } finally {

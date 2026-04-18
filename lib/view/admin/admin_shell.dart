@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controller/auth_controller.dart';
+import '../../controller/store_controller.dart';
+import '../../model/store_model.dart';
 import 'admin_dashboard.dart';
 import 'admin_menu_management.dart';
 import 'admin_order_tracking.dart';
 import 'admin_reviews_page.dart';
+
+String _capitalize(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1).toLowerCase();
 
 class AdminShell extends StatefulWidget {
   const AdminShell({super.key});
@@ -15,6 +19,7 @@ class AdminShell extends StatefulWidget {
 
 class _AdminShellState extends State<AdminShell> {
   int _selectedIndex = 0;
+  Store? _selectedStoreForMenu;
 
   static const _green      = Color(0xFF1E4620);
   static const _lightGreen = Color(0xFFB5CC30);
@@ -26,9 +31,9 @@ class _AdminShellState extends State<AdminShell> {
     _DrawerItem(icon: Icons.rate_review_outlined,   label: 'Customer Reviews'),
   ];
 
-  final List<Widget> _pages = [
+  List<Widget> get _pages => [
     const AdminDashboardPage(),
-    const AdminMenuManagementPage(),
+    AdminMenuManagementPage(store: _selectedStoreForMenu),
     const AdminOrderTrackingPage(),
     const AdminReviewsPage(),
   ];
@@ -58,10 +63,16 @@ class _AdminShellState extends State<AdminShell> {
       drawer: _AdminDrawer(
         items:         _drawerItems,
         selectedIndex: _selectedIndex,
-        onSelect: (index) {
-          setState(() => _selectedIndex = index);
+        onSelect: (index, [Store? store]) {
+          setState(() {
+            _selectedIndex = index;
+            if (store != null) {
+              _selectedStoreForMenu = store;
+            }
+          });
           Navigator.pop(context); // close drawer
         },
+        capitalize: _capitalize,
       ),
       body: IndexedStack(
         index: _selectedIndex,
@@ -76,7 +87,8 @@ class _AdminShellState extends State<AdminShell> {
 class _AdminDrawer extends StatelessWidget {
   final List<_DrawerItem> items;
   final int selectedIndex;
-  final ValueChanged<int> onSelect;
+  final Function(int, [Store?]) onSelect;
+  final String Function(String) capitalize;
 
   static const _green      = Color(0xFF1E4620);
   static const _lightGreen = Color(0xFFB5CC30);
@@ -86,6 +98,7 @@ class _AdminDrawer extends StatelessWidget {
     required this.items,
     required this.selectedIndex,
     required this.onSelect,
+    required this.capitalize,
   });
 
   @override
@@ -138,6 +151,45 @@ class _AdminDrawer extends StatelessWidget {
           ...List.generate(items.length, (index) {
             final item       = items[index];
             final isSelected = index == selectedIndex;
+
+            // Handle Menu Management as an ExpansionTile
+            if (item.label == 'Menu Management') {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+                child: Consumer<StoreController>(
+                  builder: (context, storeCtrl, _) {
+                    return ExpansionTile(
+                      leading: Icon(
+                        item.icon,
+                        color: isSelected ? _green : const Color(0xFF6B6B6B),
+                        size: 22,
+                      ),
+                      title: Text(
+                        item.label,
+                        style: TextStyle(
+                          color: isSelected ? _green : const Color(0xFF2C2C2C),
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                      shape: const RoundedRectangleBorder(side: BorderSide.none),
+                      childrenPadding: const EdgeInsets.only(left: 32),
+                      children: storeCtrl.stores.map((store) {
+                        return ListTile(
+                          title: Text(
+                            capitalize(store.name.split(' - ').last),
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                          onTap: () => onSelect(index, store),
+                          dense: true,
+                          visualDensity: VisualDensity.compact,
+                        );
+                      }).toList(),
+                    );
+                  },
+                ),
+              );
+            }
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),

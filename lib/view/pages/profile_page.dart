@@ -7,6 +7,7 @@ import 'profile/my_account_page.dart';
 import 'profile/change_password_page.dart';
 import 'profile/addresses_page.dart';
 import 'profile/more_page.dart';
+import '../admin/admin_shell.dart'; // Admin button for testing (Evelyn)
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -186,6 +187,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         )),
                       ),
+
                       const SizedBox(height: 8),
                       _divider(),
                       _menuItem(
@@ -201,6 +203,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ],
             ),
+      floatingActionButton: FloatingActionButton( // Admin button for testing (Evelyn)
+        onPressed: () => Navigator.push( // Admin button for testing (Evelyn)
+          context, // Admin button for testing (Evelyn)
+          MaterialPageRoute(builder: (_) => const AdminShell()), // Admin button for testing (Evelyn)
+        ), // Admin button for testing (Evelyn)
+        backgroundColor: const Color(0xFFD95B2B), // Admin button for testing (Evelyn)
+        child: const Icon(Icons.admin_panel_settings, color: Colors.white), // Admin button for testing (Evelyn)
+      ), // Admin button for testing (Evelyn)
     );
   }
 

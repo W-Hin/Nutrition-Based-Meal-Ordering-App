@@ -25,13 +25,16 @@ class MealService {
     }
   }
 
-  /// Fetch all menu items from Supabase
-  static Future<List<Meal>> fetchMeals() async {
+  /// Fetch menu items from Supabase (Optionally filtered by store)
+  static Future<List<Meal>> fetchMeals({String? storeId}) async {
     try {
-      final response = await supabase
-          .from(_tableName)
-          .select()
-          .order('name', ascending: true);
+      var query = supabase.from(_tableName).select();
+      
+      if (storeId != null) {
+        query = query.eq('store_id', storeId);
+      }
+
+      final response = await query.order('name', ascending: true);
       
       return (response as List).map((data) => Meal.fromMap(data)).toList();
     } catch (e) {

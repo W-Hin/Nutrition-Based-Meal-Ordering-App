@@ -2,11 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controller/bowl_controller.dart';
 import '../../controller/cart_controller.dart';
+import '../../controller/store_controller.dart';
 import '../../model/cart_item.dart';
 import '../../model/ingredient_model.dart';
 
-class BuildYourBowlPage extends StatelessWidget {
+class BuildYourBowlPage extends StatefulWidget {
   const BuildYourBowlPage({super.key});
+
+  @override
+  State<BuildYourBowlPage> createState() => _BuildYourBowlPageState();
+}
+
+class _BuildYourBowlPageState extends State<BuildYourBowlPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Load ingredients from Supabase when the page opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final storeId = Provider.of<StoreController>(context, listen: false).selectedStore?.id ?? '2';
+      Provider.of<BowlController>(context, listen: false).loadIngredients(storeId);
+    });
+  }
 
   void _showExitConfirmationDialog(BuildContext context, BowlController bowl) {
     showDialog(
@@ -57,8 +73,26 @@ class BuildYourBowlPage extends StatelessWidget {
               onPressed: () => _showExitConfirmationDialog(context, bowl),
             ),
           ),
-          body: Column(
-            children: [
+          body: bowl.isLoading 
+            ? const Center(child: CircularProgressIndicator(color: Color(0xFF1E4620)))
+            : bowl.error != null
+              ? Center(child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text('Error: ${bowl.error}'),
+                    ElevatedButton(
+                      onPressed: () {
+                        final storeId = Provider.of<StoreController>(context, listen: false).selectedStore?.id ?? '2';
+                        bowl.loadIngredients(storeId);
+                      },
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ))
+              : Column(
+                  children: [
               const _ProgressBar(),
               const _StepLabels(),
               
@@ -91,7 +125,6 @@ class BuildYourBowlPage extends StatelessWidget {
                   ),
                 ),
               ),
-
               _BottomSummary(),
             ],
           ),
@@ -99,7 +132,6 @@ class BuildYourBowlPage extends StatelessWidget {
       },
     );
   }
-
   String _getStepInstruction(int step) {
     switch (step) {
       case 0: return 'Pick one base for your bowl';
@@ -262,67 +294,111 @@ class _IngredientCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF1E4620) : Colors.transparent,
-            width: 2.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-                child: Image.asset(
-                  ingredient.imageUrl,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: Colors.grey[100],
-                    child: const Icon(Icons.rice_bowl, color: Colors.grey),
-                  ),
+    final bool isSoldOut = !ingredient.isAvailable;
+
+    return IgnorePointer(
+      ignoring: isSoldOut,
+      child: Opacity(
+        opacity: isSoldOut ? 0.6 : 1.0,
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected ? const Color(0xFF1E4620) : Colors.transparent,
+                width: 2.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
                 ),
-              ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    ingredient.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+            child: Stack(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                        child: ingredient.imageUrl.startsWith('http')
+                          ? Image.network(
+                              ingredient.imageUrl,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: Colors.grey[100],
+                                child: const Icon(Icons.rice_bowl, color: Colors.grey),
+                              ),
+                            )
+                          : Image.asset(
+                              ingredient.imageUrl,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: Colors.grey[100],
+                                child: const Icon(Icons.rice_bowl, color: Colors.grey),
+                              ),
+                            ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            ingredient.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text('${ingredient.calories} cal', style: TextStyle(color: Colors.grey[500], fontSize: 11)),
+                              const SizedBox(width: 4),
+                              _NutritionInfoIcon(ingredient: ingredient),
+                              const Spacer(),
+                              Text('RM ${ingredient.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (isSoldOut)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFBF5D32),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'SOLD OUT',
+                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text('${ingredient.calories} cal', style: TextStyle(color: Colors.grey[500], fontSize: 11)),
-                      const SizedBox(width: 4),
-                      _NutritionInfoIcon(ingredient: ingredient),
-                      const Spacer(),
-                      Text('RM ${ingredient.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-                    ],
-                  ),
-                ],
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -345,82 +421,97 @@ class _ProteinTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = quantity > 0;
+    final bool isSoldOut = !ingredient.isAvailable;
     
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isSelected ? const Color(0xFF1E4620) : Colors.grey[200]!,
-          width: isSelected ? 2.5 : 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              ingredient.imageUrl,
-              width: 60,
-              height: 40,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                width: 60,
-                height: 40,
-                color: Colors.grey[100],
-                child: const Icon(Icons.restaurant, color: Colors.grey),
-              ),
+    return IgnorePointer(
+      ignoring: isSoldOut,
+      child: Opacity(
+        opacity: isSoldOut ? 0.6 : 1.0,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? const Color(0xFF1E4620) : Colors.grey[200]!,
+              width: isSelected ? 2.5 : 1,
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(ingredient.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(ingredient.description, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-                const SizedBox(height: 4),
-                Row(
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: ingredient.imageUrl.startsWith('http')
+                  ? Image.network(
+                      ingredient.imageUrl,
+                      width: 60,
+                      height: 40,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                    )
+                  : Image.asset(
+                      ingredient.imageUrl,
+                      width: 60,
+                      height: 40,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                    ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${ingredient.calories} cal', style: const TextStyle(color: Color(0xFF4CAF50), fontSize: 12, fontWeight: FontWeight.bold)),
-                    const SizedBox(width: 4),
-                    _NutritionInfoIcon(ingredient: ingredient),
-                    const Spacer(),
-                    Text('RM ${ingredient.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(ingredient.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(ingredient.description, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text('${ingredient.calories} cal', style: const TextStyle(color: Color(0xFF4CAF50), fontSize: 12, fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 4),
+                        _NutritionInfoIcon(ingredient: ingredient),
+                        const Spacer(),
+                        if (isSoldOut)
+                          const Text('SOLD OUT', style: TextStyle(color: Color(0xFFBF5D32), fontWeight: FontWeight.bold, fontSize: 12))
+                        else
+                          Text('RM ${ingredient.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          
-          if (!isSelected)
-            GestureDetector(
-              onTap: onIncrement,
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.grey[300]!, width: 2),
-                ),
-                child: const Icon(Icons.add, size: 20, color: Colors.grey),
               ),
-            )
-          else
-            Row(
-              children: [
-                _QtyBtn(icon: Icons.remove, onTap: onDecrement),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Text('$quantity', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                ),
-                _QtyBtn(icon: Icons.add, onTap: onIncrement),
+              const SizedBox(width: 12),
+              
+              if (!isSoldOut) ...[
+                if (!isSelected)
+                  GestureDetector(
+                    onTap: onIncrement,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.grey[300]!, width: 2),
+                      ),
+                      child: const Icon(Icons.add, size: 20, color: Colors.grey),
+                    ),
+                  )
+                else
+                  Row(
+                    children: [
+                      _QtyBtn(icon: Icons.remove, onTap: onDecrement),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text('$quantity', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      ),
+                      _QtyBtn(icon: Icons.add, onTap: onIncrement),
+                    ],
+                  ),
               ],
-            ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -461,68 +552,85 @@ class _SimpleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF1E4620) : Colors.grey[200]!,
-            width: isSelected ? 2.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                ingredient.imageUrl,
-                width: 60,
-                height: 40,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  width: 60,
-                  height: 40,
-                  color: Colors.grey[100],
-                  child: const Icon(Icons.restaurant, color: Colors.grey),
-                ),
+    final bool isSoldOut = !ingredient.isAvailable;
+
+    return IgnorePointer(
+      ignoring: isSoldOut,
+      child: Opacity(
+        opacity: isSoldOut ? 0.6 : 1.0,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected ? const Color(0xFF1E4620) : Colors.grey[200]!,
+                width: isSelected ? 2.5 : 1,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(ingredient.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text(ingredient.description, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-                  const SizedBox(height: 4),
-                  Row(
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: ingredient.imageUrl.startsWith('http')
+                    ? Image.network(
+                        ingredient.imageUrl,
+                        width: 60,
+                        height: 40,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                      )
+                    : Image.asset(
+                        ingredient.imageUrl,
+                        width: 60,
+                        height: 40,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                      ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('${ingredient.calories} cal', style: const TextStyle(color: Color(0xFF4CAF50), fontSize: 12, fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 4),
-                      _NutritionInfoIcon(ingredient: ingredient),
-                      const Spacer(),
-                      Text('RM ${ingredient.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(ingredient.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(ingredient.description, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Text('${ingredient.calories} cal', style: const TextStyle(color: Color(0xFF4CAF50), fontSize: 12, fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 4),
+                          _NutritionInfoIcon(ingredient: ingredient),
+                          const Spacer(),
+                          if (isSoldOut)
+                            const Text('SOLD OUT', style: TextStyle(color: Color(0xFFBF5D32), fontWeight: FontWeight.bold, fontSize: 12))
+                          else
+                            Text('RM ${ingredient.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 12),
+                if (isSoldOut)
+                  const SizedBox(width: 24)
+                else
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.grey[300]!, width: 2),
+                      color: isSelected ? const Color(0xFF1E4620) : Colors.transparent,
+                    ),
+                    child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
+                  ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey[300]!, width: 2),
-                color: isSelected ? const Color(0xFF1E4620) : Colors.transparent,
-              ),
-              child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -920,4 +1028,13 @@ class _SummaryItem extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _buildPlaceholder() {
+  return Container(
+    width: 60,
+    height: 40,
+    color: Colors.grey[100],
+    child: const Icon(Icons.restaurant, color: Colors.grey),
+  );
 }

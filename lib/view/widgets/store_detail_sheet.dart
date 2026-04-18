@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../model/store_model.dart';
 import '../../controller/store_controller.dart';
-import '../../controller/menu_controller.dart';
+import '../../model/meal_model.dart';
+import '../../service/meal_service.dart';
 
 class StoreDetailBottomSheet extends StatelessWidget {
   final Store store;
@@ -29,7 +30,6 @@ class StoreDetailBottomSheet extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Drag Handle
               Center(
                 child: Container(
                   margin: const EdgeInsets.symmetric(vertical: 12),
@@ -64,48 +64,51 @@ class StoreDetailBottomSheet extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            store.name,
-                            style: const TextStyle(
-                              fontSize: 20, 
-                              fontWeight: FontWeight.bold, 
-                              color: Color(0xFF1E4620),
-                              height: 1.1,
+                      child: GestureDetector(
+                        onTap: () => _showRatingConfirmation(context),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              store.name,
+                              style: const TextStyle(
+                                fontSize: 20, 
+                                fontWeight: FontWeight.bold, 
+                                color: Color(0xFF1E4620),
+                                height: 1.1,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(Icons.star, color: Colors.amber, size: 16),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${store.rating} • ${store.distanceKm} km',
-                                style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w600, fontSize: 13),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.circle, color: Colors.green, size: 10),
-                              const SizedBox(width: 4),
-                              const Text(
-                                'Open',
-                                style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                store.openingHours,
-                                style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                              ),
-                            ],
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(Icons.star, color: Colors.amber, size: 16),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${store.rating} • ${store.distanceKm} km',
+                                  style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w600, fontSize: 13),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Icon(Icons.circle, color: store.isOpen ? Colors.green : Colors.red, size: 10),
+                                const SizedBox(width: 4),
+                                Text(
+                                  store.isOpen ? 'Open' : 'Closed',
+                                  style: TextStyle(color: store.isOpen ? Colors.green : Colors.red, fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${store.openTime} - ${store.closeTime}',
+                                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -119,25 +122,55 @@ class StoreDetailBottomSheet extends StatelessWidget {
                   'Set Meals',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E4620)),
                 ),
-              ),
+               ),
               const SizedBox(height: 12),
               
-              // Meals List (Using shrinkWrap to fit inside the SingleChildScrollView)
-              Consumer<FoodMenuController>(
-                builder: (context, menu, _) {
-                  final meals = menu.meals;
-                  return ListView.builder(
+              FutureBuilder<List<Meal>>(
+                future: MealService.fetchMeals(storeId: store.id),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: CircularProgressIndicator(color: Color(0xFF1E4620)),
+                      ),
+                    );
+                  }
+                  
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        child: Text('Error loading menu: ${snapshot.error}', style: const TextStyle(color: Colors.red)),
+                      ),
+                    );
+                  }
+
+                  final meals = snapshot.data ?? [];
+                  if (meals.isEmpty) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: Text('No meals found for this store.'),
+                      ),
+                    );
+                  }
+
+                  return ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     itemCount: meals.length,
+                    separatorBuilder: (context, index) => Divider(
+                      height: 32,
+                      thickness: 1,
+                      color: Colors.grey.withOpacity(0.3),
+                    ),
                     itemBuilder: (context, index) {
                       final meal = meals[index];
-                      // Item is In Stock only if it's globally available AND not specifically sold out at this store
-                      final isInStock = meal.isAvailable && !store.soldOutMealNames.contains(meal.name);
+                      final isInStock = meal.isAvailable;
                       
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 16),
                         child: Row(
                           children: [
                             Expanded(
@@ -245,6 +278,41 @@ class StoreDetailBottomSheet extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showRatingConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Rate this Restaurant?',
+          style: TextStyle(color: Color(0xFF1E4620), fontWeight: FontWeight.bold),
+        ),
+        content: Text('Would you like to provide a rating for ${store.name}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: Link to Rating Page
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Rating page coming soon!')),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1E4620),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Yes'),
+          ),
+        ],
       ),
     );
   }

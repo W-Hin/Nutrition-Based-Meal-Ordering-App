@@ -22,6 +22,7 @@ class Meal {
   // Additional Information
   final List<String> allergens;
   final String remarks;
+  final String? storeId;
 
   Meal({
     this.id,
@@ -43,6 +44,7 @@ class Meal {
     this.cholesterol = 0,
     this.allergens = const [],
     this.remarks = '',
+    this.storeId,
   });
 
   // Getter for backward compatibility if needed, though better to use fields
@@ -110,6 +112,7 @@ class Meal {
       cholesterol: cholesterol ?? this.cholesterol,
       allergens: allergens ?? this.allergens,
       remarks: remarks ?? this.remarks,
+      storeId: storeId ?? this.storeId,
     );
   }
 
@@ -134,6 +137,7 @@ class Meal {
       cholesterol: (map['cholesterol'] ?? 0).toDouble(),
       allergens:   List<String>.from(map['allergen'] ?? []), // Matches 'allergen' in dashboard
       remarks:     map['remarks'] ?? '',
+      storeId:     map['store_id']?.toString() ?? '2', // Default to Gurney Plaza if missing
     );
   }
 
@@ -157,6 +161,7 @@ class Meal {
       'cholesterol':         cholesterol,
       'allergen':            allergens, // Maps back to 'allergen'
       'remarks':             remarks,
+      'store_id':            storeId,
     };
   }
 }

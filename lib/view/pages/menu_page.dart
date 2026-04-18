@@ -97,8 +97,8 @@ class MenuPage extends StatelessWidget {
 
                 // Sort meals sold out at the bottom
                 final sortedMeals = List.from(meals)..sort((a, b) {
-                  final aSoldOut = !a.isAvailable || !storeController.isMealAvailable(a.name);
-                  final bSoldOut = !b.isAvailable || !storeController.isMealAvailable(b.name);
+                  final aSoldOut = !a.isAvailable;
+                  final bSoldOut = !b.isAvailable;
                   if (aSoldOut == bSoldOut) return 0;
                   return aSoldOut ? 1 : -1;
                 });
@@ -116,12 +116,9 @@ class MenuPage extends StatelessWidget {
                         if (index == 0) return const CustomBowlCard();
                         final meal = sortedMeals[index - 1];
                         
-                        // sold out check
-                        final isSoldOut = !meal.isAvailable || !storeController.isMealAvailable(meal.name);
-                        
                         return MealCard(
                           meal: meal, 
-                          isSoldOut: isSoldOut,
+                          isSoldOut: !meal.isAvailable,
                         );
                       },
                     ),

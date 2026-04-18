@@ -47,9 +47,19 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => CartController()),
         ChangeNotifierProvider(create: (_) => OrderController()),
-        ChangeNotifierProvider(create: (_) => FoodMenuController()),
-        ChangeNotifierProvider(create: (_) => BowlController()),
         ChangeNotifierProvider(create: (_) => StoreController()),
+        ChangeNotifierProxyProvider<StoreController, FoodMenuController>(
+          create: (_) => FoodMenuController(),
+          update: (context, storeController, foodMenuController) {
+            final controller = foodMenuController ?? FoodMenuController();
+            final storeId = storeController.selectedStore?.id;
+            if (storeId != null) {
+              controller.fetchMeals(storeId: storeId);
+            }
+            return controller;
+          },
+        ),
+        ChangeNotifierProvider(create: (_) => BowlController()),
         ChangeNotifierProvider(create: (_) => AuthController()),
         ChangeNotifierProvider(create: (_) => OnboardingController()),
         ChangeNotifierProvider(create: (_) => ProfileController()),

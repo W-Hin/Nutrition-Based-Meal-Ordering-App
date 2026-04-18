@@ -14,7 +14,7 @@ class CustomBowlCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -46,7 +46,7 @@ class CustomBowlCard extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const BuildYourBowlPage()),
+                  MaterialPageRoute(builder: (context) => BuildYourBowlPage()),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -62,7 +62,7 @@ class CustomBowlCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.add, size: 20),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
                     'Build Your Bowl',
                     style: TextStyle(
