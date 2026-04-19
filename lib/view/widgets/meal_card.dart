@@ -125,43 +125,51 @@ class MealCard extends StatelessWidget {
                   // Add to Cart Button
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: !isSoldOut
-                          ? () {
-                        final cart = Provider.of<CartController>(context, listen: false);
-                        final storeId = Provider.of<StoreController>(context, listen: false)
-                            .selectedStore?.id;
+                    child: Consumer<StoreController>(
+                      builder: (context, storeCtrl, _) {
+                        final isClosed = !(storeCtrl.selectedStore?.isOpen ?? true);
+                        final isDisabled = isSoldOut || isClosed;
 
-                        cart.addItem(CartItem(
-                          foodId:   meal.id,
-                          storeId:  storeId,
-                          itemType: 'preset',
-                          name:     meal.name,
-                          price:    meal.price,
-                          addOns:   const <String>[],
-                          imageUrl: meal.imageUrl,
-                          quantity: 1,
-                        ));
+                        return ElevatedButton(
+                          onPressed: !isDisabled
+                              ? () {
+                            final cart = Provider.of<CartController>(context, listen: false);
+                            final storeId = storeCtrl.selectedStore?.id;
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${meal.name} added to cart!'),
-                            duration: const Duration(seconds: 1),
+                            cart.addItem(CartItem(
+                              foodId:   meal.id,
+                              storeId:  storeId,
+                              itemType: 'preset',
+                              name:     meal.name,
+                              price:    meal.price,
+                              addOns:   const <String>[],
+                              imageUrl: meal.imageUrl,
+                              quantity: 1,
+                            ));
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${meal.name} added to cart!'),
+                                duration: const Duration(seconds: 1),
+                              ),
+                            );
+                          }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: !isDisabled ? const Color(0xFFABC270) : Colors.grey[300],
+                            foregroundColor: const Color(0xFF1E4620),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            isClosed
+                                ? 'Store Closed'
+                                : (!isSoldOut ? 'Add to Cart' : 'Out of Stock'),
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                         );
-                      }
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: !isSoldOut ? const Color(0xFFABC270) : Colors.grey[300],
-                        foregroundColor: const Color(0xFF1E4620),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        !isSoldOut ? 'Add to Cart' : 'Out of Stock',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
+                      },
                     ),
                   ),
                 ],
