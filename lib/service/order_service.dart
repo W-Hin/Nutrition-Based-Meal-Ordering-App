@@ -16,6 +16,7 @@ class OrderService {
       'to_address':     order.toAddress,
       'subtotal':       order.subtotal,
       'service_fee':    order.serviceFee,
+      'delivery_fee':   order.deliveryFee,
       'payment_method': order.paymentMethod,
     })
         .select('order_id')

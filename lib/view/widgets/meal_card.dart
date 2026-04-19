@@ -134,7 +134,7 @@ class MealCard extends StatelessWidget {
                           itemType: 'preset',
                           name:     meal.name,
                           price:    meal.price,
-                          addOns:   [],
+                          addOns:   const <String>[],
                           imageUrl: meal.imageUrl,
                           quantity: 1,
                         ));

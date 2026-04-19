@@ -1,3 +1,4 @@
+// cart_controller.dart
 import 'package:flutter/material.dart';
 import '../model/cart_item.dart';
 import '../service/cart_service.dart';
@@ -9,7 +10,6 @@ class CartController extends ChangeNotifier {
   bool isLoading = false;
   String? error;
 
-  // ── Read-only access ───────────────────────────────────────────────────────
   List<CartItem> get items => List.unmodifiable(_items);
 
   int get totalItemCount => _items.fold(0, (sum, item) => sum + item.quantity);
@@ -20,7 +20,7 @@ class CartController extends ChangeNotifier {
 
   double get total => subtotal + serviceFee;
 
-  // ── Load cart from Supabase ────────────────────────────────────────────────
+  // ── Load cart ────────────────────────────────────────────────────────────
   Future<void> loadCart() async {
     isLoading = true;
     error = null;
@@ -38,21 +38,49 @@ class CartController extends ChangeNotifier {
     }
   }
 
-  // ── Add item ───────────────────────────────────────────────────────────────
+  // ── Add item (with duplicate check) ──────────────────────────────────────
   Future<void> addItem(CartItem item) async {
-    // Optimistic: show immediately in UI
-    _items.add(item);
-    notifyListeners();
-
     try {
-      debugPrint('[CartController] addItem: inserting "${item.name}"...');
+      // Check if same food+store already exists in cart
+      final existing = await _service.findExistingItem(
+        foodId:  item.foodId,
+        storeId: item.storeId,
+      );
+
+      if (existing != null && existing.cartItemId != null) {
+        // Found duplicate — just increment quantity instead
+        debugPrint('[CartController] duplicate found, incrementing qty');
+
+        final newQty = existing.quantity + item.quantity;
+        await _service.updateQuantity(existing.cartItemId!, newQty);
+
+        // Update local list
+        final idx = _items.indexWhere(
+              (i) => i.cartItemId == existing.cartItemId,
+        );
+        if (idx != -1) {
+          _items[idx].quantity = newQty;
+        }
+
+        error = null;
+        notifyListeners();
+        return;
+      }
+
+      // No duplicate — insert as new item (optimistic)
+      _items.add(item);
+      notifyListeners();
+
       final saved = await _service.insertItem(item);
       debugPrint('[CartController] addItem: success, id=${saved.cartItemId}');
 
-      final idx = _items.indexOf(item);
+      // Replace optimistic item with saved (has real cartItemId)
+      final idx = _items.lastIndexOf(item);
       if (idx != -1) _items[idx] = saved;
       error = null;
+
     } catch (e) {
+      // Remove optimistic item on failure
       _items.remove(item);
       error = e.toString();
       debugPrint('[CartController] addItem ERROR: $e');
@@ -61,7 +89,7 @@ class CartController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Increment quantity ─────────────────────────────────────────────────────
+  // ── Increment ────────────────────────────────────────────────────────────
   Future<void> increment(int index) async {
     final item = _items[index];
     item.quantity++;
@@ -79,7 +107,7 @@ class CartController extends ChangeNotifier {
     }
   }
 
-  // ── Decrement quantity ─────────────────────────────────────────────────────
+  // ── Decrement ────────────────────────────────────────────────────────────
   Future<void> decrement(int index) async {
     final item = _items[index];
 
@@ -114,7 +142,7 @@ class CartController extends ChangeNotifier {
     }
   }
 
-  // ── Clear cart ─────────────────────────────────────────────────────────────
+  // ── Clear cart ────────────────────────────────────────────────────────────
   Future<void> clearCart() async {
     final backup = List<CartItem>.from(_items);
     _items.clear();

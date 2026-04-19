@@ -4,6 +4,27 @@ import 'supabase_conn.dart';
 class CartService {
   String get _uid => supabase.auth.currentUser?.id ?? 'fc33ae36-657a-4055-b81e-f6fe3de23278';
 
+  // Check if same food from same store already in cart
+  Future<CartItem?> findExistingItem({
+    required String? foodId,
+    required String? storeId,
+  }) async {
+    // Custom bowls (foodId null) are never merged
+    if (foodId == null) return null;
+
+    final rows = await supabase
+        .from('cart_items')
+        .select()
+        .eq('user_id', _uid)
+        .eq('food_id', foodId)
+        .eq('store_id', storeId ?? '')
+        .eq('item_type', 'preset')
+        .limit(1);
+
+    if ((rows as List).isEmpty) return null;
+    return CartItem.fromMap(rows.first);
+  }
+
   // ── Fetch all cart items for the current user ──────────────────────────────
   Future<List<CartItem>> fetchCart() async {
     final rows = await supabase

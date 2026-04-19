@@ -35,7 +35,9 @@ class CartItem {
       name:          map['name'] as String,
       price:         (map['price'] as num).toDouble(),
       quantity:      map['quantity'] as int? ?? 1,
-      addOns:        List<String>.from(map['add_ons'] ?? []),
+      addOns: map['add_ons'] == null
+          ? []
+          : List<String>.from(map['add_ons'] as List),
       customDetails: map['custom_details'] as Map<String, dynamic>?,
       imageUrl:      map['image_url'] as String?,
     );
@@ -51,9 +53,9 @@ class CartItem {
       'name':           name,
       'price':          price,
       'quantity':       quantity,
-      'add_ons':        addOns,
+      'add_ons':   addOns.isEmpty ? <String>[] : addOns,
       if (customDetails != null) 'custom_details': customDetails,
-      if (imageUrl != null) 'image_url': imageUrl,
+      if (imageUrl != null)      'image_url':      imageUrl,
     };
   }
 }

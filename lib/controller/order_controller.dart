@@ -14,6 +14,7 @@ class OrderController extends ChangeNotifier {
     required List<CartItem> cartItems,
     required double subtotal,
     required double serviceFee,
+    required double deliveryFee,  // ← ADD
     required String toName,
     required String toPhone,
     required String toAddress,
@@ -28,22 +29,19 @@ class OrderController extends ChangeNotifier {
       toName:        toName,
       toPhone:       toPhone,
       toAddress:     toAddress,
-      items: cartItems
-          .map((c) => OrderItemModel(
+      items: cartItems.map((c) => OrderItemModel(
         name:   c.name,
         addOns: c.addOns,
         price:  c.price,
-      ))
-          .toList(),
-      subtotal:   subtotal,
-      serviceFee: serviceFee,
-      orderType:  orderType,
-      status:     OrderStatus.submitted,
+      )).toList(),
+      subtotal:    subtotal,
+      serviceFee:  serviceFee,
+      deliveryFee: deliveryFee,  // ← ADD
+      orderType:   orderType,
+      status:      OrderStatus.submitted,
     );
 
-    // Persist to Supabase
     await _orderService.placeOrder(currentOrder!);
-
     isCancelled = false;
     notifyListeners();
   }
