@@ -74,6 +74,7 @@ class _CheckoutView extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (_) => PaymentPage(
                     checkoutCtrl: context.read<CheckoutController>(),
+                    deliveryFee: ctrl.deliveryFee,
                   ),
                 ),
               );

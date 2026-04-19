@@ -228,6 +228,15 @@ class _MainShellState extends State<MainShell> {
       ),
     );
   }
+
+  @override
+  void initState() {
+    super.initState();
+    // Load the user's cart from Supabase
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CartController>().loadCart();
+    });
+  }
 }
 
 // ── Cart FAB ───────────────────────────────────────────────────────────────────

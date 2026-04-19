@@ -21,7 +21,7 @@ class AuthService {
     );
 
     if (response.user != null) {
-      await supabase.from('users').insert({
+      await supabase.from('user').insert({
         'id':        response.user!.id,
         'email':     email,
         'full_name': '',
@@ -54,7 +54,7 @@ class AuthService {
     final uid = currentUser?.id;
     if (uid == null) return null;
     final row = await supabase
-        .from('users')
+        .from('user')
         .select('role')
         .eq('id', uid)
         .maybeSingle();

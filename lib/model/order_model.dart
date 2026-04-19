@@ -20,6 +20,7 @@ class OrderModel {
   final double subtotal;
   final double serviceFee;
   final OrderType orderType;
+  final double deliveryFee;
   OrderStatus status;
 
   OrderModel({
@@ -35,10 +36,11 @@ class OrderModel {
     required this.subtotal,
     required this.serviceFee,
     required this.orderType,
+    required this.deliveryFee,
     this.status = OrderStatus.submitted,
   });
 
-  double get total => subtotal + serviceFee;
+  double get total => subtotal + serviceFee + deliveryFee;
 
   bool get isCancellable => status == OrderStatus.submitted;
 

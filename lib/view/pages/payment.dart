@@ -11,21 +11,24 @@ import 'order_details.dart';
 
 class PaymentPage extends StatelessWidget {
   final CheckoutController checkoutCtrl;
+  final double deliveryFee;
 
-  const PaymentPage({super.key, required this.checkoutCtrl});
+  const PaymentPage({super.key, required this.checkoutCtrl, required this.deliveryFee});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => PaymentController(),
-      child: _PaymentView(checkoutCtrl: checkoutCtrl),
+      child: _PaymentView(checkoutCtrl: checkoutCtrl, deliveryFee: deliveryFee),
     );
   }
 }
 
 class _PaymentView extends StatelessWidget {
   final CheckoutController checkoutCtrl;
-  const _PaymentView({required this.checkoutCtrl});
+  final double deliveryFee;
+
+  const _PaymentView({required this.checkoutCtrl, required this.deliveryFee});
 
   static const _green = Color(0xFF1E4620);
   static const _terracotta = Color(0xFFD95F2B);
@@ -35,6 +38,8 @@ class _PaymentView extends StatelessWidget {
   Widget build(BuildContext context) {
     final ctrl = context.watch<PaymentController>();
     final cart = context.watch<CartController>();
+
+    final grandTotal = cart.total + deliveryFee;
 
     return Scaffold(
       backgroundColor: _bg,
@@ -61,9 +66,12 @@ class _PaymentView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
             _OrderSummaryCard(
-              total: cart.total,
-              itemCount: cart.totalItemCount,
+              subtotal:    cart.total,
+              deliveryFee: deliveryFee,
+              grandTotal:  grandTotal,
+              itemCount:   cart.totalItemCount,
             ),
             const SizedBox(height: 20),
 
@@ -150,7 +158,7 @@ class _PaymentView extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: ctrl.status == PaymentStatus.loading
                     ? null
-                    : () => _handlePay(context, ctrl, cart),
+                    : () => _handlePay(context, ctrl, cart, grandTotal),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _terracotta,
                   foregroundColor: Colors.white,
@@ -202,40 +210,40 @@ class _PaymentView extends StatelessWidget {
       BuildContext context,
       PaymentController ctrl,
       CartController cart,
+      double grandTotal,
       ) async {
     final payment = PaymentModel(
       billName:        'Food Order',
       billDescription: 'Order from NuBurn',
-      amount:          cart.total,
+      amount:          grandTotal,
       userName:        ctrl.nameCtrl.text.trim(),
       userEmail:       ctrl.emailCtrl.text.trim(),
       userPhone:       ctrl.phoneCtrl.text.trim(),
     );
 
     final success = await ctrl.processPayment(payment);
-
     if (!context.mounted) return;
 
     if (success) {
       final isDelivery = checkoutCtrl.activeTab == CheckoutTab.delivery;
 
       context.read<OrderController>().placeOrder(
-        cartItems:  cart.items.toList(),
-        subtotal:   cart.subtotal,
-        serviceFee: cart.serviceFee,
-        orderType:  isDelivery ? OrderType.delivery : OrderType.selfCollect,
-        toName:     isDelivery
+        cartItems:   cart.items.toList(),
+        subtotal:    cart.subtotal,
+        serviceFee:  cart.serviceFee,
+        deliveryFee: deliveryFee,
+        orderType:   isDelivery ? OrderType.delivery : OrderType.selfCollect,
+        toName:      isDelivery
             ? checkoutCtrl.deliveryAddress.name
             : 'NuBurn - Tanjung Burma',
-        toPhone:    isDelivery ? checkoutCtrl.deliveryAddress.phone : '',
-        toAddress:  isDelivery
+        toPhone:     isDelivery ? checkoutCtrl.deliveryAddress.phone : '',
+        toAddress:   isDelivery
             ? checkoutCtrl.deliveryAddress.address
             : '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21',
       );
 
       cart.clearCart();
       await _showPaymentSuccessDialog(context);
-
     } else if (ctrl.status == PaymentStatus.failed) {
       Navigator.push(
         context,
@@ -335,10 +343,17 @@ class _PaymentView extends StatelessWidget {
 }
 
 class _OrderSummaryCard extends StatelessWidget {
-  final double total;
+  final double subtotal;
+  final double deliveryFee;
+  final double grandTotal;
   final int itemCount;
 
-  const _OrderSummaryCard({required this.total, required this.itemCount});
+  const _OrderSummaryCard({
+    required this.subtotal,
+    required this.deliveryFee,
+    required this.grandTotal,
+    required this.itemCount,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -349,47 +364,66 @@ class _OrderSummaryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFDDDDD0)),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E4620).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.receipt_long_outlined,
-              color: Color(0xFF1E4620),
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E4620).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.receipt_long_outlined,
+                  color: Color(0xFF1E4620),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
                   '$itemCount item${itemCount > 1 ? 's' : ''}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF8A8A8A),
-                  ),
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF8A8A8A)),
                 ),
-                const SizedBox(height: 2),
-                const Text(
-                  'Order Total',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Subtotal row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Subtotal', style: TextStyle(fontSize: 13, color: Color(0xFF8A8A8A))),
+              Text('RM ${subtotal.toStringAsFixed(2)}',
+                  style: const TextStyle(fontSize: 13, color: Color(0xFF8A8A8A))),
+            ],
+          ),
+          // Delivery fee row — only show if applicable
+          if (deliveryFee > 0) ...[
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Delivery Fee',
+                    style: TextStyle(fontSize: 13, color: Color(0xFF8A8A8A))),
+                Text('RM ${deliveryFee.toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 13, color: Color(0xFF8A8A8A))),
               ],
             ),
-          ),
-          Text(
-            'RM ${total % 1 == 0 ? total.toInt().toString() : total.toStringAsFixed(2)}',
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
-              color: Color(0xFF1E4620),
-            ),
+          ],
+          const Divider(height: 16),
+          // Grand total
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Total',
+                  style: TextStyle(fontWeight: FontWeight.w800,
+                      fontSize: 15, color: Color(0xFF2C2C2C))),
+              Text('RM ${grandTotal.toStringAsFixed(2)}',
+                  style: const TextStyle(fontWeight: FontWeight.w800,
+                      fontSize: 18, color: Color(0xFF1E4620))),
+            ],
           ),
         ],
       ),

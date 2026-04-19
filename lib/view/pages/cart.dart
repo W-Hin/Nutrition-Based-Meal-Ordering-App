@@ -67,6 +67,7 @@ class CartPage extends StatelessWidget {
 
 // ── Cart Item Card ─────────────────────────────────────────────────────────────
 
+// cart.dart — full fixed _CartItemCard
 class _CartItemCard extends StatelessWidget {
   final CartItem item;
   final VoidCallback onIncrement;
@@ -85,17 +86,8 @@ class _CartItemCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Placeholder image — swap with real Image.network() later
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: const Color(0xFFD9D5C5),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.fastfood_outlined,
-                color: Color(0xFF9E9880), size: 32),
-          ),
+          // ── Image (real or fallback) ──────────────────────────────────
+          _CartItemImage(imageUrl: item.imageUrl),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -104,16 +96,20 @@ class _CartItemCard extends StatelessWidget {
                 Text(
                   'RM${item.price % 1 == 0 ? item.price.toInt().toString() : item.price.toStringAsFixed(2)}',
                   style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                      color: Color(0xFF2C2C2C)),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: Color(0xFF2C2C2C),
+                  ),
                 ),
                 const SizedBox(height: 2),
-                Text(item.name,
-                    style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF2C2C2C))),
+                Text(
+                  item.name,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2C2C2C),
+                  ),
+                ),
                 const SizedBox(height: 4),
                 _AddOnsList(addOns: item.addOns),
               ],
@@ -131,6 +127,64 @@ class _CartItemCard extends StatelessWidget {
   }
 }
 
+// ── New image widget with proper fallback ──────────────────────────────────
+class _CartItemImage extends StatelessWidget {
+  final String? imageUrl;
+
+  const _CartItemImage({this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    // Fallback container used when no image or load fails
+    final fallback = Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        color: const Color(0xFFD9D5C5),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Icon(
+        Icons.fastfood_outlined,
+        color: Color(0xFF9E9880),
+        size: 32,
+      ),
+    );
+
+    // No URL at all
+    if (imageUrl == null || imageUrl!.isEmpty) return fallback;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Image.network(
+        imageUrl!,
+        width: 72,
+        height: 72,
+        fit: BoxFit.cover,
+        // Show loading placeholder while fetching
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEEEBDE),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Color(0xFF1E4620),
+              ),
+            ),
+          );
+        },
+        // Show fallback icon if image fails to load
+        errorBuilder: (context, error, stackTrace) => fallback,
+      ),
+    );
+  }
+}
+
 // ── Add-ons (2-column for long lists) ─────────────────────────────────────────
 
 class _AddOnsList extends StatelessWidget {
@@ -139,7 +193,10 @@ class _AddOnsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (addOns.length <= 1) {
+    if (addOns.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    if (addOns.length == 1) {
       return Text(addOns.first,
           style: const TextStyle(fontSize: 11, color: Color(0xFF8A7E6A)));
     }
