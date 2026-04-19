@@ -52,7 +52,7 @@ class OrderService {
     return await supabase
         .from('orders')
         .select('*, order_items(*)')
-        .eq('user_id', supabase.auth.currentUser?.id ?? 'test_user_ui_mode')
+        .eq('user_id', supabase.auth.currentUser?.id ?? 'fc33ae36-657a-4055-b81e-f6fe3de23278')
         .order('created_at', ascending: false);
   }
 

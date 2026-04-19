@@ -2,7 +2,7 @@ import '../model/review_model.dart';
 import 'supabase_conn.dart';
 
 class ReviewService {
-  String get _uid => supabase.auth.currentUser?.id ?? 'test_user_ui_mode';
+  String get _uid => supabase.auth.currentUser?.id ?? 'fc33ae36-657a-4055-b81e-f6fe3de23278';
 
   // ── Submit a new review (customer) ───────────────────────────────────────
   Future<void> submitReview(ReviewModel review) async {

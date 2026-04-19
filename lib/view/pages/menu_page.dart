@@ -12,24 +12,24 @@ class MenuPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Create controller at build level
+    final ScrollController _scrollController = ScrollController();
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F0), // Cream background
+      backgroundColor: const Color(0xFFF5F5F0),
       appBar: AppBar(
         title: const Text('Menu', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF1E4620), // Dark green
+        backgroundColor: const Color(0xFF1E4620),
         foregroundColor: Colors.white,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            // Logic for back or home
-          },
+          onPressed: () {},
         ),
       ),
       body: Column(
         children: [
           const StoreLocationHeader(),
-          // Filter Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
@@ -41,24 +41,28 @@ class MenuPage extends StatelessWidget {
                     backgroundColor: Colors.transparent,
                     builder: (context) => const FilterBottomSheet(),
                   ),
-                  child: const Icon(Icons.filter_alt_rounded, color: Color(0xFF1E4620), size: 28),
+                  child: const Icon(Icons.filter_alt_rounded,
+                      color: Color(0xFF1E4620), size: 28),
                 ),
                 const SizedBox(width: 12),
-                
-                // Horizontal Filter Chips
                 Expanded(
                   child: Consumer<FoodMenuController>(
                     builder: (context, menu, _) {
-                      final categories = ['All', 'Breakfast', 'Lunch', 'Dinner', 'Snacks'];
+                      final categories = [
+                        'All', 'Breakfast', 'Lunch', 'Dinner', 'Snacks'
+                      ];
                       return SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
+                        // ↓ fix: explicitly not primary
+                        primary: false,
                         child: Row(
                           children: categories.map((cat) {
                             final isSelected = menu.selectedCategory == cat;
                             return Padding(
                               padding: const EdgeInsets.only(right: 8.0),
                               child: ChoiceChip(
-                                label: Text(cat, style: const TextStyle(fontSize: 12)),
+                                label: Text(cat,
+                                    style: const TextStyle(fontSize: 12)),
                                 selected: isSelected,
                                 onSelected: (selected) {
                                   if (selected) menu.setCategory(cat);
@@ -66,12 +70,19 @@ class MenuPage extends StatelessWidget {
                                 selectedColor: const Color(0xFFABC270),
                                 backgroundColor: Colors.white,
                                 labelStyle: TextStyle(
-                                  color: isSelected ? Colors.black : Colors.grey[700],
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  color: isSelected
+                                      ? Colors.black
+                                      : Colors.grey[700],
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
-                                  side: BorderSide(color: isSelected ? Colors.transparent : Colors.grey[300]!),
+                                  side: BorderSide(
+                                      color: isSelected
+                                          ? Colors.transparent
+                                          : Colors.grey[300]!),
                                 ),
                               ),
                             );
@@ -84,40 +95,42 @@ class MenuPage extends StatelessWidget {
               ],
             ),
           ),
-          
-          // Meal List
           Expanded(
             child: Consumer2<FoodMenuController, StoreController>(
               builder: (context, menu, storeController, _) {
                 final meals = menu.filteredMeals;
-                
+
                 if (meals.isEmpty) {
-                  return const Center(child: Text('No meals available matching your filters.'));
+                  return const Center(
+                      child: Text(
+                          'No meals available matching your filters.'));
                 }
 
-                // Sort meals sold out at the bottom
-                final sortedMeals = List.from(meals)..sort((a, b) {
-                  final aSoldOut = !a.isAvailable;
-                  final bSoldOut = !b.isAvailable;
-                  if (aSoldOut == bSoldOut) return 0;
-                  return aSoldOut ? 1 : -1;
-                });
-                
+                final sortedMeals = List.from(meals)
+                  ..sort((a, b) {
+                    final aSoldOut = !a.isAvailable;
+                    final bSoldOut = !b.isAvailable;
+                    if (aSoldOut == bSoldOut) return 0;
+                    return aSoldOut ? 1 : -1;
+                  });
+
                 return RefreshIndicator(
                   onRefresh: () => menu.fetchMeals(),
-                  color: const Color(0xFF1E4620), 
+                  color: const Color(0xFF1E4620),
                   child: Scrollbar(
+                    controller: _scrollController, // ← explicit controller
                     thumbVisibility: true,
                     child: ListView.builder(
+                      controller: _scrollController, // ← same controller
+                      primary: false,               // ← not primary
                       padding: const EdgeInsets.only(bottom: 24),
                       physics: const AlwaysScrollableScrollPhysics(),
                       itemCount: sortedMeals.length + 1,
                       itemBuilder: (context, index) {
                         if (index == 0) return const CustomBowlCard();
                         final meal = sortedMeals[index - 1];
-                        
                         return MealCard(
-                          meal: meal, 
+                          meal: meal,
                           isSoldOut: !meal.isAvailable,
                         );
                       },
