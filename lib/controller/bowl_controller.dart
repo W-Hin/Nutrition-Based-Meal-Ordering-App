@@ -3,7 +3,6 @@ import '../model/ingredient_model.dart';
 import '../service/ingredient_service.dart';
 
 class BowlController extends ChangeNotifier {
-  final IngredientService _service = IngredientService();
   
   int _currentStep = 0;
   Ingredient? _selectedBase;

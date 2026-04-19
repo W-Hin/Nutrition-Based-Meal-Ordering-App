@@ -385,7 +385,7 @@ class _ItemDetailsSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  'RM ${order.subtotal.toStringAsFixed(2)}',
+                  'RM ${order.subtotal % 1 == 0 ? order.subtotal.toInt().toString() : order.subtotal.toStringAsFixed(2)}',
                   style: const TextStyle(
                       fontSize: 13, color: Color(0xFF2C2C2C)),
                 ),
@@ -397,7 +397,7 @@ class _ItemDetailsSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Total ${order.items.length} item(s): RM ${order.total.toStringAsFixed(2)}',
+                  'Total ${order.items.length} item(s): RM ${order.total % 1 == 0 ? order.total.toInt().toString() : order.total.toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 14,

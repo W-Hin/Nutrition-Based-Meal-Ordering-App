@@ -8,7 +8,8 @@ import '../widgets/store_location_header.dart';
 import '../../controller/store_controller.dart';
 
 class MenuPage extends StatelessWidget {
-  const MenuPage({super.key});
+  final VoidCallback onBack;
+  const MenuPage({super.key, required this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -21,9 +22,7 @@ class MenuPage extends StatelessWidget {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            // Logic for back or home
-          },
+          onPressed: onBack,
         ),
       ),
       body: Column(
@@ -90,8 +89,10 @@ class MenuPage extends StatelessWidget {
             child: Consumer2<FoodMenuController, StoreController>(
               builder: (context, menu, storeController, _) {
                 final meals = menu.filteredMeals;
+                final selectedStore = storeController.selectedStore;
+                final isClosed = selectedStore != null && !selectedStore.isOpen;
                 
-                if (meals.isEmpty) {
+                if (meals.isEmpty && !isClosed) {
                   return const Center(child: Text('No meals available matching your filters.'));
                 }
 
@@ -111,10 +112,42 @@ class MenuPage extends StatelessWidget {
                     child: ListView.builder(
                       padding: const EdgeInsets.only(bottom: 24),
                       physics: const AlwaysScrollableScrollPhysics(),
-                      itemCount: sortedMeals.length + 1,
+                      itemCount: sortedMeals.length + (isClosed ? 2 : 1),
                       itemBuilder: (context, index) {
-                        if (index == 0) return const CustomBowlCard();
-                        final meal = sortedMeals[index - 1];
+                        // Closed Banner
+                        if (isClosed && index == 0) {
+                          return Container(
+                            margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.red[50],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.red[100]!),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.info_outline, color: Colors.red, size: 20),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Store is currently closed. You can browse the menu, but ordering is unavailable.',
+                                    style: TextStyle(
+                                      color: Colors.red[900],
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        // Adjust index for following items if banner is shown
+                        final itemIndex = isClosed ? index - 1 : index;
+
+                        if (itemIndex == 0) return const CustomBowlCard();
+                        final meal = sortedMeals[itemIndex - 1];
                         
                         return MealCard(
                           meal: meal, 
@@ -129,24 +162,6 @@ class MenuPage extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ActiveFilterChip extends StatelessWidget {
-  final String label;
-  final VoidCallback onDeleted;
-
-  const _ActiveFilterChip({required this.label, required this.onDeleted});
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      label: Text(label, style: const TextStyle(fontSize: 12)),
-      deleteIcon: const Icon(Icons.close, size: 14),
-      onDeleted: onDeleted,
-      backgroundColor: Colors.grey[300],
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     );
   }
 }

@@ -113,10 +113,14 @@ class Ingredient {
   }
 
   // Helper for nutrition display
-  Map<String, String> get nutritionData => {
-    'Protein': '${protein.toStringAsFixed(1)}g',
-    'Carbs': '${carbs.toStringAsFixed(1)}g',
-    'Fats': '${fat.toStringAsFixed(1)}g',
-    'Fiber': '${fiber.toStringAsFixed(1)}g',
-  };
+  // Getter to return only non-zero nutrition data
+  Map<String, String> get nutritionData {
+    final data = <String, String>{};
+    if (calories > 0) data['Calories'] = '${calories.toStringAsFixed(0)} cal';
+    if (protein > 0)  data['Protein']  = '${protein.toStringAsFixed(1)} g';
+    if (carbs > 0)    data['Carbs']    = '${carbs.toStringAsFixed(1)} g';
+    if (fat > 0)      data['Fats']     = '${fat.toStringAsFixed(1)} g';
+    if (fiber > 0)    data['Fiber']    = '${fiber.toStringAsFixed(1)} g';
+    return data;
+  }
 }

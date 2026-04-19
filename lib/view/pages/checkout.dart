@@ -29,7 +29,6 @@ class _CheckoutView extends StatelessWidget {
     final ctrl       = context.watch<CheckoutController>();
     final cart       = context.watch<CartController>();
     final isDelivery = ctrl.activeTab == CheckoutTab.delivery;
-    final grandTotal = cart.total + ctrl.deliveryFee;
 
     return Scaffold(
       backgroundColor: _bg,
@@ -187,7 +186,7 @@ class _DeliveryContent extends StatelessWidget {
         _DeliveryOptionTile(
           label:      'Eco',
           subtitle:   '~40 mins',
-          fee:        'RM 2.00',
+          fee:        'RM 2',
           value:      DeliveryOption.eco,
           groupValue: ctrl.deliveryOption,
           onChanged:  ctrl.setDeliveryOption,
@@ -198,7 +197,7 @@ class _DeliveryContent extends StatelessWidget {
         _DeliveryOptionTile(
           label:      'Standard',
           subtitle:   '~20 mins',
-          fee:        'RM 4.00',
+          fee:        'RM 4',
           value:      DeliveryOption.standard,
           groupValue: ctrl.deliveryOption,
           onChanged:  ctrl.setDeliveryOption,
@@ -209,7 +208,7 @@ class _DeliveryContent extends StatelessWidget {
         _DeliveryOptionTile(
           label:      'Fast',
           subtitle:   '~10 mins',
-          fee:        'RM 8.00',
+          fee:        'RM 8',
           value:      DeliveryOption.fast,
           groupValue: ctrl.deliveryOption,
           onChanged:  ctrl.setDeliveryOption,
@@ -220,7 +219,7 @@ class _DeliveryContent extends StatelessWidget {
         _DeliveryOptionTile(
           label:      'Order For Later',
           subtitle:   'Choose your preferred time',
-          fee:        'RM 4.00',
+          fee:        'RM 4',
           value:      DeliveryOption.orderLater,
           groupValue: ctrl.deliveryOption,
           onChanged:  ctrl.setDeliveryOption,
@@ -659,7 +658,7 @@ class _BottomBar extends StatelessWidget {
               children: [
                 const Text('Delivery Fee',
                     style: TextStyle(fontSize: 12, color: Color(0xFF8A8A8A))),
-                Text('RM ${deliveryFee.toStringAsFixed(2)}',
+                Text('RM ${deliveryFee % 1 == 0 ? deliveryFee.toInt().toString() : deliveryFee.toStringAsFixed(2)}',
                     style: const TextStyle(
                         fontSize: 12, color: Color(0xFF8A8A8A))),
               ],
@@ -674,8 +673,8 @@ class _BottomBar extends StatelessWidget {
                   const Text('Total',
                       style: TextStyle(
                           fontSize: 11, color: Color(0xFF8A8A8A))),
-                  Text(
-                    'RM ${grandTotal.toStringAsFixed(2)}',
+                   Text(
+                    'RM ${grandTotal % 1 == 0 ? grandTotal.toInt().toString() : grandTotal.toStringAsFixed(2)}',
                     style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 15,

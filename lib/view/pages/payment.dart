@@ -170,7 +170,7 @@ class _PaymentView extends StatelessWidget {
                         ),
                       )
                     : Text(
-                        'PAY RM ${cart.total.toStringAsFixed(2)}',
+                        'PAY RM ${cart.total % 1 == 0 ? cart.total.toInt().toString() : cart.total.toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
@@ -384,7 +384,7 @@ class _OrderSummaryCard extends StatelessWidget {
             ),
           ),
           Text(
-            'RM ${total.toStringAsFixed(2)}',
+            'RM ${total % 1 == 0 ? total.toInt().toString() : total.toStringAsFixed(2)}',
             style: const TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 18,

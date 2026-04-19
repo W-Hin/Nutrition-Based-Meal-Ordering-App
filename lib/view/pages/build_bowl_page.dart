@@ -319,83 +319,57 @@ class _IngredientCard extends StatelessWidget {
                 ),
               ],
             ),
-            child: Stack(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-                        child: ingredient.imageUrl.startsWith('http')
-                          ? Image.network(
-                              ingredient.imageUrl,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                color: Colors.grey[100],
-                                child: const Icon(Icons.rice_bowl, color: Colors.grey),
-                              ),
-                            )
-                          : Image.asset(
-                              ingredient.imageUrl,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                color: Colors.grey[100],
-                                child: const Icon(Icons.rice_bowl, color: Colors.grey),
-                              ),
-                            ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            ingredient.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                    child: ingredient.imageUrl.startsWith('http')
+                      ? Image.network(
+                          ingredient.imageUrl,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: Colors.grey[100],
+                            child: const Icon(Icons.rice_bowl, color: Colors.grey),
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Text('${ingredient.calories} cal', style: TextStyle(color: Colors.grey[500], fontSize: 11)),
-                              const SizedBox(width: 4),
-                              _NutritionInfoIcon(ingredient: ingredient),
-                              const Spacer(),
-                              Text('RM ${ingredient.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                if (isSoldOut)
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFBF5D32),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'SOLD OUT',
-                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        )
+                      : Image.asset(
+                          ingredient.imageUrl,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: Colors.grey[100],
+                            child: const Icon(Icons.rice_bowl, color: Colors.grey),
                           ),
                         ),
-                      ),
-                    ),
                   ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        ingredient.name,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Text('${ingredient.calories} cal', style: TextStyle(color: Colors.grey[500], fontSize: 11)),
+                          const SizedBox(width: 4),
+                          _NutritionInfoIcon(ingredient: ingredient),
+                          const Spacer(),
+                          Text('RM ${ingredient.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -472,10 +446,7 @@ class _ProteinTile extends StatelessWidget {
                         const SizedBox(width: 4),
                         _NutritionInfoIcon(ingredient: ingredient),
                         const Spacer(),
-                        if (isSoldOut)
-                          const Text('SOLD OUT', style: TextStyle(color: Color(0xFFBF5D32), fontWeight: FontWeight.bold, fontSize: 12))
-                        else
-                          Text('RM ${ingredient.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Text('RM ${ingredient.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ],
@@ -605,10 +576,7 @@ class _SimpleTile extends StatelessWidget {
                           const SizedBox(width: 4),
                           _NutritionInfoIcon(ingredient: ingredient),
                           const Spacer(),
-                          if (isSoldOut)
-                            const Text('SOLD OUT', style: TextStyle(color: Color(0xFFBF5D32), fontWeight: FontWeight.bold, fontSize: 12))
-                          else
-                            Text('RM ${ingredient.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Text('RM ${ingredient.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ],

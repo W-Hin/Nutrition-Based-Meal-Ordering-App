@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../model/meal_model.dart';
 import 'supabase_conn.dart';
 

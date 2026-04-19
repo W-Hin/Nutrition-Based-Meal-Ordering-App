@@ -705,7 +705,7 @@ class _ItemDetailsCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Text('RM ${item.price.toStringAsFixed(2)}',
+                Text('RM ${item.price % 1 == 0 ? item.price.toInt().toString() : item.price.toStringAsFixed(2)}',
                     style: const TextStyle(
                         fontWeight: FontWeight.w600, fontSize: 13)),
               ],
@@ -721,7 +721,7 @@ class _ItemDetailsCard extends StatelessWidget {
                     style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A))),
                 const SizedBox(height: 4),
                 Text(
-                  'Total ${order.items.length} item(s): RM ${order.total.toStringAsFixed(2)}',
+                  'Total ${order.items.length} item(s): RM ${order.total % 1 == 0 ? order.total.toInt().toString() : order.total.toStringAsFixed(2)}',
                   style: const TextStyle(
                       fontWeight: FontWeight.w800, fontSize: 14),
                 ),

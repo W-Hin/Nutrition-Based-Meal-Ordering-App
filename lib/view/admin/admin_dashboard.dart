@@ -3,10 +3,6 @@ import 'package:flutter/material.dart';
 class AdminDashboardPage extends StatelessWidget {
   const AdminDashboardPage({super.key});
 
-  static const _green      = Color(0xFF1E4620);
-  static const _lightGreen = Color(0xFFB5CC30);
-  static const _terracotta = Color(0xFFD95F2B);
-
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(

@@ -102,7 +102,7 @@ class _CartItemCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'RM${item.price.toStringAsFixed(2)}',
+                  'RM${item.price % 1 == 0 ? item.price.toInt().toString() : item.price.toStringAsFixed(2)}',
                   style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
@@ -307,7 +307,7 @@ class _Row extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: style),
-        Text('RM ${value.toStringAsFixed(2)}', style: style),
+        Text('RM ${value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(2)}', style: style),
       ],
     );
   }

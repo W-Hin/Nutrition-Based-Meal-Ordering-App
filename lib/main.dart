@@ -202,19 +202,19 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    const HomeDashboardPage(),
-    const MenuPage(),
-    const MyOrdersPage(),
-    const ProfilePage(),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final List<Widget> pages = [
+      const HomeDashboardPage(),
+      MenuPage(onBack: () => setState(() => _selectedIndex = 0)),
+      const MyOrdersPage(),
+      const ProfilePage(),
+    ];
+
     return Scaffold(
       body: Stack(
         children: [
-          IndexedStack(index: _selectedIndex, children: _pages),
+          IndexedStack(index: _selectedIndex, children: pages),
           Positioned(
             top: 48,
             right: 16,

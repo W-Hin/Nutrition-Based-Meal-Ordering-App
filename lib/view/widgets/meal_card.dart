@@ -4,6 +4,7 @@ import '../../model/cart_item.dart';
 import '../../controller/cart_controller.dart';
 import 'package:provider/provider.dart';
 import 'nutrition_dialog.dart';
+import '../../controller/store_controller.dart';
 
 class MealCard extends StatelessWidget {
   final Meal meal;
@@ -54,6 +55,7 @@ class MealCard extends StatelessWidget {
                   // Title and Price
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: Text(
@@ -66,7 +68,7 @@ class MealCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'RM ${meal.price.toStringAsFixed(0)}',
+                        'RM ${meal.price % 1 == 0 ? meal.price.toInt().toString() : meal.price.toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -80,22 +82,24 @@ class MealCard extends StatelessWidget {
                   // Description
                   Text(
                     meal.description,
+                    textAlign: TextAlign.justify,
                     style: TextStyle(color: Colors.grey[700], height: 1.4, fontSize: 14),
                   ),
                   const SizedBox(height: 16),
                   
-                  // Dietary and Category Tags (Simple Text as in screenshot)
-                  Row(
+                  // Dietary and Category Tags
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
                     children: [
-                      Text(
-                        meal.dietaryPreferences.isNotEmpty ? meal.dietaryPreferences.first : '',
+                      ...meal.dietaryPreferences.map((pref) => Text(
+                        pref,
                         style: const TextStyle(color: Colors.green, fontSize: 13, fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(width: 24),
-                      Text(
-                        meal.categories.isNotEmpty ? meal.categories.first : '',
+                      )),
+                      ...meal.categories.map((cat) => Text(
+                        cat,
                         style: const TextStyle(color: Colors.blueAccent, fontSize: 13, fontWeight: FontWeight.w500),
-                      ),
+                      )),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -120,33 +124,40 @@ class MealCard extends StatelessWidget {
                   // Add to Cart Button
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: !isSoldOut ? () {
-                        final cartController = Provider.of<CartController>(context, listen: false);
-                        cartController.addItem(CartItem(
-                          name: meal.name,
-                          price: meal.price,
-                          addOns: [],
-                          quantity: 1,
-                        ));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${meal.name} added to cart!'),
-                            duration: const Duration(seconds: 1),
+                    child: Consumer<StoreController>(
+                      builder: (context, storeCtrl, _) {
+                        final isClosed = !(storeCtrl.selectedStore?.isOpen ?? true);
+                        final isDisabled = isSoldOut || isClosed;
+                        
+                        return ElevatedButton(
+                          onPressed: !isDisabled ? () {
+                            final cartController = Provider.of<CartController>(context, listen: false);
+                            cartController.addItem(CartItem(
+                              name: meal.name,
+                              price: meal.price,
+                              addOns: [],
+                              quantity: 1,
+                            ));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${meal.name} added to cart!'),
+                                duration: const Duration(seconds: 1),
+                              ),
+                            );
+                          } : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: !isDisabled ? const Color(0xFFABC270) : Colors.grey[300],
+                            foregroundColor: const Color(0xFF1E4620),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            isClosed ? 'Store Closed' : (!isSoldOut ? 'Add to Cart' : 'Out of Stock'), 
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
                           ),
                         );
-                      } : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: !isSoldOut ? const Color(0xFFABC270) : Colors.grey[300],
-                        foregroundColor: const Color(0xFF1E4620),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        !isSoldOut ? 'Add to Cart' : 'Out of Stock', 
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
-                      ),
+                      },
                     ),
                   ),
                 ],

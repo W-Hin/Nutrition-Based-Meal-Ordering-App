@@ -9,6 +9,10 @@
     </array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs access to location when open to help you find the nearest stores and calculate delivery distances.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>This app needs access to location to provide a better shopping experience and distance-based store recommendations.</string>
 	<key>CFBundleDisplayName</key>
 	<string>Nutrition Based Meal Ordering App</string>
 	<key>CFBundleExecutable</key>

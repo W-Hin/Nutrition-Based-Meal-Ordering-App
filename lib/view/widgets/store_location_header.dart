@@ -36,15 +36,40 @@ class StoreLocationHeader extends StatelessWidget {
                       'Ordering From Store',
                       style: TextStyle(fontSize: 10, color: Colors.grey),
                     ),
-                    Text(
-                      selectedStore?.name ?? 'Select a Store',
-                      style: const TextStyle(
-                        fontSize: 15, 
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E4620),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            selectedStore?.name ?? 'Select a Store',
+                            style: const TextStyle(
+                              fontSize: 15, 
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E4620),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (selectedStore != null && !selectedStore.isOpen)
+                          Container(
+                            margin: const EdgeInsets.only(left: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.red[50],
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.red[200]!),
+                            ),
+                            child: const Text(
+                              'Closed',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),

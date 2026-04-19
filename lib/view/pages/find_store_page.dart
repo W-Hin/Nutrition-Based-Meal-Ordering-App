@@ -34,12 +34,7 @@ class _FindStorePageState extends State<FindStorePage> {
         title: const Text('Find Store', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF1E4620),
         foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {},
-          ),
-        ],
+        centerTitle: true,
       ),
       body: Consumer<StoreController>(
         builder: (context, controller, _) {

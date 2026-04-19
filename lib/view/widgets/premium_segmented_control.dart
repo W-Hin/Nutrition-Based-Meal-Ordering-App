@@ -33,10 +33,10 @@ class PremiumSegmentedControl extends StatelessWidget {
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 250),
                 curve: Curves.easeInOut,
-                left: selectedIndex * itemWidth,
-                top: 0,
-                bottom: 0,
-                width: itemWidth,
+                left: selectedIndex * itemWidth + 6,
+                top: 2,
+                bottom: 2,
+                width: itemWidth - 4,
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -85,18 +85,6 @@ class PremiumSegmentedControl extends StatelessWidget {
                   );
                 }),
               ),
-
-              // Divider
-              if (options.length == 2)
-                IgnorePointer(
-                  child: Center(
-                    child: Container(
-                      width: 1,
-                      height: 18,
-                      color: const Color(0xFFC4C1B6),
-                    ),
-                  ),
-                ),
             ],
           );
         },

@@ -4,6 +4,7 @@ import '../../model/store_model.dart';
 import '../../controller/store_controller.dart';
 import '../../model/meal_model.dart';
 import '../../service/meal_service.dart';
+import '../../service/location_service.dart';
 
 class StoreDetailBottomSheet extends StatelessWidget {
   final Store store;
@@ -85,9 +86,22 @@ class StoreDetailBottomSheet extends StatelessWidget {
                               children: [
                                 const Icon(Icons.star, color: Colors.amber, size: 16),
                                 const SizedBox(width: 4),
-                                Text(
-                                  '${store.rating} • ${store.distanceKm} km',
-                                  style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w600, fontSize: 13),
+                                Consumer<StoreController>(
+                                  builder: (context, storeCtrl, _) {
+                                    double? distance;
+                                    if (storeCtrl.userPosition != null) {
+                                      distance = LocationService.calculateDistance(
+                                        storeCtrl.userPosition!.latitude,
+                                        storeCtrl.userPosition!.longitude,
+                                        store.latitude,
+                                        store.longitude,
+                                      ) / 1000;
+                                    }
+                                    return Text(
+                                      '${store.rating} • ${distance?.toStringAsFixed(1) ?? store.distanceKm.toStringAsFixed(1)} km',
+                                      style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w600, fontSize: 13),
+                                    );
+                                  },
                                 ),
                               ],
                             ),
@@ -183,7 +197,7 @@ class StoreDetailBottomSheet extends StatelessWidget {
                                   const SizedBox(height: 8),
                                   Row(
                                     children: [
-                                      Text('RM ${meal.price.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                      Text('RM ${meal.price % 1 == 0 ? meal.price.toInt().toString() : meal.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                       const SizedBox(width: 12),
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -252,9 +266,26 @@ class StoreDetailBottomSheet extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          Provider.of<StoreController>(context, listen: false).selectStore(store);
-                          Navigator.pop(context); // Close sheet
-                          Navigator.pop(context); // Back to menu
+                          final storeCtrl = Provider.of<StoreController>(context, listen: false);
+                          final userPos = storeCtrl.userPosition;
+
+                          if (userPos != null) {
+                            final distance = LocationService.calculateDistance(
+                              userPos.latitude,
+                              userPos.longitude,
+                              store.latitude,
+                              store.longitude,
+                            );
+
+                            // Warning threshold: 5km
+                            if (distance > 5000) {
+                              _showFarStoreWarning(context, distance / 1000);
+                              return;
+                            }
+                          }
+
+                          // Standard selection logic
+                          _completeStoreSelection(context);
                         },
                         icon: const Icon(Icons.shopping_basket),
                         label: const Text('Order from this Store', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -311,6 +342,54 @@ class StoreDetailBottomSheet extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _completeStoreSelection(BuildContext context) {
+    Provider.of<StoreController>(context, listen: false).selectStore(store);
+    Navigator.pop(context); // Close bottom sheet
+    Navigator.pop(context, true); // Close the FindStorePage (true can be used to indicate success if needed)
+  }
+
+  void _showFarStoreWarning(BuildContext context, double distanceKm) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            SizedBox(width: 8),
+            Text(
+              'Store is a bit far',
+              style: TextStyle(color: Color(0xFF1E4620), fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Text(
+          'This store is approximately ${distanceKm.toStringAsFixed(1)} km away from you. '
+          'There might be a closer branch available. Are you sure you want to order from here anyway?',
+          style: const TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Go Back', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              _completeStoreSelection(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1E4620),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Proceed Anyway'),
           ),
         ],
       ),

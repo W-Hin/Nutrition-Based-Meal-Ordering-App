@@ -48,16 +48,19 @@ class Meal {
   });
 
   // Getter for backward compatibility if needed, though better to use fields
-  Map<String, String> get nutritionData => {
-    'Calories': '${calories.toStringAsFixed(0)} cal',
-    'Protein': '${protein.toStringAsFixed(1)} g',
-    'Carbs': '${carbs.toStringAsFixed(1)} g',
-    'Fat': '${fat.toStringAsFixed(1)} g',
-    'Fiber': '${fiber.toStringAsFixed(1)} g',
-    'Sugar': '${sugar.toStringAsFixed(1)} g',
-    'Sodium': '${sodium.toStringAsFixed(0)} mg',
-    'Cholesterol': '${cholesterol.toStringAsFixed(0)} mg',
-  };
+  // Getter to return only non-zero nutrition data
+  Map<String, String> get nutritionData {
+    final data = <String, String>{};
+    if (calories > 0)    data['Calories']    = '${calories.toStringAsFixed(0)} cal';
+    if (protein > 0)     data['Protein']     = '${protein.toStringAsFixed(1)} g';
+    if (carbs > 0)       data['Carbs']       = '${carbs.toStringAsFixed(1)} g';
+    if (fat > 0)         data['Fat']         = '${fat.toStringAsFixed(1)} g';
+    if (fiber > 0)       data['Fiber']       = '${fiber.toStringAsFixed(1)} g';
+    if (sugar > 0)       data['Sugar']       = '${sugar.toStringAsFixed(1)} g';
+    if (sodium > 0)      data['Sodium']      = '${sodium.toStringAsFixed(0)} mg';
+    if (cholesterol > 0) data['Cholesterol'] = '${cholesterol.toStringAsFixed(0)} mg';
+    return data;
+  }
 
   // Helper to check if meal matches a category
   bool hasCategory(String category) {
@@ -118,7 +121,7 @@ class Meal {
 
   factory Meal.fromMap(Map<String, dynamic> map) {
     return Meal(
-      id:          map['food_id'], // Matches 'food_id' in dashboard
+      id:          map['food_id'], 
       name:        map['name'] ?? '',
       price:       (map['price'] ?? 0).toDouble(),
       description: map['description'] ?? '',
@@ -130,12 +133,12 @@ class Meal {
       calories:    (map['calories'] ?? 0).toDouble(),
       protein:     (map['protein'] ?? 0).toDouble(),
       carbs:       (map['carbs'] ?? 0).toDouble(),
-      fat:         (map['fats'] ?? 0).toDouble(), // Matches 'fats' in dashboard
+      fat:         (map['fats'] ?? 0).toDouble(), 
       fiber:       (map['fiber'] ?? 0).toDouble(),
       sugar:       (map['sugar'] ?? 0).toDouble(),
       sodium:      (map['sodium'] ?? 0).toDouble(),
       cholesterol: (map['cholesterol'] ?? 0).toDouble(),
-      allergens:   List<String>.from(map['allergen'] ?? []), // Matches 'allergen' in dashboard
+      allergens:   List<String>.from(map['allergen'] ?? []), 
       remarks:     map['remarks'] ?? '',
       storeId:     map['store_id']?.toString() ?? '2', // Default to Gurney Plaza if missing
     );
@@ -154,12 +157,12 @@ class Meal {
       'calories':            calories,
       'protein':             protein,
       'carbs':               carbs,
-      'fats':                fat, // Maps back to 'fats'
+      'fats':                fat, 
       'fiber':               fiber,
       'sugar':               sugar,
       'sodium':              sodium,
       'cholesterol':         cholesterol,
-      'allergen':            allergens, // Maps back to 'allergen'
+      'allergen':            allergens, 
       'remarks':             remarks,
       'store_id':            storeId,
     };

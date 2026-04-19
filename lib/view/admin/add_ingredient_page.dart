@@ -199,6 +199,7 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
       String imageUrl = _currentImageUrl ?? '';
       if (_imageFile != null) {
         imageUrl = await IngredientService.uploadImage(_imageFile!);
+        if (!mounted) return;
       }
 
       final ingredient = Ingredient(
@@ -223,6 +224,7 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
       } else {
         saved = await IngredientService.addIngredient(ingredient);
       }
+      if (!mounted) return;
 
       if (mounted) Navigator.pop(context, saved);
     } catch (e) {
@@ -243,7 +245,8 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
         final shouldPop = await _showDiscardDialog();
-        if (shouldPop && mounted) {
+        if (!context.mounted) return;
+        if (shouldPop) {
           Navigator.of(context).pop();
         }
       },
@@ -259,7 +262,8 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
             icon: const Icon(Icons.arrow_back),
             onPressed: () async {
               final shouldPop = await _showDiscardDialog();
-              if (shouldPop && mounted) {
+              if (!context.mounted) return;
+              if (shouldPop) {
                 Navigator.pop(context);
               }
             },
@@ -291,17 +295,17 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _buildNutritionInput(_proteinController, 'Protein (g)')),
+                Expanded(child: _buildNutritionInput(_proteinController, 'Protein (g)', '10.5')),
                 const SizedBox(width: 12),
-                Expanded(child: _buildNutritionInput(_carbsController, 'Carbs (g)')),
+                Expanded(child: _buildNutritionInput(_carbsController, 'Carbs (g)', '20.0')),
               ],
             ),
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _buildNutritionInput(_fatController, 'Fat (g)')),
+                Expanded(child: _buildNutritionInput(_fatController, 'Fat (g)', '5.2')),
                 const SizedBox(width: 12),
-                Expanded(child: _buildNutritionInput(_fiberController, 'Fiber (g)')),
+                Expanded(child: _buildNutritionInput(_fiberController, 'Fiber (g)', '3.5')),
               ],
             ),
             const SizedBox(height: 24),
@@ -317,7 +321,7 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
                 onPressed: (_isSaving || !_isValid) ? null : _save,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _lightGreen,
-                  disabledBackgroundColor: _lightGreen.withOpacity(0.5),
+                  disabledBackgroundColor: _lightGreen.withValues(alpha: 0.5),
                   foregroundColor: _green,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
@@ -372,12 +376,12 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
     );
   }
 
-  Widget _buildNutritionInput(TextEditingController controller, String label) {
+  Widget _buildNutritionInput(TextEditingController controller, String label, String hint) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildLabel(label),
-        _buildTextField(controller, '0.0', keyboardType: TextInputType.number),
+        _buildTextField(controller, hint, keyboardType: TextInputType.number),
       ],
     );
   }

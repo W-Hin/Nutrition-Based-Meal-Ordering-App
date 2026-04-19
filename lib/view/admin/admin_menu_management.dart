@@ -10,6 +10,8 @@ import 'add_ingredient_page.dart';
 import '../../service/store_service.dart';
 import '../../controller/store_controller.dart';
 import 'package:provider/provider.dart';
+import '../widgets/nutrition_dialog.dart';
+import '../widgets/ingredient_detail_dialog.dart';
 
 class AdminMenuManagementPage extends StatefulWidget {
   final Store? store;
@@ -206,6 +208,25 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
         });
         _showSuccess('${result.name} updated');
       }
+    }
+  }
+
+  void _viewItem(int index) {
+    if (_selectedMode == 0) {
+      showDialog(
+        context: context,
+        builder: (context) => NutritionDialog(
+          meal: _items[index],
+          showAddToCart: false, // Don't show Add to Cart for Admin view
+        ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => IngredientDetailDialog(
+          ingredient: _ingredients[index],
+        ),
+      );
     }
   }
 
@@ -561,10 +582,11 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
             price: meal.price,
             imageUrl: meal.imageUrl,
             isAvailable: meal.isAvailable,
-            dietaryLabel: meal.dietaryPreferences.isNotEmpty ? meal.dietaryPreferences.first : null,
-            categoryLabel: meal.categories.isNotEmpty ? meal.categories.first : null,
+            dietaryPreferences: meal.dietaryPreferences,
+            categories: meal.categories,
             onDelete: () => _deleteItem(listIndex),
             onEdit: () => _editItem(listIndex),
+            onTap: () => _viewItem(listIndex),
             onToggleAvailability: (val) => _toggleAvailability(listIndex, val),
           );
         } else {
@@ -578,6 +600,7 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
             isAvailable: ing.isAvailable,
             onDelete: () => _deleteItem(listIndex),
             onEdit: () => _editItem(listIndex),
+            onTap: () => _viewItem(listIndex),
             onToggleAvailability: (val) => _toggleAvailability(listIndex, val),
           );
         }
@@ -599,9 +622,7 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
 }
 
 
-// ── Menu Item Card ─────────────────────────────────────────────────────────────
-
-// ── Reusable Admin Card ─────────────────────────────────────────────────────────────
+// Menu Item card
 
 class _ItemCard extends StatelessWidget {
   final String title;
@@ -609,10 +630,11 @@ class _ItemCard extends StatelessWidget {
   final double price;
   final String imageUrl;
   final bool isAvailable;
-  final String? dietaryLabel;
-  final String? categoryLabel;
+  final List<String> dietaryPreferences;
+  final List<String> categories;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
+  final VoidCallback onTap;
   final Function(bool) onToggleAvailability;
 
   static const _darkGreen  = Color(0xFF1E4620);
@@ -626,10 +648,11 @@ class _ItemCard extends StatelessWidget {
     required this.price,
     required this.imageUrl,
     required this.isAvailable,
-    this.dietaryLabel,
-    this.categoryLabel,
+    this.dietaryPreferences = const [],
+    this.categories = const [],
     required this.onDelete,
     required this.onEdit,
+    required this.onTap,
     required this.onToggleAvailability,
   });
 
@@ -642,75 +665,92 @@ class _ItemCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Image Section ──
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: imageUrl.isEmpty 
-              ? _buildPlaceholder()
-              : imageUrl.startsWith('http')
-                ? Image.network(
-                    imageUrl,
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
-                  )
-                : Image.asset(
-                    imageUrl,
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
+          // ── Clickable Area ──
+          InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ── Image Section ──
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: imageUrl.isEmpty 
+                    ? _buildPlaceholder()
+                    : imageUrl.startsWith('http')
+                      ? Image.network(
+                          imageUrl,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
+                        )
+                      : Image.asset(
+                          imageUrl,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
+                        ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: _darkGreen,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            'RM ${price % 1 == 0 ? price.toInt().toString() : price.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: _darkGreen,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        subtitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: Colors.grey[700], height: 1.4, fontSize: 13),
+                      ),
+                      const SizedBox(height: 12),
+                      if (dietaryPreferences.isNotEmpty || categories.isNotEmpty) 
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: [
+                            ...dietaryPreferences.map((pref) => _Tag(text: pref, color: const Color(0xFF4CAF50))),
+                            ...categories.map((cat) => _Tag(text: cat, color: const Color(0xFF3F51B5))),
+                          ],
+                        ),
+                    ],
                   ),
+                ),
+              ],
+            ),
           ),
 
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: _darkGreen,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      'RM ${price.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: _darkGreen,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  subtitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: Colors.grey[700], height: 1.4, fontSize: 13),
-                ),
-                const SizedBox(height: 12),
-
-                if (dietaryLabel != null || categoryLabel != null)
-                  Row(
-                    children: [
-                      if (dietaryLabel != null)
-                        _Tag(text: dietaryLabel!, color: const Color(0xFF4CAF50)),
-                      if (categoryLabel != null)
-                        _Tag(text: categoryLabel!, color: const Color(0xFF3F51B5)),
-                    ],
-                  ),
-                
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -727,7 +767,7 @@ class _ItemCard extends StatelessWidget {
                       scale: 0.8,
                       child: Switch(
                         value: isAvailable,
-                        activeColor: _darkGreen,
+                        activeThumbColor: _darkGreen,
                         onChanged: onToggleAvailability,
                       ),
                     ),

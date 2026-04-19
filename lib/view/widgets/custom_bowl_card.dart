@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../pages/build_bowl_page.dart';
+import '../../controller/store_controller.dart';
 
 class CustomBowlCard extends StatelessWidget {
   const CustomBowlCard({super.key});
@@ -42,36 +44,42 @@ class CustomBowlCard extends StatelessWidget {
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => BuildYourBowlPage()),
+            child: Consumer<StoreController>(
+              builder: (context, storeCtrl, _) {
+                final isClosed = !(storeCtrl.selectedStore?.isOpen ?? true);
+
+                return ElevatedButton(
+                  onPressed: isClosed ? null : () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const BuildYourBowlPage()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isClosed ? Colors.grey[300] : const Color(0xFFABC270),
+                    foregroundColor: isClosed ? Colors.grey[600] : const Color(0xFF1E4620),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(isClosed ? Icons.lock_outline : Icons.add, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        isClosed ? 'Store Closed' : 'Build Your Bowl',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFABC270),
-                foregroundColor: const Color(0xFF1E4620),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Build Your Bowl',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
         ],

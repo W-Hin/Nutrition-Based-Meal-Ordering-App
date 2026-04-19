@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../controller/profile_controller.dart';
+import '../../controller/store_controller.dart';
 import '../../service/supabase_conn.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -28,6 +29,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage>
     _tab = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProfileController>().loadDashboardData();
+      context.read<StoreController>().initLocationBasedStore();
     });
   }
 
@@ -55,7 +57,6 @@ class _HomeDashboardPageState extends State<HomeDashboardPage>
   Widget build(BuildContext context) {
     final ctrl    = context.watch<ProfileController>();
     final profile = ctrl.profile;
-    final user    = supabase.auth.currentUser;
 
     return Scaffold(
       backgroundColor: _cream,

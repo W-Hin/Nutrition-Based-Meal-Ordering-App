@@ -24,7 +24,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
 
   // Form State
   final _nameController = TextEditingController();
-  String? _selectedCategory;
+  final Map<String, bool> _categorySelections = {};
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
   final _servingSizeController = TextEditingController();
@@ -71,10 +71,21 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
   @override
   void initState() {
     super.initState();
+    
+    // Initialize category selections map with all categories as false
+    for (var cat in _categories) {
+      _categorySelections[cat] = false;
+    }
+
     if (widget.initialMeal != null) {
       final meal = widget.initialMeal!;
       _nameController.text = meal.name;
-      _selectedCategory = meal.categories.isNotEmpty ? meal.categories.first : null;
+      
+      // Update with existing category data
+      for (var cat in _categories) {
+        _categorySelections[cat] = meal.categories.contains(cat);
+      }
+      
       _descriptionController.text = meal.description;
       _priceController.text = meal.price.toStringAsFixed(2);
       _servingSizeController.text = meal.servingSize;
@@ -89,17 +100,17 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
       _cholesterolController.text = meal.cholesterol.toStringAsFixed(0);
 
       // Populate dietary state
-      meal.dietaryPreferences.forEach((pref) {
+      for (var pref in meal.dietaryPreferences) {
         if (_dietaryRestrictions.containsKey(pref)) {
           _dietaryRestrictions[pref] = true;
         }
-      });
+      }
       // Populate allergens
-      meal.allergens.forEach((allergen) {
+      for (var allergen in meal.allergens) {
         if (_allergens.containsKey(allergen)) {
           _allergens[allergen] = true;
         }
-      });
+      }
 
       _remarksController.text = meal.remarks;
       _currentImageUrl = meal.imageUrl;
@@ -127,7 +138,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
 
   bool get _isStep1Valid {
     return _nameController.text.isNotEmpty &&
-           _selectedCategory != null &&
+           _categorySelections.values.contains(true) &&
            _priceController.text.isNotEmpty;
   }
 
@@ -251,7 +262,10 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
         description: _descriptionController.text,
         price: double.tryParse(_priceController.text) ?? 0.0,
         imageUrl: finalImageUrl,
-        categories: [_selectedCategory ?? 'Other'],
+        categories: _categorySelections.entries
+            .where((e) => e.value)
+            .map((e) => e.key)
+            .toList(),
         dietaryPreferences: _dietaryRestrictions.entries
             .where((e) => e.value)
             .map((e) => e.key)
@@ -276,8 +290,10 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
 
       final confirmed = await showDialog<bool>(
         context: context,
-        builder: (context) => MealConfirmationDialog(meal: meal),
+        builder: (dialogContext) => MealConfirmationDialog(meal: meal),
       );
+
+      if (!context.mounted) return;
 
       if (confirmed == true) {
         Meal savedMeal;
@@ -301,7 +317,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
   Future<bool> _showDiscardDialog() async {
     final bool? result = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actionsAlignment: MainAxisAlignment.center,
@@ -348,7 +364,8 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
         final shouldPop = await _showDiscardDialog();
-        if (shouldPop && mounted) {
+        if (!context.mounted) return;
+        if (shouldPop) {
           Navigator.of(context).pop();
         }
       },
@@ -363,7 +380,8 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
             icon: const Icon(Icons.arrow_back),
             onPressed: () async {
               final shouldPop = await _showDiscardDialog();
-              if (shouldPop && mounted) {
+              if (!context.mounted) return;
+              if (shouldPop) {
                 Navigator.pop(context);
               }
             },
@@ -396,8 +414,8 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
           _buildLabel('Item Name *'),
           _buildTextField(_nameController, 'e.g., Quinoa Power Bowl'),
           const SizedBox(height: 16),
-          _buildLabel('Category *'),
-          _buildCategoryDropdown(),
+          _buildLabel('Categories *'),
+          _buildCheckboxGrid(_categorySelections),
           const SizedBox(height: 16),
           _buildLabel('Description'),
           _buildTextField(_descriptionController, 'Describe your menu item...', maxLines: 3),
@@ -597,79 +615,6 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     );
   }
 
-  Widget _buildCategoryDropdown() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          isExpanded: true,
-          hint: const Text('Select Category', style: TextStyle(color: Color(0xFFC0C0C0), fontSize: 14)),
-          value: _selectedCategory,
-          items: _categories.map((cat) {
-            return DropdownMenuItem(
-              value: cat,
-              child: Text(cat, style: const TextStyle(fontSize: 14)),
-            );
-          }).toList(),
-          onChanged: (val) => setState(() => _selectedCategory = val),
-        ),
-      ),
-    );
-  }
-
-  void _deletePhoto() async {
-    final bool? confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete photo?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        content: const Text('Are you sure to delete and add a new photo?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD25432),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('Delete', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      final String? deletedUrl = _currentImageUrl;
-      setState(() {
-        _currentImageUrl = null;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Photo deleted'),
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(
-              label: 'Undo',
-              onPressed: () {
-                setState(() {
-                  _currentImageUrl = deletedUrl;
-                });
-              },
-            ),
-          ),
-        );
-      }
-    }
-  }
 
   Widget _buildPhotoPlaceholder() {
     if (_imageFile != null || _currentImageUrl != null) {

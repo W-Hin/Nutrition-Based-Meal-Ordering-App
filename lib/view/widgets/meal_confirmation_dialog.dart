@@ -53,7 +53,7 @@ class MealConfirmationDialog extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'RM ${meal.price.toStringAsFixed(0)}',
+                        'RM ${meal.price % 1 == 0 ? meal.price.toInt().toString() : meal.price.toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -97,10 +97,10 @@ class MealConfirmationDialog extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // ── Nutrition Facts ──
-                  _buildNutritionRow('Calories', '${meal.calories.toStringAsFixed(0)} cal'),
-                  _buildNutritionRow('Carbs', '${meal.carbs.toStringAsFixed(1)} g'),
-                  _buildNutritionRow('Protein', '${meal.protein.toStringAsFixed(1)} g'),
-                  _buildNutritionRow('Fat', '${meal.fat.toStringAsFixed(1)} g'),
+                  // ── Nutrition Facts ──
+                  ...meal.nutritionData.entries.map((entry) {
+                    return _buildNutritionRow(entry.key, entry.value);
+                  }),
 
                   const SizedBox(height: 16),
 
