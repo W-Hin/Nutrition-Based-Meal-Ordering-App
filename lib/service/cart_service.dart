@@ -2,7 +2,7 @@ import '../model/cart_item.dart';
 import 'supabase_conn.dart';
 
 class CartService {
-  String get _uid => supabase.auth.currentUser?.id ?? '';
+  String get _uid => supabase.auth.currentUser?.id ?? 'fc33ae36-657a-4055-b81e-f6fe3de23278';
 
   // ── Fetch all cart items for the current user ──────────────────────────────
   Future<List<CartItem>> fetchCart() async {

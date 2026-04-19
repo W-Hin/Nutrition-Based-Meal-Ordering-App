@@ -8,7 +8,7 @@ class OrderService {
     final orderResponse = await supabase
         .from('orders')
         .insert({
-      'user_id':        supabase.auth.currentUser?.id ?? 'test_user_ui_mode',
+      'user_id':        supabase.auth.currentUser?.id ?? 'fc33ae36-657a-4055-b81e-f6fe3de23278',
       'order_type':     order.orderType.name,
       'status':         order.status.name,
       'to_name':        order.toName,
@@ -18,10 +18,10 @@ class OrderService {
       'service_fee':    order.serviceFee,
       'payment_method': order.paymentMethod,
     })
-        .select('id')
+        .select('order_id')
         .single();
 
-    final orderId = orderResponse['id'] as String;
+    final orderId = orderResponse['order_id'].toString();
 
     // Insert all order items linked to that order
     await supabase.from('order_items').insert(
@@ -42,8 +42,8 @@ class OrderService {
   Future<Map<String, dynamic>> fetchOrder(String orderId) async {
     return await supabase
         .from('orders')
-        .select('*, order_items(*)')  // joins items in one call
-        .eq('id', orderId)
+        .select('*, order_items(*)')
+        .eq('order_id', orderId)   // ← was 'id'
         .single();
   }
 
@@ -60,8 +60,8 @@ class OrderService {
   Stream<Map<String, dynamic>> watchOrderStatus(String orderId) {
     return supabase
         .from('orders')
-        .stream(primaryKey: ['id'])
-        .eq('id', orderId)
+        .stream(primaryKey: ['order_id'])   // ← was ['id']
+        .eq('order_id', orderId)
         .map((rows) => rows.first);
   }
 
@@ -70,6 +70,6 @@ class OrderService {
     await supabase
         .from('orders')
         .update({'status': 'cancelled'})
-        .eq('id', orderId);
+        .eq('order_id', orderId);
   }
 }
