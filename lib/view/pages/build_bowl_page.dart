@@ -17,7 +17,6 @@ class _BuildYourBowlPageState extends State<BuildYourBowlPage> {
   @override
   void initState() {
     super.initState();
-    // Load ingredients from Supabase when the page opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final storeId = Provider.of<StoreController>(context, listen: false).selectedStore?.id ?? '2';
       Provider.of<BowlController>(context, listen: false).loadIngredients(storeId);
@@ -42,8 +41,8 @@ class _BuildYourBowlPageState extends State<BuildYourBowlPage> {
           ElevatedButton(
             onPressed: () {
               bowl.reset();
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Go back to menu
+              Navigator.pop(context);
+              Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFBF5D32),
@@ -73,29 +72,30 @@ class _BuildYourBowlPageState extends State<BuildYourBowlPage> {
               onPressed: () => _showExitConfirmationDialog(context, bowl),
             ),
           ),
-          body: bowl.isLoading 
-            ? const Center(child: CircularProgressIndicator(color: Color(0xFF1E4620)))
-            : bowl.error != null
-              ? Center(child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text('Error: ${bowl.error}'),
-                    ElevatedButton(
-                      onPressed: () {
-                        final storeId = Provider.of<StoreController>(context, listen: false).selectedStore?.id ?? '2';
-                        bowl.loadIngredients(storeId);
-                      },
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ))
+          body: bowl.isLoading
+              ? const Center(child: CircularProgressIndicator(color: Color(0xFF1E4620)))
+              : bowl.error != null
+              ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text('Error: ${bowl.error}'),
+                ElevatedButton(
+                  onPressed: () {
+                    final storeId = Provider.of<StoreController>(context, listen: false).selectedStore?.id ?? '2';
+                    bowl.loadIngredients(storeId);
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          )
               : Column(
-                  children: [
+            children: [
               const _ProgressBar(),
               const _StepLabels(),
-              
               Expanded(
                 child: Scrollbar(
                   thumbVisibility: true,
@@ -117,9 +117,7 @@ class _BuildYourBowlPageState extends State<BuildYourBowlPage> {
                         style: TextStyle(color: Colors.grey[700], fontSize: 16),
                       ),
                       const SizedBox(height: 20),
-                      
                       _buildStepContent(bowl),
-                      
                       const SizedBox(height: 20),
                     ],
                   ),
@@ -132,6 +130,7 @@ class _BuildYourBowlPageState extends State<BuildYourBowlPage> {
       },
     );
   }
+
   String _getStepInstruction(int step) {
     switch (step) {
       case 0: return 'Pick one base for your bowl';
@@ -328,24 +327,24 @@ class _IngredientCard extends StatelessWidget {
                       child: ClipRRect(
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
                         child: ingredient.imageUrl.startsWith('http')
-                          ? Image.network(
-                              ingredient.imageUrl,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                color: Colors.grey[100],
-                                child: const Icon(Icons.rice_bowl, color: Colors.grey),
-                              ),
-                            )
-                          : Image.asset(
-                              ingredient.imageUrl,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                color: Colors.grey[100],
-                                child: const Icon(Icons.rice_bowl, color: Colors.grey),
-                              ),
-                            ),
+                            ? Image.network(
+                          ingredient.imageUrl,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: Colors.grey[100],
+                            child: const Icon(Icons.rice_bowl, color: Colors.grey),
+                          ),
+                        )
+                            : Image.asset(
+                          ingredient.imageUrl,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: Colors.grey[100],
+                            child: const Icon(Icons.rice_bowl, color: Colors.grey),
+                          ),
+                        ),
                       ),
                     ),
                     Padding(
@@ -422,7 +421,7 @@ class _ProteinTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isSelected = quantity > 0;
     final bool isSoldOut = !ingredient.isAvailable;
-    
+
     return IgnorePointer(
       ignoring: isSoldOut,
       child: Opacity(
@@ -443,20 +442,20 @@ class _ProteinTile extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: ingredient.imageUrl.startsWith('http')
-                  ? Image.network(
-                      ingredient.imageUrl,
-                      width: 60,
-                      height: 40,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-                    )
-                  : Image.asset(
-                      ingredient.imageUrl,
-                      width: 60,
-                      height: 40,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-                    ),
+                    ? Image.network(
+                  ingredient.imageUrl,
+                  width: 60,
+                  height: 40,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                )
+                    : Image.asset(
+                  ingredient.imageUrl,
+                  width: 60,
+                  height: 40,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -482,7 +481,6 @@ class _ProteinTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              
               if (!isSoldOut) ...[
                 if (!isSelected)
                   GestureDetector(
@@ -576,20 +574,20 @@ class _SimpleTile extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: ingredient.imageUrl.startsWith('http')
-                    ? Image.network(
-                        ingredient.imageUrl,
-                        width: 60,
-                        height: 40,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-                      )
-                    : Image.asset(
-                        ingredient.imageUrl,
-                        width: 60,
-                        height: 40,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-                      ),
+                      ? Image.network(
+                    ingredient.imageUrl,
+                    width: 60,
+                    height: 40,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                  )
+                      : Image.asset(
+                    ingredient.imageUrl,
+                    width: 60,
+                    height: 40,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -689,7 +687,7 @@ class _BottomSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final bowl = Provider.of<BowlController>(context);
     final showButtons = bowl.currentStep != 0 || bowl.selectedBase != null;
-    
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -728,19 +726,19 @@ class _BottomSummary extends StatelessWidget {
                   else
                     const SizedBox.shrink(),
 
-                  // Next Button
+                  // Next / Add to Cart Button
                   ElevatedButton(
-                    onPressed: bowl.canGoNext ? () {
+                    onPressed: bowl.canGoNext
+                        ? () {
                       if (bowl.currentStep == bowl.steps.length - 1) {
                         _showCustomDetailsDialog(context, bowl);
                       } else {
                         bowl.nextStep();
                       }
-                    } : null,
+                    }
+                        : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: bowl.canGoNext 
-                          ? const Color(0xFFABC270) 
-                          : const Color(0xFFD9D9D9), 
+                      backgroundColor: bowl.canGoNext ? const Color(0xFFABC270) : const Color(0xFFD9D9D9),
                       foregroundColor: bowl.canGoNext ? const Color(0xFF1E4620) : Colors.white,
                       disabledBackgroundColor: const Color(0xFFD9D9D9),
                       disabledForegroundColor: Colors.white,
@@ -751,8 +749,8 @@ class _BottomSummary extends StatelessWidget {
                     child: Text(
                       bowl.currentStep == bowl.steps.length - 1 ? 'Add to Cart' : 'Next: ${bowl.steps[bowl.currentStep + 1]}',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold, 
-                        fontSize: 16, 
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
                         color: bowl.canGoNext ? const Color(0xFF1E4620) : Colors.black26,
                       ),
                     ),
@@ -760,9 +758,9 @@ class _BottomSummary extends StatelessWidget {
                 ],
               ),
             ),
-          
+
           const Divider(height: 1),
-          
+
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -778,10 +776,7 @@ class _BottomSummary extends StatelessWidget {
                       child: const Icon(Icons.local_fire_department, color: Color(0xFF4CAF50), size: 20),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Total Calorie',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                    ),
+                    const Text('Total Calorie', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                     const Spacer(),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -789,11 +784,7 @@ class _BottomSummary extends StatelessWidget {
                       children: [
                         Text(
                           '${bowl.totalCalories}',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF4CAF50),
-                          ),
+                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF4CAF50)),
                         ),
                         const SizedBox(width: 4),
                         const Text('calories', style: TextStyle(fontSize: 10, color: Colors.grey)),
@@ -813,18 +804,11 @@ class _BottomSummary extends StatelessWidget {
                       child: const Icon(Icons.payments, color: Color(0xFF1976D2), size: 20),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Total Amount',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                    ),
+                    const Text('Total Amount', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                     const Spacer(),
                     Text(
                       'RM ${bowl.totalPrice.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E4620),
-                      ),
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E4620)),
                     ),
                   ],
                 ),
@@ -874,12 +858,12 @@ class _BottomSummary extends StatelessWidget {
               const SizedBox(height: 8),
               _SummaryItem(title: 'Base', items: [bowl.selectedBase?.name ?? 'None']),
               _SummaryItem(
-                title: 'Protein', 
-                items: bowl.selectedProteins.entries.map((e) => '${e.key.name} x${e.value}').toList()
+                title: 'Protein',
+                items: bowl.selectedProteins.entries.map((e) => '${e.key.name} x${e.value}').toList(),
               ),
               _SummaryItem(
-                title: 'Veggies', 
-                items: bowl.selectedVeggies.entries.map((e) => '${e.key.name} x${e.value}').toList()
+                title: 'Veggies',
+                items: bowl.selectedVeggies.entries.map((e) => '${e.key.name} x${e.value}').toList(),
               ),
               _SummaryItem(title: 'Sauce', items: [bowl.selectedSauce?.name ?? 'No sauce']),
               const SizedBox(height: 20),
@@ -909,22 +893,41 @@ class _BottomSummary extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    final cart = Provider.of<CartController>(context, listen: false);
-                    List<String> details = [];
-                    details.add('Base: ${bowl.selectedBase!.name}');
-                    bowl.selectedProteins.forEach((k, v) => details.add('${k.name} x$v'));
-                    bowl.selectedVeggies.forEach((k, v) => details.add('${k.name} x$v'));
-                    if (bowl.selectedSauce != null) details.add('Sauce: ${bowl.selectedSauce!.name}');
+                    final cart    = Provider.of<CartController>(context, listen: false);
+                    final storeId = Provider.of<StoreController>(context, listen: false)
+                        .selectedStore?.id;
+
+                    // Human-readable add-ons list shown in cart UI
+                    final List<String> addOnsList = [
+                      'Base: ${bowl.selectedBase!.name}',
+                      ...bowl.selectedProteins.entries.map((e) => '${e.key.name} ×${e.value}'),
+                      ...bowl.selectedVeggies.entries.map((e) => '${e.key.name} ×${e.value}'),
+                      if (bowl.selectedSauce != null) 'Sauce: ${bowl.selectedSauce!.name}',
+                    ];
+
+                    // Structured data stored as jsonb in Supabase custom_details column
+                    final Map<String, dynamic> customDetails = {
+                      'base':     bowl.selectedBase!.name,
+                      'proteins': bowl.selectedProteins.map((k, v) => MapEntry(k.name, v)),
+                      'veggies':  bowl.selectedVeggies.map((k, v) => MapEntry(k.name, v)),
+                      'sauce':    bowl.selectedSauce?.name,
+                      'calories': bowl.totalCalories,
+                    };
 
                     cart.addItem(CartItem(
-                      name: 'Custom Bowl',
-                      price: bowl.totalPrice,
-                      addOns: details,
-                      quantity: 1,
+                      foodId:        null,       // no food_id for custom bowls
+                      storeId:       storeId,
+                      itemType:      'custom',
+                      name:          'Custom Bowl',
+                      price:         bowl.totalPrice,
+                      addOns:        addOnsList,
+                      customDetails: customDetails,
+                      quantity:      1,
                     ));
+
                     bowl.reset();
-                    Navigator.pop(context); // Close dialog
-                    Navigator.pop(context); // Go back to menu
+                    Navigator.pop(context); // close dialog
+                    Navigator.pop(context); // back to menu
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Custom Bowl added to cart!')),
                     );
@@ -962,10 +965,7 @@ class _NutritionTotalsInfo extends StatelessWidget {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Nutritional Info',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF1E4620)),
-                ),
+                const Text('Nutritional Info', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF1E4620))),
                 const SizedBox(height: 16),
                 _NutrientRow(label: 'Protein', value: '${totals['Protein']} g'),
                 _NutrientRow(label: 'Carbs', value: '${totals['Carbs']} g'),

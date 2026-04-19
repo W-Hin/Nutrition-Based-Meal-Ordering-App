@@ -1,83 +1,132 @@
 import 'package:flutter/material.dart';
 import '../model/cart_item.dart';
+import '../service/cart_service.dart';
 
 class CartController extends ChangeNotifier {
-  final List<CartItem> _items = [
-    // Placeholder data — replace with real data from your backend later
-    CartItem(
-      name: 'Caesar Salad with Chicken Bites',
-      price: 32.80,
-      addOns: ['+ No Add Ons'],
-      quantity: 3,
-    ),
-    CartItem(
-      name: 'Custom Meal Bowl',
-      price: 32.80,
-      addOns: [
-        'Brown Rice', 'Cherry Tomatoes',
-        'Chicken Breast (100g)', 'Onions',
-        'Minced Beef (100g)', 'Fresh Avocado',
-      ],
-      quantity: 3,
-    ),
-    CartItem(
-      name: 'Caesar Salad with Chicken Bites',
-      price: 32.80,
-      addOns: ['+ No Add Ons'],
-      quantity: 3,
-    ),
-    CartItem(
-      name: 'Caesar Salad with Chicken Bites',
-      price: 32.80,
-      addOns: [
-        'Cherry Tomatoes', 'Chicken Breast (150g)',
-        'Onions', 'Minced Beef (100g)', 'Fresh Avocado',
-      ],
-      quantity: 3,
-    ),
-  ];
+  final CartService _service = CartService();
 
-  // ── Read-only access ──────────────────────────────────────
+  List<CartItem> _items = [];
+  bool isLoading = false;
+  String? error;
+
+  // ── Read-only access ───────────────────────────────────────────────────────
   List<CartItem> get items => List.unmodifiable(_items);
 
-  int get totalItemCount =>
-      _items.fold(0, (sum, item) => sum + item.quantity);
+  int get totalItemCount => _items.fold(0, (sum, item) => sum + item.quantity);
 
-  double get subtotal =>
-      _items.fold(0, (sum, item) => sum + item.lineTotal);
+  double get subtotal => _items.fold(0.0, (sum, item) => sum + item.lineTotal);
 
   double get serviceFee => subtotal * 0.05;
 
   double get total => subtotal + serviceFee;
 
-  // ── Actions (called by View, notifies listeners) ──────────
-  void increment(int index) {
-    _items[index].quantity++;
+  // ── Load cart from Supabase ────────────────────────────────────────────────
+  Future<void> loadCart() async {
+    isLoading = true;
+    error = null;
     notifyListeners();
-  }
 
-  void decrement(int index) {
-    if (_items[index].quantity > 1) {
-      _items[index].quantity--;
-    } else {
-      _items.removeAt(index); // remove item when qty reaches 0
+    try {
+      _items = await _service.fetchCart();
+      debugPrint('[CartController] loadCart: ${_items.length} items loaded');
+    } catch (e) {
+      error = e.toString();
+      debugPrint('[CartController] loadCart ERROR: $e');
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
-    notifyListeners();
   }
 
-  void addItem(CartItem item) {
-    // If item already exists, just increment quantity
-    final existing = _items.where((e) => e.name == item.name).firstOrNull;
-    if (existing != null) {
-      existing.quantity++;
-    } else {
-      _items.add(item);
+  // ── Add item ───────────────────────────────────────────────────────────────
+  Future<void> addItem(CartItem item) async {
+    // Optimistic: show immediately in UI
+    _items.add(item);
+    notifyListeners();
+
+    try {
+      debugPrint('[CartController] addItem: inserting "${item.name}"...');
+      final saved = await _service.insertItem(item);
+      debugPrint('[CartController] addItem: success, id=${saved.cartItemId}');
+
+      final idx = _items.indexOf(item);
+      if (idx != -1) _items[idx] = saved;
+      error = null;
+    } catch (e) {
+      _items.remove(item);
+      error = e.toString();
+      debugPrint('[CartController] addItem ERROR: $e');
     }
+
     notifyListeners();
   }
 
-  void clearCart() {
+  // ── Increment quantity ─────────────────────────────────────────────────────
+  Future<void> increment(int index) async {
+    final item = _items[index];
+    item.quantity++;
+    notifyListeners();
+
+    if (item.cartItemId != null) {
+      try {
+        await _service.updateQuantity(item.cartItemId!, item.quantity);
+      } catch (e) {
+        item.quantity--;
+        error = e.toString();
+        debugPrint('[CartController] increment ERROR: $e');
+        notifyListeners();
+      }
+    }
+  }
+
+  // ── Decrement quantity ─────────────────────────────────────────────────────
+  Future<void> decrement(int index) async {
+    final item = _items[index];
+
+    if (item.quantity > 1) {
+      item.quantity--;
+      notifyListeners();
+
+      if (item.cartItemId != null) {
+        try {
+          await _service.updateQuantity(item.cartItemId!, item.quantity);
+        } catch (e) {
+          item.quantity++;
+          error = e.toString();
+          debugPrint('[CartController] decrement ERROR: $e');
+          notifyListeners();
+        }
+      }
+    } else {
+      _items.removeAt(index);
+      notifyListeners();
+
+      if (item.cartItemId != null) {
+        try {
+          await _service.deleteItem(item.cartItemId!);
+        } catch (e) {
+          _items.insert(index, item);
+          error = e.toString();
+          debugPrint('[CartController] deleteItem ERROR: $e');
+          notifyListeners();
+        }
+      }
+    }
+  }
+
+  // ── Clear cart ─────────────────────────────────────────────────────────────
+  Future<void> clearCart() async {
+    final backup = List<CartItem>.from(_items);
     _items.clear();
     notifyListeners();
+
+    try {
+      await _service.clearCart();
+    } catch (e) {
+      _items = backup;
+      error = e.toString();
+      debugPrint('[CartController] clearCart ERROR: $e');
+      notifyListeners();
+    }
   }
 }
