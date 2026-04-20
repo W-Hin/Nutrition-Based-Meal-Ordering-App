@@ -584,7 +584,7 @@ class _ItemRow extends StatelessWidget {
                 // FIX 1: Show "- No Add Ons" when list is empty
                 if (addOns.isEmpty)
                   const Text(
-                    '- No Add Ons',
+                    '+ No Add Ons',
                     style: TextStyle(fontSize: 10, color: Color(0xFF8A8A8A)),
                   )
                 else

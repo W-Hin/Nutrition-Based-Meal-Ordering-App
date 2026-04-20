@@ -933,9 +933,6 @@ class _LiveItemDetailsSection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text('RM ${_fmt(order.subtotal)}',
-                    style: const TextStyle(
-                        fontSize: 13, color: Color(0xFF2C2C2C))),
                 const SizedBox(height: 4),
                 const Text('Service Fee (5%) included *',
                     style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A))),
@@ -1041,9 +1038,6 @@ class _HistoryItemDetailsSection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text('RM ${_fmt(subtotal)}',
-                    style: const TextStyle(
-                        fontSize: 13, color: Color(0xFF2C2C2C))),
                 const SizedBox(height: 4),
                 const Text('Service Fee (5%) included *',
                     style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A))),
@@ -1109,7 +1103,7 @@ class _OrderItemRow extends StatelessWidget {
                 // FIX 1: Show "- No Add Ons" when empty
                 if (addOns.isEmpty)
                   const Text(
-                    '- No Add Ons',
+                    '+ No Add Ons',
                     style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)),
                   )
                 else

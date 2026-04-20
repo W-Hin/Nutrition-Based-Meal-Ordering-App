@@ -190,7 +190,7 @@ class _AddOnsList extends StatelessWidget {
     // FIX 1: Show "- No Add Ons" instead of hiding when list is empty
     if (addOns.isEmpty) {
       return const Text(
-        '- No Add Ons',
+        '+ No Add Ons',
         style: TextStyle(fontSize: 11, color: Color(0xFF8A7E6A)),
       );
     }
