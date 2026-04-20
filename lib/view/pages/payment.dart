@@ -292,7 +292,7 @@ class _PaymentViewState extends State<_PaymentView> {
           ? checkoutCtrl.deliveryAddress.address
           : '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21';
 
-      // Place order — storeId and remark now wired through
+      // Place order + record payment in Supabase
       await context.read<OrderController>().placeOrder(
         cartItems:   cart.items.toList(),
         subtotal:    cart.subtotal,
@@ -304,6 +304,11 @@ class _PaymentViewState extends State<_PaymentView> {
         toAddress:   toAddress,
         storeId:     storeId,
         remark:      checkoutCtrl.remarks,
+        // Payment details → stored in payments table
+        totalPaid:   grandTotal,
+        payerName:   ctrl.nameCtrl.text.trim(),
+        payerEmail:  ctrl.emailCtrl.text.trim(),
+        payerPhone:  ctrl.phoneCtrl.text.trim(),
       );
 
       cart.clearCart();

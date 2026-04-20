@@ -2,23 +2,28 @@ import '../model/order_model.dart';
 import 'supabase_conn.dart';
 
 class OrderService {
-  // ── Save a new order ─────────────────────────────────────────
+  static const _devUserId = 'fc33ae36-657a-4055-b81e-f6fe3de23278';
+
+  String get _uid =>
+      supabase.auth.currentUser?.id ?? _devUserId;
+
+  // ── Place order → returns the real DB order_id ──────────────
   Future<String> placeOrder(OrderModel order) async {
+    // 1. Insert the order row
     final orderResponse = await supabase
         .from('orders')
         .insert({
-      'user_id':        supabase.auth.currentUser?.id
-          ?? 'fc33ae36-657a-4055-b81e-f6fe3de23278',
+      'user_id':        _uid,
       'store_id':       order.storeId,
       'order_type':     order.orderType.name,
       'status':         order.status.name,
       'to_name':        order.toName,
-      'to_phone':       order.toPhone,
+      'to_phone':       order.toPhone.isEmpty ? null : order.toPhone,
       'to_address':     order.toAddress,
       'subtotal':       order.subtotal,
       'service_fee':    order.serviceFee,
       'delivery_fee':   order.deliveryFee,
-      'total':          order.total,          // ← DB has total column
+      'total':          order.total,
       'payment_method': order.paymentMethod,
       'remark':         order.remark.isEmpty ? null : order.remark,
       'is_cancellable': true,
@@ -29,17 +34,19 @@ class OrderService {
 
     final orderId = orderResponse['order_id'].toString();
 
-    // Insert all order items linked to that order
-    await supabase.from('order_items').insert(
-      order.items.map((item) => {
-        'order_id': orderId,
-        'name':     item.name,
-        'price':    item.price,
-        'add_ons':  item.addOns,
-      }).toList(),
-    );
+    // 2. Insert each cart item as a separate row (3 items → 3 rows)
+    if (order.items.isNotEmpty) {
+      await supabase.from('order_items').insert(
+        order.items.map((item) => {
+          'order_id': int.parse(orderId),
+          'name':     item.name,
+          'price':    item.price,
+          'add_ons':  item.addOns.isEmpty ? <String>[] : item.addOns,
+        }).toList(),
+      );
+    }
 
-    return orderId;
+    return orderId;   // real DB bigint — used to link the payment record
   }
 
   // ── Fetch a single order by ID ───────────────────────────────
@@ -56,8 +63,7 @@ class OrderService {
     return await supabase
         .from('orders')
         .select('*, order_items(*)')
-        .eq('user_id', supabase.auth.currentUser?.id
-        ?? 'fc33ae36-657a-4055-b81e-f6fe3de23278')
+        .eq('user_id', _uid)
         .order('created_at', ascending: false);
   }
 
