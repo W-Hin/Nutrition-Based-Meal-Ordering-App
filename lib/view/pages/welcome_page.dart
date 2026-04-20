@@ -116,26 +116,29 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                         const SizedBox(height: 28),
 
                         // Multi-colored slogan matching prototype
-                        RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.4,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: RichText(
+                            textAlign: TextAlign.center,
+                            text: const TextSpan(
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.4,
+                              ),
+                              children: [
+                                TextSpan(text: '🔥  '),
+                                TextSpan(
+                                  text: 'BURN OLD ME, ',
+                                  style: TextStyle(color: Color(0xFFD95B2B)),
+                                ),
+                                TextSpan(
+                                  text: 'BORN NEW ME.',
+                                  style: TextStyle(color: Color(0xFF1E4620)),
+                                ),
+                                TextSpan(text: '  🔥'),
+                              ],
                             ),
-                            children: [
-                              const TextSpan(text: '🔥  '),
-                              const TextSpan(
-                                text: 'BURN OLD ME, ',
-                                style: TextStyle(color: Color(0xFFD95B2B)),
-                              ),
-                              const TextSpan(
-                                text: 'BORN NEW ME.',
-                                style: TextStyle(color: Color(0xFF1E4620)),
-                              ),
-                              const TextSpan(text: '  🔥'),
-                            ],
                           ),
                         ),
                         const SizedBox(height: 52),

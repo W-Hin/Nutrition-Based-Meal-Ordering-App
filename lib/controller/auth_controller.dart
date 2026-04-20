@@ -42,7 +42,13 @@ class AuthController extends ChangeNotifier {
       currentUser = response.user;
       return true;
     } on AuthException catch (e) {
-      errorMessage = e.message;
+      if (e.message.contains('Invalid login credentials')) {
+        errorMessage = 'Incorrect email or password. Please check and try again.';
+      } else if (e.message.contains('Email not confirmed')) {
+        errorMessage = 'Please verify your email address before logging in.';
+      } else {
+        errorMessage = e.message;
+      }
       return false;
     } catch (e) {
       errorMessage = 'An unexpected error occurred. Please try again.';
@@ -70,7 +76,13 @@ class AuthController extends ChangeNotifier {
       currentUser = response.user;
       return true;
     } on AuthException catch (e) {
-      errorMessage = e.message;
+      if (e.message.contains('User already registered')) {
+        errorMessage = 'An account with this email already exists. Please log in instead.';
+      } else if (e.message.contains('Password should be at least 6 characters')) {
+        errorMessage = 'Your password is too weak. Please use at least 6 characters.';
+      } else {
+        errorMessage = e.message;
+      }
       return false;
     } catch (e) {
       errorMessage = 'Registration failed. Please try again.';

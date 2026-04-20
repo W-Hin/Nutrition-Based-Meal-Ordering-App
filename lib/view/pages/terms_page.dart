@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class TermsPage extends StatelessWidget {
-  const TermsPage({super.key});
+  final bool readOnly;
+  const TermsPage({super.key, this.readOnly = false});
 
   static const _cream  = Color(0xFFF5F0E8);
   static const _green  = Color(0xFF1E4620);
@@ -94,43 +95,46 @@ class TermsPage extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Footer
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: _orange.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _orange.withValues(alpha: 0.25)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline, color: _orange, size: 18),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Text(
-                      'By registering, you confirm that you have read and agree to these Terms & Conditions.',
-                      style: TextStyle(color: _orange, fontSize: 12, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 28),
-
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _green,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
+            if (!readOnly) ...[
+              // Footer — only shown during registration
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _orange.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _orange.withValues(alpha: 0.25)),
                 ),
-                child: const Text('I Understand', style: TextStyle(fontWeight: FontWeight.w700)),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, color: _orange, size: 18),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'By registering, you confirm that you have read and agree to these Terms & Conditions.',
+                        style: TextStyle(color: _orange, fontSize: 12, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              const SizedBox(height: 28),
+
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _green,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                  child: const Text('I Understand', style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ],
+
             const SizedBox(height: 16),
           ],
         ),

@@ -50,8 +50,33 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
     if (picked != null) ctrl.setDob(picked);
   }
 
+  bool _validateAllFields(OnboardingController ctrl) {
+    if (!_formKey.currentState!.validate()) return false;
+
+    if (ctrl.street.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Please tap the address field to set your delivery address.'),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ));
+      return false;
+    }
+
+    if (ctrl.dob == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Please select your Date of Birth.'),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ));
+      return false;
+    }
+
+    return true;
+  }
+
   void _goToBmi(OnboardingController ctrl) {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_validateAllFields(ctrl)) return;
+    
     ctrl.fullName = _nameCtrl.text.trim();
     ctrl.phone    = _phoneCtrl.text.trim();
     ctrl.calculateBmiAndCalories();
@@ -59,59 +84,82 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
   }
 
   void _skipToHome(OnboardingController ctrl) async {
+    if (!_validateAllFields(ctrl)) return;
+    
     ctrl.fullName = _nameCtrl.text.trim();
     ctrl.phone    = _phoneCtrl.text.trim();
+
+    // Calculate default BMI/goals since they skipped
+    ctrl.calculateBmiAndCalories();
+
+    // MUST SAVE to database, otherwise they'll be stuck in the onboarding loop forever
+    final profileSaved = await ctrl.saveProfile();
+    final addressSaved = await ctrl.saveAddress();
+
+    if (!profileSaved || !addressSaved || !mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Error saving profile. Please try again.'),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
 
     final proceed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Text(
-                    'Congratulations !',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: _dark,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'You finished the register process successfully!',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: _dark,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _green.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle_rounded, color: _green, size: 48),
               ),
-            ),
-            Positioned(
-              right: 12,
-              top: 12,
-              child: GestureDetector(
-                onTap: () => Navigator.pop(ctx, true),
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
+              const SizedBox(height: 20),
+              const Text(
+                'Congratulations!',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: _dark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'You have successfully completed the registration process.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: _dark.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w500,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _green,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
                   ),
-                  child: const Icon(Icons.close, color: Colors.white, size: 16),
+                  child: const Text('Go to Home', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

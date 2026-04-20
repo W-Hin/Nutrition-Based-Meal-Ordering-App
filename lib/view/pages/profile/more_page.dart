@@ -70,23 +70,17 @@ class MorePage extends StatelessWidget {
 
     if (confirm == true && context.mounted) {
       try {
-        // Delete user data from tables, then delete auth user
-        final uid = supabase.auth.currentUser?.id;
-        if (uid != null) {
-          await supabase.from('profiles').delete().eq('user_id', uid);
-          await supabase.from('addresses').delete().eq('user_id', uid);
-          await supabase.from('calorie_logs').delete().eq('user_id', uid);
-          await supabase.from('reviews').delete().eq('user_id', uid);
-          await supabase.from('user').delete().eq('user_id', uid);
-        }
+        // Use Supabase RPC to securely delete the account from auth.users and all related data.
+        await supabase.rpc('delete_user_account');
+
         await context.read<AuthController>().logout();
         if (context.mounted) {
           Navigator.pushNamedAndRemoveUntil(context, '/auth', (_) => false);
         }
-      } catch (_) {
+      } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Failed to delete account. Please contact support.'),
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Failed to delete account: $e'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ));
@@ -116,7 +110,7 @@ class MorePage extends StatelessWidget {
             context,
             icon: Icons.article_outlined,
             label: 'Term & Condition',
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsPage())),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsPage(readOnly: true))),
           ),
           _menuItem(
             context,
