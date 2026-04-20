@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import '../model/profile_model.dart';
 import '../service/profile_service.dart';
 import '../service/address_service.dart';
-import '../model/address_model.dart';
 import '../service/supabase_conn.dart';
 
 class OnboardingController extends ChangeNotifier {
   final ProfileService _profileService = ProfileService();
-  final AddressService _addressService = AddressService();
 
   // ── Step 1: Personal Details ───────────────────────────────────────────────
   String    fullName   = '';
@@ -147,13 +145,19 @@ class OnboardingController extends ChangeNotifier {
   // ── Save address to Supabase ───────────────────────────────────────────────
   Future<bool> saveAddress() async {
     try {
-      final address = AddressModel(
-        name:    fullName,
-        phone:   phone,
-        address: '$street, $city, $state $postcode',
-        label:   AddressLabel.home,
-      );
-      await _addressService.saveAddress(address);
+      final uid = supabase.auth.currentUser!.id;
+      await supabase.from('addresses').insert({
+        'user_id':              uid,
+        'name':                 fullName,   // delivery recipient name
+        'phone':                phone,      // delivery recipient phone
+        'label':                deliveryLabel,
+        'street':               street,
+        'city':                 city,
+        'state':                state,
+        'postcode':             postcode,
+        'delivery_instruction': deliveryInstruction,
+        'is_default':           isDefaultAddress,
+      });
       return true;
     } catch (e) {
       return false;

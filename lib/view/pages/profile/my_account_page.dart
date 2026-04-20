@@ -278,11 +278,13 @@ class _MyAccountPageState extends State<MyAccountPage> {
             _label('Address'),
             const SizedBox(height: 6),
             GestureDetector(
-              onTap: () async {
+              onTap: _editing ? () async {
                 await Navigator.push(context,
                     MaterialPageRoute(builder: (_) => const AddressesPage()));
-                _loadDefaultAddress(); // refresh label on return
-              },
+                // Clear first so stale label doesn't linger while reloading
+                if (mounted) setState(() => _addressLabel = '');
+                await _loadDefaultAddress(); // re-fetch from DB on return
+              } : null,
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
@@ -302,8 +304,9 @@ class _MyAccountPageState extends State<MyAccountPage> {
                               ? _dark.withValues(alpha: 0.4)
                               : _dark),
                     ),
-                    Icon(Icons.chevron_right,
-                        size: 20, color: _dark.withValues(alpha: 0.35)),
+                    if (_editing)
+                      Icon(Icons.chevron_right,
+                          size: 20, color: _dark.withValues(alpha: 0.35)),
                   ],
                 ),
               ),

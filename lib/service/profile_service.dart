@@ -2,9 +2,7 @@ import '../model/profile_model.dart';
 import 'supabase_conn.dart';
 
 class ProfileService {
-  // TODO(TESTING): Bypass dummy UUID used for UI layout testing.
-  // Original should be: String get _uid => supabase.auth.currentUser?.id ?? '';
-  String get _uid => supabase.auth.currentUser?.id ?? '00000000-0000-0000-0000-000000000000';
+  String get _uid => supabase.auth.currentUser?.id ?? '';
   // ── Profile CRUD ─────────────────────────────────────────────────────────
 
   Future<void> createProfile(ProfileModel profile) async {

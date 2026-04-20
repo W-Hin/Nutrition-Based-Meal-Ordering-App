@@ -22,11 +22,12 @@ class AuthService {
 
     if (response.user != null) {
       await supabase.from('user').insert({
-        'id':        response.user!.id,
-        'email':     email,
-        'full_name': '',
-        'phone':     '',
-        'role':      'user',
+        'user_id':    response.user!.id,
+        'email':      email,
+        'first_name': '',
+        'last_name':  '',
+        'phone':      '',
+        'role':       'customer',
       });
     }
 
@@ -49,14 +50,14 @@ class AuthService {
     await supabase.auth.signOut();
   }
 
-  // ── Fetch role from public.users ─────────────────────────────────────────
+  // ── Fetch role from public.user ──────────────────────────────────────────
   Future<String?> getUserRole() async {
     final uid = currentUser?.id;
     if (uid == null) return null;
     final row = await supabase
         .from('user')
         .select('role')
-        .eq('id', uid)
+        .eq('user_id', uid)
         .maybeSingle();
     return row?['role'] as String?;
   }

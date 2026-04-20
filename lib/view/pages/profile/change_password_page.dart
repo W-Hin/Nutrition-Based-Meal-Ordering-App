@@ -14,29 +14,33 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   static const _orange = Color(0xFFD95B2B);
   static const _dark   = Color(0xFF2D2D2D);
 
+  final _currentPassCtrl  = TextEditingController();
   final _newPassCtrl     = TextEditingController();
   final _confirmPassCtrl = TextEditingController();
+  bool _obscureCurrent = true;
   bool _obscureNew     = true;
   bool _obscureConfirm = true;
   bool _saving         = false;
 
   @override
   void dispose() {
+    _currentPassCtrl.dispose();
     _newPassCtrl.dispose();
     _confirmPassCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
+    final currentPass = _currentPassCtrl.text;
     final newPass     = _newPassCtrl.text;
     final confirmPass = _confirmPassCtrl.text;
 
-    if (newPass.isEmpty || confirmPass.isEmpty) {
-      _showSnack('Please fill in both fields.', isError: true);
+    if (currentPass.isEmpty || newPass.isEmpty || confirmPass.isEmpty) {
+      _showSnack('Please fill in all fields.', isError: true);
       return;
     }
     if (newPass.length < 6) {
-      _showSnack('Password must be at least 6 characters.', isError: true);
+      _showSnack('New password must be at least 6 characters.', isError: true);
       return;
     }
     if (newPass != confirmPass) {
@@ -46,12 +50,16 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
     setState(() => _saving = true);
     try {
-      await supabase.auth.updateUser(
-        UserAttributes(password: newPass),
-      );
-      if (mounted) {
-        _showSuccessDialog();
-      }
+      // Re-authenticate with current password first (required by Supabase)
+      final email = supabase.auth.currentUser?.email ?? '';
+      await supabase.auth.signInWithPassword(email: email, password: currentPass);
+
+      // Now update the password
+      await supabase.auth.updateUser(UserAttributes(password: newPass));
+
+      if (mounted) _showSuccessDialog();
+    } on AuthException catch (e) {
+      if (mounted) _showSnack(e.message, isError: true);
     } catch (e) {
       if (mounted) _showSnack('Failed to update password. Please try again.', isError: true);
     } finally {
@@ -139,6 +147,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 12),
+            _passField('Current Password *', _currentPassCtrl, _obscureCurrent, () {
+              setState(() => _obscureCurrent = !_obscureCurrent);
+            }),
+            const SizedBox(height: 16),
             _passField('New Password *', _newPassCtrl, _obscureNew, () {
               setState(() => _obscureNew = !_obscureNew);
             }),
