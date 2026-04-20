@@ -567,8 +567,6 @@ class _PaymentChannelsCard extends StatelessWidget {
           Row(
             children: const [
               _ChannelChip(label: 'Credit / Debit Card'),
-              SizedBox(width: 8),
-              _ChannelChip(label: 'Apple / Google Pay'),
             ],
           ),
           const SizedBox(height: 8),

@@ -3,12 +3,50 @@ import 'package:provider/provider.dart';
 import '../../controller/order_controller.dart';
 import '../../model/order_model.dart';
 
-class OrderDetailsPage extends StatelessWidget {
+class OrderDetailsPage extends StatefulWidget {
   const OrderDetailsPage({super.key});
 
+  @override
+  State<OrderDetailsPage> createState() => _OrderDetailsPageState();
+}
+
+class _OrderDetailsPageState extends State<OrderDetailsPage> {
   static const _green      = Color(0xFF1E4620);
-  static const _terracotta = Color(0xFFD95F2B);
   static const _bg         = Color(0xFFF5F5F0);
+
+  @override
+  void initState() {
+    super.initState();
+    // Subscribe to real-time status updates for the current order
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctrl = context.read<OrderController>();
+      if (ctrl.dbOrderId != null) {
+        _listenToOrderStatus(ctrl);
+      }
+    });
+  }
+
+  void _listenToOrderStatus(OrderController ctrl) {
+    final stream = ctrl.watchOrderStatus(ctrl.dbOrderId!);
+    stream.listen((row) {
+      if (!mounted) return;
+      final rawStatus = row['status'] as String? ?? 'submitted';
+      OrderStatus? newStatus;
+
+      switch (rawStatus) {
+        case 'submitted':   newStatus = OrderStatus.submitted;             break;
+        case 'preparing':   newStatus = OrderStatus.preparing;             break;
+        case 'out_for_delivery':
+        case 'ready_for_collection':
+          newStatus = OrderStatus.readyOrOutForDelivery;                   break;
+        case 'completed':   newStatus = OrderStatus.completed;             break;
+        case 'cancelled':   // handled by isCancelled flag                  break;
+          break;
+      }
+
+      if (newStatus != null) ctrl.updateStatus(newStatus);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,9 +73,9 @@ class OrderDetailsPage extends StatelessWidget {
         title: const Text(
           'Order Details',
           style: TextStyle(
-            color: _green,
+            color:      _green,
             fontWeight: FontWeight.w800,
-            fontSize: 18,
+            fontSize:   18,
           ),
         ),
       ),
@@ -62,11 +100,15 @@ class OrderDetailsPage extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // ── Deliver To ──
+            // ── Deliver To / Collect At ──
             _InfoSection(
-              title: 'Deliver To',
+              title: order.orderType == OrderType.delivery
+                  ? 'Deliver To'
+                  : 'Self Collection',
               lines: [
-                '${order.toName}  |  ${order.toPhone}',
+                order.orderType == OrderType.delivery
+                    ? '${order.toName}  |  ${order.toPhone}'
+                    : order.toName,
                 order.toAddress,
               ],
             ),
@@ -92,19 +134,16 @@ class _SubmittedBanner extends StatelessWidget {
   final OrderModel order;
   final bool isCancelled;
 
-  const _SubmittedBanner({
-    required this.order,
-    required this.isCancelled,
-  });
+  const _SubmittedBanner({required this.order, required this.isCancelled});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color:        Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDDDDD0)),
+        border:       Border.all(color: const Color(0xFFDDDDD0)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,56 +156,51 @@ class _SubmittedBanner extends StatelessWidget {
                   isCancelled ? 'Order Cancelled' : order.statusLabel,
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    color: Color(0xFF2C2C2C),
+                    fontSize:   16,
+                    color:      Color(0xFF2C2C2C),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   isCancelled
-                      ? 'Your order has been cancelled. Refund will be processed within 3-5 business days.'
+                      ? 'Your order has been cancelled. Refund will be processed within 3–5 business days.'
                       : order.statusDescription,
                   style: const TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF6B6B6B),
-                    height: 1.5,
+                    color:    Color(0xFF6B6B6B),
+                    height:   1.5,
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 12),
-          // Status image — falls back to icon if asset not found
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: isCancelled
-                ? Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.red, width: 2),
-              ),
-              child: const Icon(Icons.cancel_outlined,
-                  color: Colors.red, size: 32),
-            )
-                : Image.asset(
-              order.statusImagePath,
-              width: 72,
+          isCancelled
+              ? Container(
+            width:  64,
+            height: 64,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.red, width: 2),
+            ),
+            child: const Icon(Icons.cancel_outlined,
+                color: Colors.red, size: 32),
+          )
+              : Image.asset(
+            order.statusImagePath,
+            width:  72,
+            height: 72,
+            fit:    BoxFit.contain,
+            errorBuilder: (_, __, ___) => Container(
+              width:  72,
               height: 72,
-              fit: BoxFit.contain,
-              // Shows placeholder icon if image file not found yet
-              errorBuilder: (_, __, ___) => Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                      color: const Color(0xFFD95F2B), width: 2),
-                ),
-                child: const Icon(Icons.shopping_basket_outlined,
-                    color: Color(0xFFD95F2B), size: 32),
+              decoration: BoxDecoration(
+                shape:  BoxShape.circle,
+                border: Border.all(
+                    color: const Color(0xFFD95F2B), width: 2),
               ),
+              child: const Icon(Icons.shopping_basket_outlined,
+                  color: Color(0xFFD95F2B), size: 32),
             ),
           ),
         ],
@@ -179,7 +213,7 @@ class _SubmittedBanner extends StatelessWidget {
 
 class _StatusTracker extends StatelessWidget {
   final OrderStatus status;
-  final OrderType orderType;
+  final OrderType   orderType;
 
   static const _green = Color(0xFF1E4620);
 
@@ -188,8 +222,8 @@ class _StatusTracker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final steps = [
-      _Step(icon: Icons.receipt_outlined,          label: 'Order\nSubmitted'),
-      _Step(icon: Icons.soup_kitchen_outlined,      label: 'Preparing'),
+      _Step(icon: Icons.receipt_outlined,     label: 'Order\nSubmitted'),
+      _Step(icon: Icons.soup_kitchen_outlined, label: 'Preparing'),
       _Step(
         icon: orderType == OrderType.delivery
             ? Icons.directions_bike_outlined
@@ -211,9 +245,9 @@ class _StatusTracker extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color:        Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDDDDD0)),
+        border:       Border.all(color: const Color(0xFFDDDDD0)),
       ),
       child: Row(
         children: List.generate(steps.length * 2 - 1, (i) {
@@ -226,31 +260,34 @@ class _StatusTracker extends StatelessWidget {
               ),
             );
           }
-          final stepIndex  = i ~/ 2;
+          final stepIndex   = i ~/ 2;
           final isCompleted = stepIndex <= activeIndex;
           final step        = steps[stepIndex];
 
           return Column(
             children: [
               Container(
-                width: 36,
+                width:  36,
                 height: 36,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isCompleted ? _green : const Color(0xFFEEEBDE),
                 ),
                 child: Icon(step.icon,
-                    size: 18,
-                    color: isCompleted ? Colors.white : const Color(0xFFAAAAAA)),
+                    size:  18,
+                    color: isCompleted
+                        ? Colors.white
+                        : const Color(0xFFAAAAAA)),
               ),
               const SizedBox(height: 6),
               Text(
                 step.label,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 9,
-                  fontWeight:
-                  isCompleted ? FontWeight.w700 : FontWeight.w400,
+                  fontSize:   9,
+                  fontWeight: isCompleted
+                      ? FontWeight.w700
+                      : FontWeight.w400,
                   color: isCompleted ? _green : const Color(0xFFAAAAAA),
                 ),
               ),
@@ -264,14 +301,14 @@ class _StatusTracker extends StatelessWidget {
 
 class _Step {
   final IconData icon;
-  final String label;
+  final String   label;
   const _Step({required this.icon, required this.label});
 }
 
-// ── Info Section (From / Deliver To) ──────────────────────────────────────────
+// ── Info Section ───────────────────────────────────────────────────────────────
 
 class _InfoSection extends StatelessWidget {
-  final String title;
+  final String       title;
   final List<String> lines;
 
   const _InfoSection({required this.title, required this.lines});
@@ -279,12 +316,12 @@ class _InfoSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
+      width:   double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color:        Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDDDDD0)),
+        border:       Border.all(color: const Color(0xFFDDDDD0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,14 +329,14 @@ class _InfoSection extends StatelessWidget {
           Text(title,
               style: const TextStyle(
                   fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                  color: Color(0xFF2C2C2C))),
+                  fontSize:   14,
+                  color:      Color(0xFF2C2C2C))),
           const SizedBox(height: 6),
           ...lines.map((l) => Text(l,
               style: const TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF6B6B6B),
-                  height: 1.5))),
+                  color:    Color(0xFF6B6B6B),
+                  height:   1.5))),
         ],
       ),
     );
@@ -310,7 +347,7 @@ class _InfoSection extends StatelessWidget {
 
 class _ItemDetailsSection extends StatelessWidget {
   final OrderController ctrl;
-  final OrderModel order;
+  final OrderModel      order;
 
   static const _terracotta = Color(0xFFD95F2B);
 
@@ -321,9 +358,9 @@ class _ItemDetailsSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color:        Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDDDDD0)),
+        border:       Border.all(color: const Color(0xFFDDDDD0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,10 +373,9 @@ class _ItemDetailsSection extends StatelessWidget {
                 'Item Details',
                 style: TextStyle(
                     fontWeight: FontWeight.w800,
-                    fontSize: 14,
-                    color: Color(0xFF2C2C2C)),
+                    fontSize:   14,
+                    color:      Color(0xFF2C2C2C)),
               ),
-              // Cancel button — only visible if cancellable and not cancelled
               if (order.isCancellable && !ctrl.isCancelled)
                 GestureDetector(
                   onTap: () => _confirmCancel(context, ctrl),
@@ -347,24 +383,22 @@ class _ItemDetailsSection extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      border:
-                      Border.all(color: _terracotta, width: 1.2),
+                      border:       Border.all(color: _terracotta, width: 1.2),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: ctrl.isCancelling
                         ? const SizedBox(
-                      width: 14,
+                      width:  14,
                       height: 14,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 1.5,
-                          color: _terracotta),
+                      child:  CircularProgressIndicator(
+                          strokeWidth: 1.5, color: _terracotta),
                     )
                         : const Text(
                       'CANCEL ORDER',
                       style: TextStyle(
-                        color: _terracotta,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
+                        color:       _terracotta,
+                        fontSize:    11,
+                        fontWeight:  FontWeight.w700,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -385,23 +419,22 @@ class _ItemDetailsSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  'RM ${order.subtotal % 1 == 0 ? order.subtotal.toInt().toString() : order.subtotal.toStringAsFixed(2)}',
+                  'RM ${_fmt(order.subtotal)}',
                   style: const TextStyle(
                       fontSize: 13, color: Color(0xFF2C2C2C)),
                 ),
                 const SizedBox(height: 4),
-                Text(
+                const Text(
                   'Service Fee (5%) included *',
-                  style: const TextStyle(
-                      fontSize: 11, color: Color(0xFF8A8A8A)),
+                  style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Total ${order.items.length} item(s): RM ${order.total % 1 == 0 ? order.total.toInt().toString() : order.total.toStringAsFixed(2)}',
+                  'Total ${order.items.length} item(s): RM ${_fmt(order.total)}',
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
-                    fontSize: 14,
-                    color: Color(0xFF2C2C2C),
+                    fontSize:   14,
+                    color:      Color(0xFF2C2C2C),
                   ),
                 ),
               ],
@@ -411,6 +444,9 @@ class _ItemDetailsSection extends StatelessWidget {
       ),
     );
   }
+
+  String _fmt(double v) =>
+      v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(2);
 
   void _confirmCancel(BuildContext context, OrderController ctrl) {
     showDialog(
@@ -448,21 +484,19 @@ class _ItemRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final half = (item.addOns.length / 2).ceil();
-    final col1 = item.addOns.isNotEmpty ? item.addOns.sublist(0, half) : [];
-    final col2 =
-    item.addOns.length > 1 ? item.addOns.sublist(half) : [];
+    final col1 = item.addOns.isNotEmpty ? item.addOns.sublist(0, half) : <String>[];
+    final col2 = item.addOns.length > 1  ? item.addOns.sublist(half)   : <String>[];
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Placeholder image
           Container(
-            width: 64,
+            width:  64,
             height: 64,
             decoration: BoxDecoration(
-              color: const Color(0xFFD9D5C5),
+              color:        const Color(0xFFD9D5C5),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.fastfood_outlined,
@@ -493,7 +527,7 @@ class _ItemRow extends StatelessWidget {
     );
   }
 
-  Widget _addOnCol(List addOns) => Column(
+  Widget _addOnCol(List<String> addOns) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: addOns
         .map((a) => Text('+ $a',
@@ -518,9 +552,9 @@ class _OrderInfoSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color:        Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDDDDD0)),
+        border:       Border.all(color: const Color(0xFFDDDDD0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -528,12 +562,12 @@ class _OrderInfoSection extends StatelessWidget {
           const Text('Order Info',
               style: TextStyle(
                   fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                  color: Color(0xFF2C2C2C))),
+                  fontSize:   14,
+                  color:      Color(0xFF2C2C2C))),
           const SizedBox(height: 12),
-          _InfoRow(label: 'Order ID', value: order.orderId),
+          _InfoRow(label: 'Order ID',       value: order.orderId),
           const SizedBox(height: 6),
-          _InfoRow(label: 'Order Date', value: dateStr),
+          _InfoRow(label: 'Order Date',     value: dateStr),
           const SizedBox(height: 6),
           _InfoRow(label: 'Payment Method', value: order.paymentMethod),
         ],
@@ -559,15 +593,14 @@ class _InfoRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label,
-            style: const TextStyle(
-                fontSize: 12, color: Color(0xFF6B6B6B))),
+            style: const TextStyle(fontSize: 12, color: Color(0xFF6B6B6B))),
         Flexible(
           child: Text(
             value,
             textAlign: TextAlign.right,
             style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF2C2C2C),
+                fontSize:   12,
+                color:      Color(0xFF2C2C2C),
                 fontWeight: FontWeight.w500),
           ),
         ),

@@ -14,7 +14,7 @@ class OrderController extends ChangeNotifier {
   bool isCancelling = false;
   bool isCancelled  = false;
 
-  // ── Place order + record payment ─────────────────────────────
+  // ── Place order + record payment ─────────────────────────────────────────
   Future<void> placeOrder({
     required List<CartItem> cartItems,
     required double subtotal,
@@ -31,6 +31,7 @@ class OrderController extends ChangeNotifier {
     String  payerEmail = '',
     String  payerPhone = '',
   }) async {
+    // Default status is always 'submitted' on creation
     currentOrder = OrderModel(
       orderId:       _generateLocalId(),
       orderDate:     DateTime.now(),
@@ -51,7 +52,7 @@ class OrderController extends ChangeNotifier {
       deliveryFee: deliveryFee,
       orderType:   orderType,
       remark:      remark,
-      status:      OrderStatus.submitted,
+      status:      OrderStatus.submitted, // ← always starts as submitted
     );
 
     // 1. Insert order + order_items rows; get back real DB order_id
@@ -70,12 +71,18 @@ class OrderController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ── Update local status (called from real-time stream) ───────────────────
   void updateStatus(OrderStatus newStatus) {
     if (currentOrder == null) return;
     currentOrder!.status = newStatus;
     notifyListeners();
   }
 
+  // ── Real-time status stream (delegates to OrderService) ──────────────────
+  Stream<Map<String, dynamic>> watchOrderStatus(String orderId) =>
+      _orderService.watchOrderStatus(orderId);
+
+  // ── Cancel order ─────────────────────────────────────────────────────────
   Future<void> cancelOrder() async {
     if (currentOrder == null || !currentOrder!.isCancellable) return;
     isCancelling = true;
@@ -86,12 +93,16 @@ class OrderController extends ChangeNotifier {
 
     isCancelled  = true;
     isCancelling = false;
+
+    // Update local status so UI reflects cancellation immediately
+    currentOrder!.status = OrderStatus.submitted; // keep last known; banner overrides
     notifyListeners();
   }
 
+  // ── Generate a short local order ID (used before DB returns real ID) ─────
   String _generateLocalId() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    final rand = DateTime.now().millisecondsSinceEpoch.toString();
+    final rand  = DateTime.now().millisecondsSinceEpoch.toString();
     return rand.split('').map((e) => chars[int.parse(e) % chars.length]).join();
   }
 }
