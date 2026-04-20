@@ -21,8 +21,6 @@ class _EditAddressPageState extends State<EditAddressPage> {
   late TextEditingController _customLabelCtrl;
   AddressLabel? _selectedLabel;
 
-  // Map state — initialised from current controller coords so it opens at
-  // the previously pinned location rather than always the default.
   final MapController _mapController = MapController();
   late LatLng _markerPos;
   bool _isGeocoding = false;
@@ -41,7 +39,6 @@ class _EditAddressPageState extends State<EditAddressPage> {
     _customLabelCtrl = TextEditingController(text: addr.customLabelName);
     _selectedLabel   = addr.label;
 
-    // Start map at whatever coords the controller currently has
     _markerPos = LatLng(
       widget.ctrl.deliveryLat,
       widget.ctrl.deliveryLng,
@@ -103,8 +100,6 @@ class _EditAddressPageState extends State<EditAddressPage> {
     }
   }
 
-  /// Save address + pinned lat/lng back into the controller so checkout.dart
-  /// map reflects the new location immediately.
   void _save() {
     widget.ctrl.updateAddress(
       AddressModel(
@@ -147,7 +142,6 @@ class _EditAddressPageState extends State<EditAddressPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Interactive Map ───────────────────────────────────────────
             _buildInteractiveMap(),
             const SizedBox(height: 10),
 
@@ -156,18 +150,16 @@ class _EditAddressPageState extends State<EditAddressPage> {
                 const Icon(Icons.touch_app_outlined,
                     size: 14, color: Color(0xFF8A8A8A)),
                 const SizedBox(width: 6),
-                Expanded(
+                const Expanded(
                   child: Text(
                     'Tap anywhere on the map to pin your location — address will auto-fill below.',
-                    style:
-                    const TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)),
+                    style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
 
-            // ── Current address ───────────────────────────────────────────
             Row(
               children: [
                 const Icon(Icons.location_on, color: _green, size: 20),
@@ -186,7 +178,6 @@ class _EditAddressPageState extends State<EditAddressPage> {
             ),
             const Divider(height: 28),
 
-            // ── New Address ───────────────────────────────────────────────
             _FieldLabel('New Address'),
             Stack(
               children: [
@@ -215,7 +206,6 @@ class _EditAddressPageState extends State<EditAddressPage> {
             _InputField(controller: _phoneCtrl, hint: '012-345 6789'),
             const Divider(height: 28),
 
-            // ── Label Address As ──────────────────────────────────────────
             _FieldLabel('Label Address As'),
             const SizedBox(height: 10),
             Row(
@@ -304,8 +294,11 @@ class _EditAddressPageState extends State<EditAddressPage> {
               options: MapOptions(
                 initialCenter: _markerPos,
                 initialZoom:   15.0,
+                // FIX 4: Pan the map to the tapped point AND update marker
                 onTap: (tapPos, latLng) {
                   setState(() => _markerPos = latLng);
+                  // Move the map camera so the pin stays visible in frame
+                  _mapController.move(latLng, _mapController.camera.zoom);
                   _reverseGeocode(latLng);
                 },
               ),

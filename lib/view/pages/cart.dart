@@ -30,7 +30,6 @@ class CartPage extends StatelessWidget {
         ),
       ),
       body: Consumer<CartController>(
-        // Consumer rebuilds only when CartController calls notifyListeners()
         builder: (context, cart, _) {
           if (cart.items.isEmpty) {
             return const Center(
@@ -48,7 +47,7 @@ class CartPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16, vertical: 8),
                   itemCount: cart.items.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, index) => _CartItemCard(
                     item: cart.items[index],
                     onIncrement: () => cart.increment(index),
@@ -67,7 +66,6 @@ class CartPage extends StatelessWidget {
 
 // ── Cart Item Card ─────────────────────────────────────────────────────────────
 
-// cart.dart — full fixed _CartItemCard
 class _CartItemCard extends StatelessWidget {
   final CartItem item;
   final VoidCallback onIncrement;
@@ -86,7 +84,6 @@ class _CartItemCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Image (real or fallback) ──────────────────────────────────
           _CartItemImage(imageUrl: item.imageUrl),
           const SizedBox(width: 12),
           Expanded(
@@ -127,7 +124,8 @@ class _CartItemCard extends StatelessWidget {
   }
 }
 
-// ── New image widget with proper fallback ──────────────────────────────────
+// ── Image widget with proper fallback ──────────────────────────────────────────
+
 class _CartItemImage extends StatelessWidget {
   final String? imageUrl;
 
@@ -135,7 +133,6 @@ class _CartItemImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Fallback container used when no image or load fails
     final fallback = Container(
       width: 72,
       height: 72,
@@ -150,7 +147,6 @@ class _CartItemImage extends StatelessWidget {
       ),
     );
 
-    // No URL at all
     if (imageUrl == null || imageUrl!.isEmpty) return fallback;
 
     return ClipRRect(
@@ -160,7 +156,6 @@ class _CartItemImage extends StatelessWidget {
         width: 72,
         height: 72,
         fit: BoxFit.cover,
-        // Show loading placeholder while fetching
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
           return Container(
@@ -178,14 +173,13 @@ class _CartItemImage extends StatelessWidget {
             ),
           );
         },
-        // Show fallback icon if image fails to load
         errorBuilder: (context, error, stackTrace) => fallback,
       ),
     );
   }
 }
 
-// ── Add-ons (2-column for long lists) ─────────────────────────────────────────
+// ── Add-ons list — shows "- No Add Ons" when empty ────────────────────────────
 
 class _AddOnsList extends StatelessWidget {
   final List<String> addOns;
@@ -193,8 +187,12 @@ class _AddOnsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // FIX 1: Show "- No Add Ons" instead of hiding when list is empty
     if (addOns.isEmpty) {
-      return const SizedBox.shrink();
+      return const Text(
+        '- No Add Ons',
+        style: TextStyle(fontSize: 11, color: Color(0xFF8A7E6A)),
+      );
     }
     if (addOns.length == 1) {
       return Text(addOns.first,
@@ -320,10 +318,10 @@ class _CartSummary extends StatelessWidget {
             height: 50,
             child: ElevatedButton(
               onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const CheckoutPage()),
-                  );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CheckoutPage()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFBF5D32),
@@ -364,7 +362,9 @@ class _Row extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: style),
-        Text('RM ${value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(2)}', style: style),
+        Text(
+            'RM ${value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(2)}',
+            style: style),
       ],
     );
   }

@@ -71,6 +71,8 @@ class _MyOrdersPageState extends State<MyOrdersPage>
   String _searchQuery = '';
 
   List<Map<String, dynamic>> _allOrders = [];
+  // FIX 3: Cache of store_id → store row fetched from Supabase
+  Map<String, Map<String, dynamic>> _storeCache = {};
   bool    _loading = true;
   String? _error;
 
@@ -90,18 +92,50 @@ class _MyOrdersPageState extends State<MyOrdersPage>
     super.dispose();
   }
 
+  // FIX 3: Fetch orders then batch-fetch all unique store IDs
   Future<void> _fetchOrders() async {
     setState(() { _loading = true; _error = null; });
     try {
       final uid = supabase.auth.currentUser?.id
           ?? 'fc33ae36-657a-4055-b81e-f6fe3de23278';
+
       final rows = await supabase
           .from('orders')
           .select('*, order_items(*)')
           .eq('user_id', uid)
           .order('created_at', ascending: false);
+
+      final orders = List<Map<String, dynamic>>.from(rows);
+
+      // Collect unique non-null store IDs
+      final storeIds = orders
+          .map((o) => o['store_id'])
+          .where((id) => id != null)
+          .map((id) => id.toString().trim())
+          .where((id) => id.isNotEmpty)
+          .toSet();
+
+      // Batch fetch stores
+      Map<String, Map<String, dynamic>> storeCache = {};
+      if (storeIds.isNotEmpty) {
+        try {
+          final storeRows = await supabase
+              .from('stores')
+              .select('id, name, address')
+              .inFilter('id', storeIds.toList());
+
+          for (final row in List<Map<String, dynamic>>.from(storeRows)) {
+            final id = (row['id'] as String?)?.trim() ?? '';
+            if (id.isNotEmpty) storeCache[id] = row;
+          }
+        } catch (e) {
+          debugPrint('[MyOrders] store batch fetch error: $e');
+        }
+      }
+
       setState(() {
-        _allOrders = List<Map<String, dynamic>>.from(rows);
+        _allOrders  = orders;
+        _storeCache = storeCache;
       });
     } catch (e) {
       setState(() { _error = e.toString(); });
@@ -123,8 +157,17 @@ class _MyOrdersPageState extends State<MyOrdersPage>
     }).toList();
   }
 
-  String _storeName(Map<String, dynamic> o) =>
-      (o['store_name'] as String?) ?? 'NuBurn - Tanjung Burma';
+  // FIX 3: Resolve store name from cache instead of hardcoded fallback
+  String _storeName(Map<String, dynamic> o) {
+    final rawId = o['store_id'];
+    if (rawId != null) {
+      final id = rawId.toString().trim();
+      if (id.isNotEmpty && _storeCache.containsKey(id)) {
+        return (_storeCache[id]!['name'] as String?)?.trim() ?? 'NuBurn';
+      }
+    }
+    return 'NuBurn';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +213,6 @@ class _MyOrdersPageState extends State<MyOrdersPage>
       ),
       body: Column(
         children: [
-          // ── Search bar ────────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
@@ -193,7 +235,6 @@ class _MyOrdersPageState extends State<MyOrdersPage>
             ),
           ),
 
-          // ── Body ─────────────────────────────────────────────────────────
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator(color: Color(0xFF1E4620)))
@@ -249,6 +290,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
 
           return _OrderCard(
             order:      order,
+            storeName:  _storeName(order),   // FIX 3: pass resolved name
             isExpanded: _expandedIds.contains(id),
             showRate:   showRate &&
                 (status == 'completed' ||
@@ -280,6 +322,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
 
 class _OrderCard extends StatelessWidget {
   final Map<String, dynamic> order;
+  final String       storeName;   // FIX 3: accept resolved store name
   final bool         isExpanded;
   final bool         showRate;
   final VoidCallback onExpand;
@@ -289,6 +332,7 @@ class _OrderCard extends StatelessWidget {
 
   const _OrderCard({
     required this.order,
+    required this.storeName,
     required this.isExpanded,
     required this.showRate,
     required this.onExpand,
@@ -304,7 +348,6 @@ class _OrderCard extends StatelessWidget {
     final total     = (order['total'] as num?)?.toDouble() ?? 0.0;
     final dateStr   = _formatDate(
         order['order_date'] as String? ?? order['created_at'] as String?);
-    final storeName = (order['store_name'] as String?) ?? 'NuBurn - Tanjung Burma';
 
     final first      = items.isNotEmpty ? items.first : null;
     final extraCount = items.length - 1;
@@ -332,7 +375,7 @@ class _OrderCard extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            storeName,
+                            storeName,  // FIX 3: use resolved name
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize:   13,
@@ -355,14 +398,12 @@ class _OrderCard extends StatelessWidget {
             ),
             const Divider(height: 16, indent: 14, endIndent: 14),
 
-            // ── First item ─────────────────────────────────────────────────
             if (first != null)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: _ItemRow(item: first),
               ),
 
-            // ── Expanded: remaining items ──────────────────────────────────
             if (isExpanded && hasMore) ...[
               const Divider(height: 12, indent: 14, endIndent: 14),
               ...items.skip(1).map(
@@ -373,7 +414,6 @@ class _OrderCard extends StatelessWidget {
               ),
             ],
 
-            // ── Show more / less ───────────────────────────────────────────
             if (hasMore)
               GestureDetector(
                 onTap:     onExpand,
@@ -415,7 +455,6 @@ class _OrderCard extends StatelessWidget {
             else
               const SizedBox(height: 8),
 
-            // ── Totals ─────────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
               child: Column(
@@ -452,7 +491,6 @@ class _OrderCard extends StatelessWidget {
               ),
             ),
 
-            // ── Footer: type · status + RATE ──────────────────────────────
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: const BoxDecoration(
@@ -511,7 +549,7 @@ class _OrderCard extends StatelessWidget {
       v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(2);
 }
 
-// ── Item Row — now shows food image from order_items.image_url ─────────────────
+// ── Item Row ───────────────────────────────────────────────────────────────────
 
 class _ItemRow extends StatelessWidget {
   final Map<String, dynamic> item;
@@ -522,7 +560,7 @@ class _ItemRow extends StatelessWidget {
     final name     = item['name']      as String? ?? '';
     final price    = (item['price']    as num?)?.toDouble() ?? 0.0;
     final addOns   = List<String>.from(item['add_ons'] as List? ?? []);
-    final imageUrl = item['image_url'] as String?; // ← from order_items
+    final imageUrl = item['image_url'] as String?;
 
     final half = (addOns.length / 2).ceil();
     final col1 = addOns.isNotEmpty ? addOns.sublist(0, half) : <String>[];
@@ -543,7 +581,13 @@ class _ItemRow extends StatelessWidget {
                     style: const TextStyle(
                         fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 4),
-                if (addOns.isNotEmpty)
+                // FIX 1: Show "- No Add Ons" when list is empty
+                if (addOns.isEmpty)
+                  const Text(
+                    '- No Add Ons',
+                    style: TextStyle(fontSize: 10, color: Color(0xFF8A8A8A)),
+                  )
+                else
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

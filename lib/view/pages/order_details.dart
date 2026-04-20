@@ -8,7 +8,6 @@ import '../../service/supabase_conn.dart';
 /// When set, the page loads the order directly from Supabase
 /// instead of reading from OrderController.currentOrder.
 class OrderDetailsPage extends StatefulWidget {
-  /// DB bigint order_id — supplied when navigating from MyOrdersPage.
   final String? historyOrderId;
 
   const OrderDetailsPage({super.key, this.historyOrderId});
@@ -21,14 +20,18 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   static const _green = Color(0xFF1E4620);
   static const _bg    = Color(0xFFF5F5F0);
 
-  // ── State for history-mode (loaded from Supabase directly) ────────────────
+  // ── History-mode state ────────────────────────────────────────────────────
   Map<String, dynamic>? _historyRow;
-  // FIX 3 & 4: store data fetched from Supabase by store_id
   Map<String, dynamic>? _storeRow;
-  bool  _historyLoading    = false;
-  bool  _historyCancelling = false;
-  bool  _historyCancelled  = false;
+  bool    _historyLoading    = false;
+  bool    _historyCancelling = false;
+  bool    _historyCancelled  = false;
   String? _historyError;
+
+  // ── FIX 2: Live-mode store state ──────────────────────────────────────────
+  // Store data for the LIVE order view, fetched eagerly in initState so it is
+  // available on the very first render without requiring a page re-entry.
+  Map<String, dynamic>? _liveStoreRow;
 
   bool get _isHistoryMode => widget.historyOrderId != null;
 
@@ -41,7 +44,29 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final ctrl = context.read<OrderController>();
         if (ctrl.dbOrderId != null) _listenToOrderStatus(ctrl);
+
+        // FIX 2: Fetch store for live order immediately
+        final storeId = ctrl.currentOrder?.storeId;
+        if (storeId != null && storeId.isNotEmpty) {
+          _fetchLiveStore(storeId);
+        }
       });
+    }
+  }
+
+  // ── FIX 2: Fetch store for live order ─────────────────────────────────────
+  Future<void> _fetchLiveStore(String storeId) async {
+    try {
+      final row = await supabase
+          .from('stores')
+          .select('id, name, address')
+          .eq('id', storeId.trim())
+          .maybeSingle();
+      if (row != null && mounted) {
+        setState(() => _liveStoreRow = Map<String, dynamic>.from(row));
+      }
+    } catch (e) {
+      debugPrint('[OrderDetails] live store fetch error: $e');
     }
   }
 
@@ -57,8 +82,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
 
       final orderMap = Map<String, dynamic>.from(row);
 
-      // FIX 3 & 4: fetch real store data.
-      // Normalise store_id to String — Supabase may return it as int 1 or String '1'
       final rawStoreId = orderMap['store_id'];
       final storeId = rawStoreId != null ? rawStoreId.toString().trim() : null;
       Map<String, dynamic>? storeMap;
@@ -72,10 +95,10 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           if (storeRow != null) {
             storeMap = Map<String, dynamic>.from(storeRow);
           } else {
-            debugPrint('[OrderDetails] store not found for store_id=\$storeId');
+            debugPrint('[OrderDetails] store not found for store_id=$storeId');
           }
         } catch (e) {
-          debugPrint('[OrderDetails] store fetch error for store_id=\$storeId: \$e');
+          debugPrint('[OrderDetails] store fetch error for store_id=$storeId: $e');
         }
       } else {
         debugPrint('[OrderDetails] store_id is null/empty on this order');
@@ -119,7 +142,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     }
   }
 
-  // ── Confirm cancel dialog ─────────────────────────────────────────────────
   void _showCancelDialog({required VoidCallback onConfirm}) {
     showDialog(
       context: context,
@@ -147,7 +169,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     );
   }
 
-  // ── Real-time listener (live-order mode only) ─────────────────────────────
   void _listenToOrderStatus(OrderController ctrl) {
     ctrl.watchOrderStatus(ctrl.dbOrderId!).listen((row) {
       if (!mounted) return;
@@ -164,13 +185,12 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     });
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return _isHistoryMode ? _buildHistoryView() : _buildLiveView();
   }
 
-  // ── LIVE ORDER VIEW (from OrderController.currentOrder) ───────────────────
+  // ── LIVE ORDER VIEW ───────────────────────────────────────────────────────
   Widget _buildLiveView() {
     final ctrl  = context.watch<OrderController>();
     final order = ctrl.currentOrder;
@@ -179,8 +199,16 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       return const Scaffold(body: Center(child: Text('No order found.')));
     }
 
-    final isCancelled  = ctrl.isCancelled;
+    final isCancelled   = ctrl.isCancelled;
     final isSelfCollect = order.orderType == OrderType.selfCollect;
+
+    // FIX 2: Use _liveStoreRow when available; fall back to order model values
+    // while the fetch is still in-flight (shows correct data without requiring
+    // the user to exit and re-enter the page).
+    final liveFromName    = (_liveStoreRow?['name']    as String?)?.trim()
+        ?? order.fromName;
+    final liveFromAddress = (_liveStoreRow?['address'] as String?)?.trim()
+        ?? order.fromAddress;
 
     return Scaffold(
       backgroundColor: _bg,
@@ -211,12 +239,13 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               ),
               const SizedBox(height: 12),
               _CollectAtCard(
-                storeName:    order.fromName,
-                storeAddress: order.fromAddress,
+                storeName:    liveFromName,
+                storeAddress: liveFromAddress,
               ),
             ] else ...[
+              // FIX 2: Use live-fetched store name/address
               _InfoSection(title: 'From',
-                  lines: [order.fromName, order.fromAddress]),
+                  lines: [liveFromName, liveFromAddress]),
               const SizedBox(height: 12),
               _InfoSection(
                 title: 'Deliver To',
@@ -226,8 +255,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             const SizedBox(height: 16),
 
             _LiveItemDetailsSection(
-              ctrl:       ctrl,
-              order:      order,
+              ctrl:        ctrl,
+              order:       order,
               onCancelTap: () => _showCancelDialog(onConfirm: ctrl.cancelOrder),
             ),
             const SizedBox(height: 16),
@@ -239,7 +268,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     );
   }
 
-  // ── HISTORY ORDER VIEW (loaded from Supabase) ─────────────────────────────
+  // ── HISTORY ORDER VIEW ────────────────────────────────────────────────────
   Widget _buildHistoryView() {
     if (_historyLoading) {
       return Scaffold(
@@ -291,7 +320,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     final orderId        = row['order_id'].toString();
     final collectionCode = row['collection_code'] as String?;
 
-    // FIX 3 & 4: Use real store name + address fetched from stores table
     final fromName    = (_storeRow?['name']    as String?)?.trim() ?? '';
     final fromAddress = (_storeRow?['address'] as String?)?.trim() ?? '';
 
@@ -332,7 +360,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               _StatusTracker(status: trackerStatus, orderType: trackerType),
             const SizedBox(height: 16),
 
-            // FIX 4: Self Collect uses real store name + address
             if (isSelfCollect) ...[
               _SelfCollectCodeCard(
                 collectionCode: collectionCode,
@@ -345,7 +372,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                   storeAddress: fromAddress.isNotEmpty ? fromAddress : null,
                 ),
             ] else ...[
-              // FIX 3: Delivery — only render From card when store data loaded
               if (fromName.isNotEmpty)
                 _InfoSection(
                   title: 'From',
@@ -561,7 +587,7 @@ class _SelfCollectCodeCard extends StatelessWidget {
               Text(
                 _statusLabel,
                 style: const TextStyle(
-                  color:   Color(0xFF6B6B6B),
+                  color:    Color(0xFF6B6B6B),
                   fontSize: 12,
                 ),
               ),
@@ -575,7 +601,7 @@ class _SelfCollectCodeCard extends StatelessWidget {
 
 class _CollectAtCard extends StatelessWidget {
   final String  storeName;
-  final String? storeAddress; // nullable — omitted when not available
+  final String? storeAddress;
 
   const _CollectAtCard({
     required this.storeName,
@@ -795,7 +821,7 @@ class _Step {
   const _Step({required this.icon, required this.label});
 }
 
-// ── Info Section (delivery orders) ────────────────────────────────────────────
+// ── Info Section ───────────────────────────────────────────────────────────────
 
 class _InfoSection extends StatelessWidget {
   final String       title;
@@ -895,7 +921,6 @@ class _LiveItemDetailsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // FIX 5: pass price; live items don't have imageUrl
           ...order.items.map((item) => _OrderItemRow(
             name:     item.name,
             addOns:   item.addOns,
@@ -1004,7 +1029,6 @@ class _HistoryItemDetailsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // FIX 5: pass price + imageUrl from order_items
           ...items.map((item) => _OrderItemRow(
             name:     item['name']      as String? ?? '',
             addOns:   List<String>.from(item['add_ons'] as List? ?? []),
@@ -1048,7 +1072,7 @@ class _HistoryItemDetailsSection extends StatelessWidget {
 class _OrderItemRow extends StatelessWidget {
   final String       name;
   final List<String> addOns;
-  final double       price;   // FIX 5: price field
+  final double       price;
   final String?      imageUrl;
 
   const _OrderItemRow({
@@ -1078,15 +1102,14 @@ class _OrderItemRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // FIX 5: Item name on top
                 Text(name,
                     style: const TextStyle(
                         fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 4),
-                // FIX 5: "No Add Ons" when empty, otherwise show add-ons
+                // FIX 1: Show "- No Add Ons" when empty
                 if (addOns.isEmpty)
                   const Text(
-                    '+ No Add Ons',
+                    '- No Add Ons',
                     style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)),
                   )
                 else
@@ -1101,7 +1124,6 @@ class _OrderItemRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // FIX 5: Price aligned to the right
           Text(
             'RM $priceStr',
             style: const TextStyle(
@@ -1123,7 +1145,6 @@ class _OrderItemRow extends StatelessWidget {
   );
 }
 
-/// Food thumbnail with network image support + fallback.
 class _FoodThumb extends StatelessWidget {
   final String? imageUrl;
   const _FoodThumb({this.imageUrl});
