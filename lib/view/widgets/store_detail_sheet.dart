@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../model/store_model.dart';
 import '../../controller/store_controller.dart';
+import '../../controller/cart_controller.dart';
 import '../../model/meal_model.dart';
 import '../../service/meal_service.dart';
 import '../../service/location_service.dart';
@@ -20,7 +21,7 @@ class StoreDetailBottomSheet extends StatelessWidget {
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
+          topLeft:  Radius.circular(20),
           topRight: Radius.circular(20),
         ),
       ),
@@ -28,38 +29,39 @@ class StoreDetailBottomSheet extends StatelessWidget {
         thumbVisibility: true,
         child: SingleChildScrollView(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize:      MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
                 child: Container(
                   margin: const EdgeInsets.symmetric(vertical: 12),
-                  width: 40,
+                  width:  40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color:        Colors.grey[300],
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-              
+
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                     ClipRRect(
+                    ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: Image.asset(
                         store.logoUrl,
-                        width: 140, 
+                        width:  140,
                         height: 140,
-                        fit: BoxFit.contain,
+                        fit:    BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) => Container(
-                          width: 140,
+                          width:  140,
                           height: 140,
-                          color: const Color(0xFFF5F5F0),
-                          child: const Icon(Icons.store, color: Color(0xFF1E4620), size: 50),
+                          color:  const Color(0xFFF5F5F0),
+                          child:  const Icon(Icons.store,
+                              color: Color(0xFF1E4620), size: 50),
                         ),
                       ),
                     ),
@@ -73,18 +75,19 @@ class StoreDetailBottomSheet extends StatelessWidget {
                             Text(
                               store.name,
                               style: const TextStyle(
-                                fontSize: 20, 
-                                fontWeight: FontWeight.bold, 
-                                color: Color(0xFF1E4620),
-                                height: 1.1,
+                                fontSize:   20,
+                                fontWeight: FontWeight.bold,
+                                color:      Color(0xFF1E4620),
+                                height:     1.1,
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                              maxLines:  2,
+                              overflow:  TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                const Icon(Icons.star, color: Colors.amber, size: 16),
+                                const Icon(Icons.star,
+                                    color: Colors.amber, size: 16),
                                 const SizedBox(width: 4),
                                 Consumer<StoreController>(
                                   builder: (context, storeCtrl, _) {
@@ -99,7 +102,10 @@ class StoreDetailBottomSheet extends StatelessWidget {
                                     }
                                     return Text(
                                       '${store.rating} • ${distance?.toStringAsFixed(1) ?? store.distanceKm.toStringAsFixed(1)} km',
-                                      style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w600, fontSize: 13),
+                                      style: TextStyle(
+                                          color:      Colors.grey[700],
+                                          fontWeight: FontWeight.w600,
+                                          fontSize:   13),
                                     );
                                   },
                                 ),
@@ -108,16 +114,28 @@ class StoreDetailBottomSheet extends StatelessWidget {
                             const SizedBox(height: 8),
                             Row(
                               children: [
-                                Icon(Icons.circle, color: store.isOpen ? Colors.green : Colors.red, size: 10),
+                                Icon(Icons.circle,
+                                    color: store.isOpen
+                                        ? Colors.green
+                                        : Colors.red,
+                                    size: 10),
                                 const SizedBox(width: 4),
                                 Text(
                                   store.isOpen ? 'Open' : 'Closed',
-                                  style: TextStyle(color: store.isOpen ? Colors.green : Colors.red, fontWeight: FontWeight.bold, fontSize: 13),
+                                  style: TextStyle(
+                                    color:      store.isOpen
+                                        ? Colors.green
+                                        : Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize:   13,
+                                  ),
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
                                   '${store.openTime} - ${store.closeTime}',
-                                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                  style: TextStyle(
+                                      color:   Colors.grey[600],
+                                      fontSize: 13),
                                 ),
                               ],
                             ),
@@ -128,17 +146,20 @@ class StoreDetailBottomSheet extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
                   'Set Meals',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E4620)),
+                  style: TextStyle(
+                      fontSize:   20,
+                      fontWeight: FontWeight.bold,
+                      color:      Color(0xFF1E4620)),
                 ),
-               ),
+              ),
               const SizedBox(height: 12),
-              
+
               FutureBuilder<List<Meal>>(
                 future: MealService.fetchMeals(storeId: store.id),
                 builder: (context, snapshot) {
@@ -146,16 +167,17 @@ class StoreDetailBottomSheet extends StatelessWidget {
                     return const Center(
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 40),
-                        child: CircularProgressIndicator(color: Color(0xFF1E4620)),
+                        child:   CircularProgressIndicator(
+                            color: Color(0xFF1E4620)),
                       ),
                     );
                   }
-                  
                   if (snapshot.hasError) {
                     return Center(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 20),
-                        child: Text('Error loading menu: ${snapshot.error}', style: const TextStyle(color: Colors.red)),
+                        child: Text('Error loading menu: ${snapshot.error}',
+                            style: const TextStyle(color: Colors.red)),
                       ),
                     );
                   }
@@ -172,91 +194,116 @@ class StoreDetailBottomSheet extends StatelessWidget {
 
                   return ListView.separated(
                     shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
+                    physics:    const NeverScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     itemCount: meals.length,
-                    separatorBuilder: (context, index) => Divider(
-                      height: 32,
+                    separatorBuilder: (_, __) => Divider(
+                      height:    32,
                       thickness: 1,
-                      color: Colors.grey.withOpacity(0.3),
+                      color:     Colors.grey.withOpacity(0.3),
                     ),
                     itemBuilder: (context, index) {
-                      final meal = meals[index];
+                      final meal      = meals[index];
                       final isInStock = meal.isAvailable;
-                      
-                      return Container(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(meal.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                  const SizedBox(height: 4),
-                                  Text(meal.description, style: TextStyle(color: Colors.grey[600], fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      Text('RM ${meal.price % 1 == 0 ? meal.price.toInt().toString() : meal.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                      const SizedBox(width: 12),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: isInStock ? const Color(0xFFE8F5E9) : const Color(0xFFFFEBEE),
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              isInStock ? Icons.check_circle : Icons.cancel,
-                                              size: 14,
-                                              color: isInStock ? Colors.green : Colors.red,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              isInStock ? 'In Stock' : 'Sold Out',
-                                              style: TextStyle(
-                                                color: isInStock ? Colors.green[700] : Colors.red[700],
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: meal.imageUrl.startsWith('http')
-                                  ? Image.network(
-                                      meal.imageUrl,
-                                      width: 100,
-                                      height: 80,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
-                                    )
-                                  : Image.asset(
-                                      meal.imageUrl,
-                                      width: 100,
-                                      height: 80,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
+
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(meal.name,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize:   16)),
+                                const SizedBox(height: 4),
+                                Text(meal.description,
+                                    style: TextStyle(
+                                        color:   Colors.grey[600],
+                                        fontSize: 12),
+                                    maxLines:  2,
+                                    overflow:  TextOverflow.ellipsis),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'RM ${meal.price % 1 == 0 ? meal.price.toInt().toString() : meal.price.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize:   16),
                                     ),
+                                    const SizedBox(width: 12),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: isInStock
+                                            ? const Color(0xFFE8F5E9)
+                                            : const Color(0xFFFFEBEE),
+                                        borderRadius:
+                                        BorderRadius.circular(20),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            isInStock
+                                                ? Icons.check_circle
+                                                : Icons.cancel,
+                                            size:  14,
+                                            color: isInStock
+                                                ? Colors.green
+                                                : Colors.red,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            isInStock
+                                                ? 'In Stock'
+                                                : 'Sold Out',
+                                            style: TextStyle(
+                                              color: isInStock
+                                                  ? Colors.green[700]
+                                                  : Colors.red[700],
+                                              fontSize:   12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 12),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: meal.imageUrl.startsWith('http')
+                                ? Image.network(
+                              meal.imageUrl,
+                              width:  100,
+                              height: 80,
+                              fit:    BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  _buildErrorImage(),
+                            )
+                                : Image.asset(
+                              meal.imageUrl,
+                              width:  100,
+                              height: 80,
+                              fit:    BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  _buildErrorImage(),
+                            ),
+                          ),
+                        ],
                       );
                     },
                   );
                 },
               ),
-              
+
               // Action Button
               Padding(
                 padding: const EdgeInsets.all(20),
@@ -266,34 +313,41 @@ class StoreDetailBottomSheet extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          final storeCtrl = Provider.of<StoreController>(context, listen: false);
+                          final storeCtrl =
+                          Provider.of<StoreController>(context,
+                              listen: false);
                           final userPos = storeCtrl.userPosition;
 
                           if (userPos != null) {
-                            final distance = LocationService.calculateDistance(
+                            final distance =
+                            LocationService.calculateDistance(
                               userPos.latitude,
                               userPos.longitude,
                               store.latitude,
                               store.longitude,
                             );
-
-                            // Warning threshold: 5km
                             if (distance > 5000) {
-                              _showFarStoreWarning(context, distance / 1000);
+                              _showFarStoreWarning(
+                                  context, distance / 1000);
                               return;
                             }
                           }
 
-                          // Standard selection logic
                           _completeStoreSelection(context);
                         },
-                        icon: const Icon(Icons.shopping_basket),
-                        label: const Text('Order from this Store', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        icon:  const Icon(Icons.shopping_basket),
+                        label: const Text(
+                          'Order from this Store',
+                          style: TextStyle(
+                              fontSize:   18,
+                              fontWeight: FontWeight.bold),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFABC270),
                           foregroundColor: const Color(0xFF1E4620),
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15)),
                         ),
                       ),
                     ),
@@ -313,33 +367,54 @@ class StoreDetailBottomSheet extends StatelessWidget {
     );
   }
 
+  // ── Complete store selection: update both StoreController & CartController ─
+  void _completeStoreSelection(BuildContext context) {
+    final storeCtrl = Provider.of<StoreController>(context, listen: false);
+    final cartCtrl  = Provider.of<CartController>(context,  listen: false);
+
+    // 1. Update which store is selected
+    storeCtrl.selectStore(store);
+
+    // 2. Switch the cart scope to this store — loads the store-specific cart
+    cartCtrl.setStore(store.id, store.name);
+
+    Navigator.pop(context);        // Close bottom sheet
+    Navigator.pop(context, true);  // Close FindStorePage
+  }
+
   void _showRatingConfirmation(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'Rate this Restaurant?',
-          style: TextStyle(color: Color(0xFF1E4620), fontWeight: FontWeight.bold),
+          style: TextStyle(
+              color:      Color(0xFF1E4620),
+              fontWeight: FontWeight.bold),
         ),
-        content: Text('Would you like to provide a rating for ${store.name}?'),
+        content:
+        Text('Would you like to provide a rating for ${store.name}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close', style: TextStyle(color: Colors.grey)),
+            child: const Text('Close',
+                style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Link to Rating Page
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Rating page coming soon!')),
+                const SnackBar(
+                    content: Text('Rating page coming soon!')),
               );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1E4620),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             child: const Text('Yes'),
           ),
@@ -348,46 +423,46 @@ class StoreDetailBottomSheet extends StatelessWidget {
     );
   }
 
-  void _completeStoreSelection(BuildContext context) {
-    Provider.of<StoreController>(context, listen: false).selectStore(store);
-    Navigator.pop(context); // Close bottom sheet
-    Navigator.pop(context, true); // Close the FindStorePage (true can be used to indicate success if needed)
-  }
-
   void _showFarStoreWarning(BuildContext context, double distanceKm) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
             Icon(Icons.warning_amber_rounded, color: Colors.orange),
             SizedBox(width: 8),
             Text(
               'Store is a bit far',
-              style: TextStyle(color: Color(0xFF1E4620), fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color:      Color(0xFF1E4620),
+                  fontWeight: FontWeight.bold),
             ),
           ],
         ),
         content: Text(
-          'This store is approximately ${distanceKm.toStringAsFixed(1)} km away from you. '
-          'There might be a closer branch available. Are you sure you want to order from here anyway?',
+          'This store is approximately ${distanceKm.toStringAsFixed(1)} km away. '
+              'There might be a closer branch. Are you sure you want to order from here anyway?',
           style: const TextStyle(height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Go Back', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            child: const Text('Go Back',
+                style: TextStyle(
+                    color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context); // Close dialog
+              Navigator.pop(context);
               _completeStoreSelection(context);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1E4620),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             child: const Text('Proceed Anyway'),
           ),
@@ -398,10 +473,10 @@ class StoreDetailBottomSheet extends StatelessWidget {
 
   Widget _buildErrorImage() {
     return Container(
-      width: 100,
+      width:  100,
       height: 80,
-      color: Colors.grey[100],
-      child: const Icon(Icons.lunch_dining, color: Colors.grey),
+      color:  Colors.grey[100],
+      child:  const Icon(Icons.lunch_dining, color: Colors.grey),
     );
   }
 }

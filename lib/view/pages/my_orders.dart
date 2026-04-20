@@ -1,26 +1,23 @@
 import 'package:flutter/material.dart';
-import '../../service/order_service.dart';
 import '../../service/supabase_conn.dart';
+import 'order_details.dart';
 
 // ── Status helpers ─────────────────────────────────────────────────────────────
 
-/// Statuses shown in "Track Order" (active)
-const _activeStatuses = {'submitted', 'preparing', 'out_for_delivery', 'ready_for_collection'};
-
-/// Statuses shown in "Order History" (done)
+const _activeStatuses  = {'submitted', 'preparing', 'out_for_delivery', 'ready_for_collection'};
 const _historyStatuses = {'completed', 'delivered', 'retrieved', 'cancelled'};
 
 Color _statusColor(String status) {
   switch (status) {
-    case 'submitted':           return const Color(0xFF1E4620);
-    case 'preparing':           return const Color(0xFFD95F2B);
+    case 'submitted':            return const Color(0xFF1E4620);
+    case 'preparing':            return const Color(0xFFD95F2B);
     case 'out_for_delivery':
-    case 'ready_for_collection':return const Color(0xFFB5CC30);
+    case 'ready_for_collection': return const Color(0xFFB5CC30);
     case 'completed':
     case 'delivered':
-    case 'retrieved':           return const Color(0xFF8A8A8A);
-    case 'cancelled':           return Colors.red;
-    default:                    return const Color(0xFF8A8A8A);
+    case 'retrieved':            return const Color(0xFF8A8A8A);
+    case 'cancelled':            return Colors.red;
+    default:                     return const Color(0xFF8A8A8A);
   }
 }
 
@@ -65,21 +62,18 @@ class MyOrdersPage extends StatefulWidget {
 class _MyOrdersPageState extends State<MyOrdersPage>
     with SingleTickerProviderStateMixin {
 
-  final _orderService = OrderService();
-  late TabController  _tabCtrl;
-  final _searchCtrl   = TextEditingController();
+  late TabController _tabCtrl;
+  final _searchCtrl = TextEditingController();
 
-  static const _green      = Color(0xFF1E4620);
-  static const _bg         = Color(0xFFF5F5F0);
+  static const _green = Color(0xFF1E4620);
+  static const _bg    = Color(0xFFF5F5F0);
 
   String _searchQuery = '';
 
-  // Raw rows from Supabase
   List<Map<String, dynamic>> _allOrders = [];
-  bool  _loading = true;
+  bool    _loading = true;
   String? _error;
 
-  // Track which order cards are expanded
   final Set<dynamic> _expandedIds = {};
 
   @override
@@ -96,7 +90,6 @@ class _MyOrdersPageState extends State<MyOrdersPage>
     super.dispose();
   }
 
-  // ── Fetch all orders for current user ─────────────────────────────────────
   Future<void> _fetchOrders() async {
     setState(() { _loading = true; _error = null; });
     try {
@@ -107,7 +100,9 @@ class _MyOrdersPageState extends State<MyOrdersPage>
           .select('*, order_items(*)')
           .eq('user_id', uid)
           .order('created_at', ascending: false);
-      setState(() { _allOrders = List<Map<String, dynamic>>.from(rows); });
+      setState(() {
+        _allOrders = List<Map<String, dynamic>>.from(rows);
+      });
     } catch (e) {
       setState(() { _error = e.toString(); });
     } finally {
@@ -115,25 +110,21 @@ class _MyOrdersPageState extends State<MyOrdersPage>
     }
   }
 
-  // ── Filter helpers ────────────────────────────────────────────────────────
   List<Map<String, dynamic>> _filter(Set<String> statusSet) {
     return _allOrders.where((o) {
-      final status    = (o['status'] as String? ?? '').toLowerCase();
+      final status    = (o['status']     as String? ?? '').toLowerCase();
       final orderType = (o['order_type'] as String? ?? '');
       final label     = _statusLabel(status, orderType).toLowerCase();
       final storeName = _storeName(o).toLowerCase();
-
-      final matchesStatus = statusSet.contains(status);
-      final matchesSearch = _searchQuery.isEmpty ||
-          label.contains(_searchQuery.toLowerCase()) ||
-          storeName.contains(_searchQuery.toLowerCase());
-
-      return matchesStatus && matchesSearch;
+      return statusSet.contains(status) &&
+          (_searchQuery.isEmpty ||
+              label.contains(_searchQuery.toLowerCase()) ||
+              storeName.contains(_searchQuery.toLowerCase()));
     }).toList();
   }
 
-  String _storeName(Map<String, dynamic> order) =>
-      (order['store_name'] as String?) ?? 'NuBurn - Tanjung Burma';
+  String _storeName(Map<String, dynamic> o) =>
+      (o['store_name'] as String?) ?? 'NuBurn - Tanjung Burma';
 
   @override
   Widget build(BuildContext context) {
@@ -144,24 +135,23 @@ class _MyOrdersPageState extends State<MyOrdersPage>
       backgroundColor: _bg,
       appBar: AppBar(
         backgroundColor: _bg,
-        elevation: 0,
-        centerTitle: true,
+        elevation:       0,
+        centerTitle:     true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: _green),
+          icon:      const Icon(Icons.arrow_back, color: _green),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'My Orders',
           style: TextStyle(
-            color:      _green,
-            fontWeight: FontWeight.w800,
-            fontSize:   18,
-          ),
+              color:      _green,
+              fontWeight: FontWeight.w800,
+              fontSize:   18),
         ),
         actions: [
           IconButton(
-            icon:    const Icon(Icons.refresh, color: _green),
-            tooltip: 'Refresh',
+            icon:     const Icon(Icons.refresh, color: _green),
+            tooltip:  'Refresh',
             onPressed: _fetchOrders,
           ),
         ],
@@ -188,8 +178,8 @@ class _MyOrdersPageState extends State<MyOrdersPage>
               onChanged:  (v) => setState(() => _searchQuery = v.trim()),
               style: const TextStyle(fontSize: 13),
               decoration: InputDecoration(
-                hintText:  'Search by status or restaurant',
-                hintStyle: const TextStyle(
+                hintText:   'Search by status or restaurant',
+                hintStyle:  const TextStyle(
                     color: Color(0xFFAAAAAA), fontSize: 12),
                 prefixIcon: const Icon(Icons.search,
                     size: 18, color: Color(0xFF8A8A8A)),
@@ -208,30 +198,30 @@ class _MyOrdersPageState extends State<MyOrdersPage>
           // ── Body ─────────────────────────────────────────────────────────
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator(
-                color: Color(0xFF1E4620)))
+                ? const Center(
+                child: CircularProgressIndicator(
+                    color: Color(0xFF1E4620)))
                 : _error != null
-                ? _ErrorState(message: _error!, onRetry: _fetchOrders)
+                ? _ErrorState(
+                message: _error!, onRetry: _fetchOrders)
                 : TabBarView(
               controller: _tabCtrl,
               children: [
-                // ── Track Order ──
                 _buildList(
-                  orders:   activeOrders,
-                  emptyMsg: _searchQuery.isEmpty
+                  orders:    activeOrders,
+                  emptyMsg:  _searchQuery.isEmpty
                       ? 'No active orders right now.'
                       : 'No active orders match your search.',
                   emptyIcon: Icons.receipt_long_outlined,
-                  showRate: false,
+                  showRate:  false,
                 ),
-                // ── Order History ──
                 _buildList(
-                  orders:   historyOrders,
-                  emptyMsg: _searchQuery.isEmpty
+                  orders:    historyOrders,
+                  emptyMsg:  _searchQuery.isEmpty
                       ? 'No past orders yet.'
                       : 'No past orders match your search.',
                   emptyIcon: Icons.history,
-                  showRate: true,
+                  showRate:  true,
                 ),
               ],
             ),
@@ -252,7 +242,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
     }
 
     return RefreshIndicator(
-      color: const Color(0xFF1E4620),
+      color:     const Color(0xFF1E4620),
       onRefresh: _fetchOrders,
       child: ListView.builder(
         padding:     const EdgeInsets.all(16),
@@ -270,12 +260,20 @@ class _MyOrdersPageState extends State<MyOrdersPage>
                     status == 'delivered' ||
                     status == 'retrieved'),
             onExpand: () => setState(() {
-              if (_expandedIds.contains(id)) {
-                _expandedIds.remove(id);
-              } else {
-                _expandedIds.add(id);
-              }
+              _expandedIds.contains(id)
+                  ? _expandedIds.remove(id)
+                  : _expandedIds.add(id);
             }),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OrderDetailsPage(
+                    historyOrderId: id.toString(),
+                  ),
+                ),
+              ).then((_) => _fetchOrders()); // refresh on return
+            },
           );
         },
       ),
@@ -287,9 +285,10 @@ class _MyOrdersPageState extends State<MyOrdersPage>
 
 class _OrderCard extends StatelessWidget {
   final Map<String, dynamic> order;
-  final bool        isExpanded;
-  final bool        showRate;
+  final bool         isExpanded;
+  final bool         showRate;
   final VoidCallback onExpand;
+  final VoidCallback onTap;
 
   static const _terracotta = Color(0xFFD95F2B);
 
@@ -298,6 +297,7 @@ class _OrderCard extends StatelessWidget {
     required this.isExpanded,
     required this.showRate,
     required this.onExpand,
+    required this.onTap,
   });
 
   @override
@@ -309,80 +309,96 @@ class _OrderCard extends StatelessWidget {
     final total     = (order['total'] as num?)?.toDouble() ?? 0.0;
     final dateStr   = _formatDate(
         order['order_date'] as String? ?? order['created_at'] as String?);
-    final storeName = (order['store_name'] as String?) ?? 'NuBurn - Tanjung Burma';
+    final storeName = (order['store_name'] as String?)
+        ?? 'NuBurn - Tanjung Burma';
 
     final first      = items.isNotEmpty ? items.first : null;
     final extraCount = items.length - 1;
     final hasMore    = extraCount > 0;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color:        Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border:       Border.all(color: const Color(0xFFEEEBDE)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Header ─────────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
-            child: Row(
-              children: [
-                Text(
-                  storeName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize:   13,
-                    color:      Color(0xFF2C2C2C),
-                  ),
-                ),
-                const Icon(Icons.chevron_right,
-                    size: 16, color: Color(0xFF8A8A8A)),
-                const Spacer(),
-                Text(
-                  dateStr,
-                  style: const TextStyle(
-                      fontSize: 11, color: Color(0xFF8A8A8A)),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 16, indent: 14, endIndent: 14),
-
-          // ── First item ─────────────────────────────────────────────────
-          if (first != null)
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        decoration: BoxDecoration(
+          color:        Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border:       Border.all(color: const Color(0xFFEEEBDE)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header ─────────────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: _ItemRow(item: first),
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            storeName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize:   13,
+                              color:      Color(0xFF2C2C2C),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right,
+                            size: 16, color: Color(0xFF8A8A8A)),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    dateStr,
+                    style: const TextStyle(
+                        fontSize: 11, color: Color(0xFF8A8A8A)),
+                  ),
+                ],
+              ),
             ),
+            const Divider(height: 16, indent: 14, endIndent: 14),
 
-          // ── Expanded: remaining items ──────────────────────────────────
-          if (isExpanded && hasMore) ...[
-            const Divider(height: 12, indent: 14, endIndent: 14),
-            ...items.skip(1).map(
-                  (item) => Padding(
+            // ── First item ─────────────────────────────────────────────────
+            if (first != null)
+              Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: _ItemRow(item: item),
+                child: _ItemRow(item: first),
               ),
-            ),
-          ],
 
-          // ── Show more / less ───────────────────────────────────────────
-          if (hasMore)
-            Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                    top: BorderSide(color: Color(0xFFEEEBDE), width: 1)),
-                borderRadius:
-                BorderRadius.vertical(bottom: Radius.circular(12)),
+            // ── Expanded: remaining items ──────────────────────────────────
+            if (isExpanded && hasMore) ...[
+              const Divider(height: 12, indent: 14, endIndent: 14),
+              ...items.skip(1).map(
+                    (item) => Padding(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 14),
+                  child: _ItemRow(item: item),
+                ),
               ),
-              child: GestureDetector(
-                onTap: onExpand,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+            ],
+
+            // ── Show more / less ───────────────────────────────────────────
+            if (hasMore)
+              GestureDetector(
+                onTap: () {
+                  onExpand(); // toggle expand WITHOUT triggering onTap (card nav)
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                        top: BorderSide(
+                            color: Color(0xFFEEEBDE), width: 1)),
+                    borderRadius: BorderRadius.vertical(
+                        bottom: Radius.circular(12)),
+                  ),
+                  padding:
+                  const EdgeInsets.symmetric(vertical: 10),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -407,106 +423,105 @@ class _OrderCard extends StatelessWidget {
                     ],
                   ),
                 ),
-              ),
-            )
-          else
-            const SizedBox(height: 8),
+              )
+            else
+              const SizedBox(height: 8),
 
-          // ── Totals ─────────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                const Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    'Service Fee (5%) included *',
-                    style: TextStyle(
-                        fontSize: 10, color: Color(0xFF8A8A8A)),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    'Total ${items.length} item(s): RM ${_fmt(total)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize:   13,
-                    ),
-                  ),
-                ),
-                // Remark
-                if ((order['remark'] as String?)?.isNotEmpty == true) ...[
-                  const SizedBox(height: 4),
-                  Align(
-                    alignment: Alignment.centerLeft,
+            // ── Totals ─────────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Align(
+                    alignment: Alignment.centerRight,
                     child: Text(
-                      'Remark: ${order['remark']}',
-                      style: const TextStyle(
-                          fontSize: 11, color: Color(0xFF8A8A8A)),
+                      'Service Fee (5%) included *',
+                      style: TextStyle(
+                          fontSize: 10, color: Color(0xFF8A8A8A)),
                     ),
                   ),
-                ],
-              ],
-            ),
-          ),
-
-          // ── Footer: type · status + rate button ───────────────────────
-          Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 10),
-            decoration: const BoxDecoration(
-              border: Border(
-                  top: BorderSide(color: Color(0xFFEEEBDE))),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  orderType == 'delivery' ? 'Delivery' : 'Self Collect',
-                  style: const TextStyle(
-                      fontSize: 11, color: Color(0xFF8A8A8A)),
-                ),
-                const Text(' · ',
-                    style: TextStyle(
-                        fontSize: 11, color: Color(0xFF8A8A8A))),
-                Text(
-                  _statusLabel(status, orderType),
-                  style: TextStyle(
-                    fontSize:   11,
-                    fontWeight: FontWeight.w700,
-                    color:      _statusColor(status),
+                  const SizedBox(height: 2),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      'Total ${items.length} item(s): RM ${_fmt(total)}',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 13),
+                    ),
                   ),
-                ),
-                const Spacer(),
-                if (showRate)
-                  GestureDetector(
-                    onTap: () {
-                      // TODO: open rating dialog
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 5),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                            color: _terracotta, width: 1.2),
-                        borderRadius: BorderRadius.circular(6),
+                  if ((order['remark'] as String?)?.isNotEmpty == true) ...[
+                    const SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Remark: ${order['remark']}',
+                        style: const TextStyle(
+                            fontSize: 11, color: Color(0xFF8A8A8A)),
                       ),
-                      child: const Text(
-                        'RATE',
-                        style: TextStyle(
-                          color:      _terracotta,
-                          fontSize:   11,
-                          fontWeight: FontWeight.w700,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // ── Footer: type · status + RATE ──────────────────────────────
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 14, vertical: 10),
+              decoration: const BoxDecoration(
+                border: Border(
+                    top: BorderSide(color: Color(0xFFEEEBDE))),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    orderType == 'delivery'
+                        ? 'Delivery'
+                        : 'Self Collect',
+                    style: const TextStyle(
+                        fontSize: 11, color: Color(0xFF8A8A8A)),
+                  ),
+                  const Text(' · ',
+                      style: TextStyle(
+                          fontSize: 11, color: Color(0xFF8A8A8A))),
+                  Text(
+                    _statusLabel(status, orderType),
+                    style: TextStyle(
+                      fontSize:   11,
+                      fontWeight: FontWeight.w700,
+                      color:      _statusColor(status),
+                    ),
+                  ),
+                  const Spacer(),
+                  if (showRate)
+                    GestureDetector(
+                      onTap: () {
+                        // TODO: open rating dialog
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 5),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                              color: _terracotta, width: 1.2),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'RATE',
+                          style: TextStyle(
+                            color:      _terracotta,
+                            fontSize:   11,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -515,7 +530,7 @@ class _OrderCard extends StatelessWidget {
       v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(2);
 }
 
-// ── Item Row ───────────────────────────────────────────────────────────────────
+// ── Item Row (with food image from order_items.image_url or menu_items) ────────
 
 class _ItemRow extends StatelessWidget {
   final Map<String, dynamic> item;
@@ -524,9 +539,12 @@ class _ItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name   = item['name']  as String? ?? '';
-    final price  = (item['price'] as num?)?.toDouble() ?? 0.0;
-    final addOns = List<String>.from(item['add_ons'] as List? ?? []);
+    final name     = item['name']      as String? ?? '';
+    final price    = (item['price']    as num?)?.toDouble() ?? 0.0;
+    final addOns   = List<String>.from(item['add_ons'] as List? ?? []);
+    // image_url is not stored in order_items per schema — use a placeholder.
+    // If you later add image_url to order_items, read it here:
+    final imageUrl = item['image_url'] as String?;
 
     final half = (addOns.length / 2).ceil();
     final col1 = addOns.isNotEmpty ? addOns.sublist(0, half) : <String>[];
@@ -537,17 +555,8 @@ class _ItemRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Placeholder image
-          Container(
-            width:  60,
-            height: 60,
-            decoration: BoxDecoration(
-              color:        const Color(0xFFD9D5C5),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.fastfood_outlined,
-                color: Color(0xFF9E9880), size: 26),
-          ),
+          // ── Food image ──────────────────────────────────────────────────
+          _FoodImage(imageUrl: imageUrl),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -562,7 +571,8 @@ class _ItemRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(child: _addOnCol(col1)),
-                      if (col2.isNotEmpty) Expanded(child: _addOnCol(col2)),
+                      if (col2.isNotEmpty)
+                        Expanded(child: _addOnCol(col2)),
                     ],
                   ),
               ],
@@ -570,21 +580,73 @@ class _ItemRow extends StatelessWidget {
           ),
           Text(
             'RM ${price % 1 == 0 ? price.toInt().toString() : price.toStringAsFixed(2)}',
-            style: const TextStyle(fontSize: 12, color: Color(0xFF6B6B6B)),
+            style: const TextStyle(
+                fontSize: 12, color: Color(0xFF6B6B6B)),
           ),
         ],
       ),
     );
   }
 
-  Widget _addOnCol(List<String> addOns) => Column(
+  Widget _addOnCol(List<String> items) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
-    children: addOns
+    children: items
         .map((a) => Text('+ $a',
         style: const TextStyle(
             fontSize: 10, color: Color(0xFF8A8A8A))))
         .toList(),
   );
+}
+
+// ── Food Image widget with network + fallback support ─────────────────────────
+
+class _FoodImage extends StatelessWidget {
+  final String? imageUrl;
+
+  const _FoodImage({this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    // Fallback grey box with icon
+    Widget fallback = Container(
+      width:  60,
+      height: 60,
+      decoration: BoxDecoration(
+        color:        const Color(0xFFD9D5C5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Icon(Icons.fastfood_outlined,
+          color: Color(0xFF9E9880), size: 26),
+    );
+
+    if (imageUrl == null || imageUrl!.isEmpty) return fallback;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.network(
+        imageUrl!,
+        width:  60,
+        height: 60,
+        fit:    BoxFit.cover,
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) return child;
+          return Container(
+            width:  60,
+            height: 60,
+            decoration: BoxDecoration(
+              color:        const Color(0xFFEEEBDE),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: Color(0xFF1E4620)),
+            ),
+          );
+        },
+        errorBuilder: (_, __, ___) => fallback,
+      ),
+    );
+  }
 }
 
 // ── Empty State ────────────────────────────────────────────────────────────────
@@ -642,9 +704,9 @@ class _ErrorState extends StatelessWidget {
                     fontSize: 11, color: Color(0xFF8A8A8A))),
             const SizedBox(height: 16),
             ElevatedButton.icon(
-              onPressed:  onRetry,
-              icon:       const Icon(Icons.refresh, size: 16),
-              label:      const Text('Retry'),
+              onPressed: onRetry,
+              icon:      const Icon(Icons.refresh, size: 16),
+              label:     const Text('Retry'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1E4620),
                 foregroundColor: Colors.white,
