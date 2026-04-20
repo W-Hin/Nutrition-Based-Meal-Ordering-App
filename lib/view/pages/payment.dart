@@ -200,16 +200,6 @@ class _PaymentViewState extends State<_PaymentView> {
               keyboardType: TextInputType.phone,
               onChanged:    (_) => ctrl.phoneError = null,
             ),
-            const SizedBox(height: 8),
-
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color:        _green.withOpacity(0.06),
-                borderRadius: BorderRadius.circular(8),
-                border:       Border.all(color: _green.withOpacity(0.15)),
-              ),
-            ),
             const SizedBox(height: 20),
 
             const _PaymentChannelsCard(),
@@ -313,12 +303,12 @@ class _PaymentViewState extends State<_PaymentView> {
       final checkoutCtrl = widget.checkoutCtrl;
       final isDelivery   = checkoutCtrl.activeTab == CheckoutTab.delivery;
 
-      // ── Resolve store dynamically from CartController / StoreController ──
-      final cartCtrl  = context.read<CartController>();
-      final storeName = cartCtrl.activeStoreName
-          ?? context.read<StoreController>().selectedStore?.name
-          ?? 'NuBurn';
-      final storeId   = context.read<StoreController>().selectedStore?.id;
+      // FIX 2: Resolve real store name + address from StoreController (fetched from Supabase)
+      final storeCtrl = context.read<StoreController>();
+      final store     = storeCtrl.selectedStore;
+      final storeName = store?.name    ?? 'NuBurn - Tanjung Burma';
+      final storeAddr = store?.address ?? '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21';
+      final storeId   = store?.id;
 
       final toName    = isDelivery
           ? checkoutCtrl.deliveryAddress.name
@@ -328,8 +318,7 @@ class _PaymentViewState extends State<_PaymentView> {
           : '';
       final toAddress = isDelivery
           ? checkoutCtrl.deliveryAddress.address
-          : context.read<StoreController>().selectedStore?.address
-          ?? '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21';
+          : storeAddr;
 
       await context.read<OrderController>().placeOrder(
         cartItems:   cart.items.toList(),
@@ -362,15 +351,11 @@ class _PaymentViewState extends State<_PaymentView> {
     }
   }
 
-  // ── Success dialog — dynamic store name ───────────────────────────────────
+  // ── Success dialog ─────────────────────────────────────────────────────────
   Future<void> _showPaymentSuccessDialog(
       BuildContext context,
       String storeName,
       ) async {
-    // Resolve store phone from StoreController if available
-    final store =
-        context.read<StoreController>().selectedStore;
-
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -402,8 +387,6 @@ class _PaymentViewState extends State<_PaymentView> {
                     color:      Color(0xFF2C2C2C)),
               ),
               const SizedBox(height: 8),
-
-              // ── Dynamic store name ──
               Text(
                 storeName,
                 style: const TextStyle(
@@ -412,7 +395,6 @@ class _PaymentViewState extends State<_PaymentView> {
                     color:      Color(0xFF2C2C2C)),
                 textAlign: TextAlign.center,
               ),
-
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -442,7 +424,7 @@ class _PaymentViewState extends State<_PaymentView> {
                 height: 48,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context); // close dialog
+                    Navigator.pop(context);
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(

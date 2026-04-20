@@ -180,9 +180,9 @@ class _DeliveryContent extends StatelessWidget {
             context,
             MaterialPageRoute(builder: (_) => EditAddressPage(ctrl: ctrl)),
           ),
-          // For delivery, show the user's address on the map
-          mapLat: 5.4164,   // Default Penang coords — will be replaced by geocoding in future
-          mapLng: 100.3327,
+          // FIX 1: Use saved coords from controller instead of hardcoded values
+          mapLat: ctrl.deliveryLat,
+          mapLng: ctrl.deliveryLng,
           mapLabel: ctrl.deliveryAddress.address,
         ),
         const SizedBox(height: 16),
@@ -253,20 +253,16 @@ class _SelfCollectContent extends StatelessWidget {
   final CheckoutController ctrl;
   const _SelfCollectContent({required this.ctrl});
 
-  // NuBurn Tanjung Burma store coordinates
-  static const _storeLat = 5.4379;
-  static const _storeLng = 100.3074;
-
   @override
   Widget build(BuildContext context) {
     final slots = ctrl.generateTimeSlots();
-    // Try to get actual store coordinates from StoreController
     final storeCtrl = context.read<StoreController>();
     final store = storeCtrl.selectedStore;
-    final lat = store?.latitude ?? _storeLat;
-    final lng = store?.longitude ?? _storeLng;
+    final lat = store?.latitude ?? 5.4379;
+    final lng = store?.longitude ?? 100.3074;
     final storeName = store?.name ?? 'NuBurn - Tanjung Burma';
     final storeAddress = store?.address ?? '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21, ...';
+    final storePhone = ''; // stores table doesn't have phone — leave blank
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,7 +272,7 @@ class _SelfCollectContent extends StatelessWidget {
         _AddressCard(
           address: AddressModel(
             name:    storeName,
-            phone:   '',
+            phone:   storePhone,
             address: storeAddress,
           ),
           showArrow:     false,
@@ -597,13 +593,12 @@ class _AddressCard extends StatelessWidget {
               child: SizedBox(
                 height: 130,
                 child: AbsorbPointer(
-                  // Absorb touches so tapping the map still triggers the card's onTap
                   child: FlutterMap(
                     options: MapOptions(
                       initialCenter: LatLng(mapLat, mapLng),
                       initialZoom: 15.0,
                       interactionOptions: const InteractionOptions(
-                        flags: InteractiveFlag.none, // static map in card
+                        flags: InteractiveFlag.none,
                       ),
                     ),
                     children: [

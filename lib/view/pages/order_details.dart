@@ -23,6 +23,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
 
   // ── State for history-mode (loaded from Supabase directly) ────────────────
   Map<String, dynamic>? _historyRow;
+  // FIX 3 & 4: store data fetched from Supabase by store_id
+  Map<String, dynamic>? _storeRow;
   bool  _historyLoading    = false;
   bool  _historyCancelling = false;
   bool  _historyCancelled  = false;
@@ -36,7 +38,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     if (_isHistoryMode) {
       _loadHistoryOrder();
     } else {
-      // Live order — subscribe to real-time status updates
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final ctrl = context.read<OrderController>();
         if (ctrl.dbOrderId != null) _listenToOrderStatus(ctrl);
@@ -44,7 +45,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     }
   }
 
-  // ── Load a past order row from Supabase (history mode) ───────────────────
+  // ── Load a past order row + its store from Supabase ───────────────────────
   Future<void> _loadHistoryOrder() async {
     setState(() { _historyLoading = true; _historyError = null; });
     try {
@@ -53,7 +54,37 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           .select('*, order_items(*)')
           .eq('order_id', int.parse(widget.historyOrderId!))
           .single();
-      setState(() { _historyRow = Map<String, dynamic>.from(row); });
+
+      final orderMap = Map<String, dynamic>.from(row);
+
+      // FIX 3 & 4: fetch real store data.
+      // Normalise store_id to String — Supabase may return it as int 1 or String '1'
+      final rawStoreId = orderMap['store_id'];
+      final storeId = rawStoreId != null ? rawStoreId.toString().trim() : null;
+      Map<String, dynamic>? storeMap;
+      if (storeId != null && storeId.isNotEmpty) {
+        try {
+          final storeRow = await supabase
+              .from('stores')
+              .select('id, name, address')
+              .eq('id', storeId)
+              .maybeSingle();
+          if (storeRow != null) {
+            storeMap = Map<String, dynamic>.from(storeRow);
+          } else {
+            debugPrint('[OrderDetails] store not found for store_id=\$storeId');
+          }
+        } catch (e) {
+          debugPrint('[OrderDetails] store fetch error for store_id=\$storeId: \$e');
+        }
+      } else {
+        debugPrint('[OrderDetails] store_id is null/empty on this order');
+      }
+
+      setState(() {
+        _historyRow = orderMap;
+        _storeRow   = storeMap;
+      });
     } catch (e) {
       setState(() { _historyError = e.toString(); });
     } finally {
@@ -173,7 +204,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               _StatusTracker(status: order.status, orderType: order.orderType),
             const SizedBox(height: 16),
 
-            // ── Self Collect: show collection code + Collect At ──
             if (isSelfCollect) ...[
               _SelfCollectCodeCard(
                 collectionCode: order.collectionCode,
@@ -185,7 +215,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 storeAddress: order.fromAddress,
               ),
             ] else ...[
-              // Delivery: show From + Deliver To
               _InfoSection(title: 'From',
                   lines: [order.fromName, order.fromAddress]),
               const SizedBox(height: 12),
@@ -262,12 +291,9 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     final orderId        = row['order_id'].toString();
     final collectionCode = row['collection_code'] as String?;
 
-    // Build store name / address from store_id (or fallback)
-    final fromName    = 'NuBurn - Tanjung Burma';
-    final storeIdVal  = row['store_id'] as String? ?? '';
-    final fromAddress = toAddress.isNotEmpty && !isSelfCollect
-        ? toAddress
-        : '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21, ....';
+    // FIX 3 & 4: Use real store name + address fetched from stores table
+    final fromName    = (_storeRow?['name']    as String?)?.trim() ?? '';
+    final fromAddress = (_storeRow?['address'] as String?)?.trim() ?? '';
 
     final rawDate   = row['order_date']  as String?
         ?? row['created_at'] as String? ?? '';
@@ -306,20 +332,28 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               _StatusTracker(status: trackerStatus, orderType: trackerType),
             const SizedBox(height: 16),
 
-            // ── Self Collect: collection code + Collect At ──
+            // FIX 4: Self Collect uses real store name + address
             if (isSelfCollect) ...[
               _SelfCollectCodeCard(
                 collectionCode: collectionCode,
                 status:         trackerStatus,
               ),
               const SizedBox(height: 12),
-              _CollectAtCard(
-                storeName:    fromName,
-                storeAddress: '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21, ....',
-              ),
+              if (fromName.isNotEmpty)
+                _CollectAtCard(
+                  storeName:    fromName,
+                  storeAddress: fromAddress.isNotEmpty ? fromAddress : null,
+                ),
             ] else ...[
-              // Delivery: show From + Deliver To
-              _InfoSection(title: 'From', lines: [fromName, storeIdVal.isNotEmpty ? storeIdVal : '—']),
+              // FIX 3: Delivery — only render From card when store data loaded
+              if (fromName.isNotEmpty)
+                _InfoSection(
+                  title: 'From',
+                  lines: [
+                    fromName,
+                    if (fromAddress.isNotEmpty) fromAddress,
+                  ],
+                ),
               const SizedBox(height: 12),
               _InfoSection(
                 title: 'Deliver To',
@@ -454,7 +488,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
 // Self-Collect specific widgets
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Shows the collection code pill + status label, matching the UI mockup.
 class _SelfCollectCodeCard extends StatelessWidget {
   final String? collectionCode;
   final OrderStatus status;
@@ -469,12 +502,13 @@ class _SelfCollectCodeCard extends StatelessWidget {
   String get _statusLabel {
     switch (status) {
       case OrderStatus.submitted:
+        return 'Order Received! We will start preparing your Order soon.';
       case OrderStatus.preparing:
-        return 'Waiting to be Collected';
+        return 'We are Preparing! Your Order will be ready soon.';
       case OrderStatus.readyOrOutForDelivery:
-        return 'Order Waiting to be Collected';
+        return 'Order Ready! Waiting to be Collected.';
       case OrderStatus.completed:
-        return 'Order Collected';
+        return 'Order Collected!';
     }
   }
 
@@ -491,7 +525,6 @@ class _SelfCollectCodeCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Carry-bag icon inside a circle border
           Container(
             width:  48,
             height: 48,
@@ -540,14 +573,13 @@ class _SelfCollectCodeCard extends StatelessWidget {
   }
 }
 
-/// "Collect At" card showing store name + address.
 class _CollectAtCard extends StatelessWidget {
-  final String storeName;
-  final String storeAddress;
+  final String  storeName;
+  final String? storeAddress; // nullable — omitted when not available
 
   const _CollectAtCard({
     required this.storeName,
-    required this.storeAddress,
+    this.storeAddress,
   });
 
   @override
@@ -574,10 +606,12 @@ class _CollectAtCard extends StatelessWidget {
           Text(storeName,
               style: const TextStyle(
                   fontSize: 12, color: Color(0xFF2C2C2C), fontWeight: FontWeight.w600)),
-          const SizedBox(height: 2),
-          Text(storeAddress,
-              style: const TextStyle(
-                  fontSize: 12, color: Color(0xFF6B6B6B), height: 1.5)),
+          if (storeAddress != null && storeAddress!.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(storeAddress!,
+                style: const TextStyle(
+                    fontSize: 12, color: Color(0xFF6B6B6B), height: 1.5)),
+          ],
         ],
       ),
     );
@@ -585,7 +619,7 @@ class _CollectAtCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared widgets (used by both delivery & self-collect, live & history)
+// Shared widgets
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _SubmittedBanner extends StatelessWidget {
@@ -648,7 +682,6 @@ class _SubmittedBanner extends StatelessWidget {
   }
 }
 
-/// Renders the status image — handles both .png assets and .jpg assets.
 class _StatusImage extends StatelessWidget {
   final String path;
   const _StatusImage({required this.path});
@@ -862,10 +895,12 @@ class _LiveItemDetailsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+          // FIX 5: pass price; live items don't have imageUrl
           ...order.items.map((item) => _OrderItemRow(
             name:     item.name,
             addOns:   item.addOns,
-            imageUrl: null, // live order items don't carry imageUrl
+            price:    item.price,
+            imageUrl: null,
           )),
           const Divider(height: 20),
           Align(
@@ -969,9 +1004,11 @@ class _HistoryItemDetailsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+          // FIX 5: pass price + imageUrl from order_items
           ...items.map((item) => _OrderItemRow(
             name:     item['name']      as String? ?? '',
             addOns:   List<String>.from(item['add_ons'] as List? ?? []),
+            price:    (item['price']    as num?)?.toDouble() ?? 0.0,
             imageUrl: item['image_url'] as String?,
           )),
           const Divider(height: 20),
@@ -1006,16 +1043,18 @@ class _HistoryItemDetailsSection extends StatelessWidget {
       v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(2);
 }
 
-// ── Shared item row (now shows food image from order_items.image_url) ─────────
+// ── Shared item row ────────────────────────────────────────────────────────────
 
 class _OrderItemRow extends StatelessWidget {
   final String       name;
   final List<String> addOns;
+  final double       price;   // FIX 5: price field
   final String?      imageUrl;
 
   const _OrderItemRow({
     required this.name,
     required this.addOns,
+    required this.price,
     this.imageUrl,
   });
 
@@ -1024,6 +1063,9 @@ class _OrderItemRow extends StatelessWidget {
     final half = (addOns.length / 2).ceil();
     final col1 = addOns.isNotEmpty ? addOns.sublist(0, half)            : <String>[];
     final col2 = addOns.length > 1  ? addOns.sublist(half)              : <String>[];
+    final priceStr = price % 1 == 0
+        ? price.toInt().toString()
+        : price.toStringAsFixed(2);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -1036,11 +1078,18 @@ class _OrderItemRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // FIX 5: Item name on top
                 Text(name,
                     style: const TextStyle(
                         fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 4),
-                if (addOns.isNotEmpty)
+                // FIX 5: "No Add Ons" when empty, otherwise show add-ons
+                if (addOns.isEmpty)
+                  const Text(
+                    '+ No Add Ons',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)),
+                  )
+                else
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1050,6 +1099,15 @@ class _OrderItemRow extends StatelessWidget {
                   ),
               ],
             ),
+          ),
+          const SizedBox(width: 8),
+          // FIX 5: Price aligned to the right
+          Text(
+            'RM $priceStr',
+            style: const TextStyle(
+                fontSize:   12,
+                fontWeight: FontWeight.w600,
+                color:      Color(0xFF2C2C2C)),
           ),
         ],
       ),
