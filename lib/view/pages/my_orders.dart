@@ -53,7 +53,8 @@ String _formatDate(String? raw) {
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 class MyOrdersPage extends StatefulWidget {
-  const MyOrdersPage({super.key});
+  final ValueNotifier<int>? tabNotifier;
+  const MyOrdersPage({super.key, this.tabNotifier});
 
   @override
   State<MyOrdersPage> createState() => _MyOrdersPageState();
@@ -83,10 +84,17 @@ class _MyOrdersPageState extends State<MyOrdersPage>
     super.initState();
     _tabCtrl = TabController(length: 2, vsync: this);
     _fetchOrders();
+    // Auto-refresh whenever the Orders tab (index 2) becomes active
+    widget.tabNotifier?.addListener(_onTabSwitch);
+  }
+
+  void _onTabSwitch() {
+    if (widget.tabNotifier?.value == 2) _fetchOrders();
   }
 
   @override
   void dispose() {
+    widget.tabNotifier?.removeListener(_onTabSwitch);
     _tabCtrl.dispose();
     _searchCtrl.dispose();
     super.dispose();

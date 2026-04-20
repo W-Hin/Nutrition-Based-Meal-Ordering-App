@@ -572,26 +572,28 @@ class _SelfCollectCodeCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Self Collection Code #$code',
-                style: const TextStyle(
-                  color:      _green,
-                  fontWeight: FontWeight.w800,
-                  fontSize:   15,
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Self Collection Code #$code',
+                  style: const TextStyle(
+                    color:      _green,
+                    fontWeight: FontWeight.w800,
+                    fontSize:   15,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _statusLabel,
-                style: const TextStyle(
-                  color:    Color(0xFF6B6B6B),
-                  fontSize: 12,
+                const SizedBox(height: 4),
+                Text(
+                  _statusLabel,
+                  style: const TextStyle(
+                    color:    Color(0xFF6B6B6B),
+                    fontSize: 12,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

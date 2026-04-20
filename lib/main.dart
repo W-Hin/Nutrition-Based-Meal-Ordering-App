@@ -201,13 +201,14 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
+  final _tabNotifier = ValueNotifier<int>(0);
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       const HomeDashboardPage(),
       MenuPage(onBack: () => setState(() => _selectedIndex = 0)),
-      const MyOrdersPage(),
+      MyOrdersPage(tabNotifier: _tabNotifier),
       const ProfilePage(),
     ];
 
@@ -224,7 +225,10 @@ class _MainShellState extends State<MainShell> {
       ),
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: _selectedIndex,
-        onItemTapped: (index) => setState(() => _selectedIndex = index),
+        onItemTapped: (index) {
+          setState(() => _selectedIndex = index);
+          _tabNotifier.value = index;
+        },
       ),
     );
   }
@@ -232,10 +236,15 @@ class _MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
-    // Load the user's cart from Supabase
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CartController>().loadCart();
     });
+  }
+
+  @override
+  void dispose() {
+    _tabNotifier.dispose();
+    super.dispose();
   }
 }
 
