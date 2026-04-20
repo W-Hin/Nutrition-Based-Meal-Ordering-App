@@ -32,10 +32,9 @@ class OrderController extends ChangeNotifier {
     String  payerEmail = '',
     String  payerPhone = '',
   }) async {
-    // Generate a 3-digit collection code for self-collect orders
-    final collectionCode = orderType == OrderType.selfCollect
-        ? _generateCollectionCode()
-        : null;
+    // Generate a 3-digit order code for ALL orders (delivery + self-collect)
+    // for easy admin tracking. Uniqueness is guaranteed in OrderService.
+    final collectionCode = _generateCollectionCode();
 
     currentOrder = OrderModel(
       orderId:        _generateLocalId(),

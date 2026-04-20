@@ -1,3 +1,4 @@
+import 'dart:math';
 import '../model/order_model.dart';
 import 'supabase_conn.dart';
 
@@ -28,9 +29,8 @@ class OrderService {
       'remark':           order.remark.isEmpty ? null : order.remark,
       'is_cancellable':   true,
       'order_date':       DateTime.now().toIso8601String(),
-      // collection_code stored only for selfCollect orders
-      if (order.collectionCode != null)
-        'collection_code': order.collectionCode,
+      // Always store collection_code for all order types (delivery + self-collect)
+      'collection_code': await _ensureUniqueCode(order.collectionCode),
     })
         .select('order_id')
         .single();
@@ -87,5 +87,32 @@ class OrderService {
         .from('orders')
         .update({'status': 'cancelled', 'is_cancellable': false})
         .eq('order_id', orderId);
+  }
+
+  // ── Ensure collection_code is unique in the orders table ─────
+  Future<String> _ensureUniqueCode(String? suggested) async {
+    final rng = Random();
+    String generate() => (100 + rng.nextInt(900)).toString();
+
+    // Fetch all existing codes once
+    final rows = await supabase
+        .from('orders')
+        .select('collection_code');
+    final existing = <String>{};
+    for (final r in List<Map<String, dynamic>>.from(rows)) {
+      final c = r['collection_code'] as String?;
+      if (c != null) existing.add(c);
+    }
+
+    // Try suggested code first, then random ones
+    var code = suggested ?? generate();
+    for (int i = 0; i < 10 && existing.contains(code); i++) {
+      code = generate();
+    }
+    // Fallback to 4-digit if all 3-digit attempts collide
+    if (existing.contains(code)) {
+      code = (1000 + rng.nextInt(9000)).toString();
+    }
+    return code;
   }
 }

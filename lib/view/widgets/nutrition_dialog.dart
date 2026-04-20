@@ -234,15 +234,25 @@ class NutritionDialog extends StatelessWidget {
                       return ElevatedButton(
                         onPressed: !isDisabled ? () {
                           final cartController = Provider.of<CartController>(context, listen: false);
+                          final storeId = storeCtrl.selectedStore?.id;
+
                           cartController.addItem(CartItem(
-                            name: meal.name,
-                            price: meal.price,
-                            addOns: [],
+                            foodId:   meal.id,
+                            storeId:  storeId,
+                            itemType: 'preset',
+                            name:     meal.name,
+                            price:    meal.price,
+                            addOns:   const <String>[],
+                            imageUrl: meal.imageUrl,
                             quantity: 1,
                           ));
+
                           Navigator.pop(context); // Close dialog
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('${meal.name} added to cart!')),
+                            SnackBar(
+                              content: Text('${meal.name} added to cart!'),
+                              duration: const Duration(seconds: 1),
+                            ),
                           );
                         } : null,
                         style: ElevatedButton.styleFrom(
@@ -279,4 +289,3 @@ class NutritionDialog extends StatelessWidget {
     );
   }
 }
-
