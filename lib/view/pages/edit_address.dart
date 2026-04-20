@@ -1,4 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:http/http.dart' as http;
 import '../../controller/checkout_controller.dart';
 import '../../model/address_model.dart';
 
@@ -17,19 +21,24 @@ class _EditAddressPageState extends State<EditAddressPage> {
   late TextEditingController _customLabelCtrl;
   AddressLabel? _selectedLabel;
 
-  static const _green = Color(0xFF1E4620);
+  // Map state
+  final MapController _mapController = MapController();
+  LatLng _markerPos = const LatLng(5.4164, 100.3327); // Default: Penang
+  bool _isGeocoding = false;
+
+  static const _green      = Color(0xFF1E4620);
   static const _terracotta = Color(0xFFD95F2B);
-  static const _bg = Color(0xFFF5F5F0);
+  static const _bg         = Color(0xFFF5F5F0);
 
   @override
   void initState() {
     super.initState();
-    final addr = widget.ctrl.deliveryAddress; // ← was context.read<CheckoutController>()
-    _addressCtrl     = TextEditingController(text: addr.address);
-    _nameCtrl        = TextEditingController(text: addr.name);
-    _phoneCtrl       = TextEditingController(text: addr.phone);
-    _customLabelCtrl = TextEditingController(text: addr.customLabelName);
-    _selectedLabel   = addr.label;
+    final addr           = widget.ctrl.deliveryAddress;
+    _addressCtrl         = TextEditingController(text: addr.address);
+    _nameCtrl            = TextEditingController(text: addr.name);
+    _phoneCtrl           = TextEditingController(text: addr.phone);
+    _customLabelCtrl     = TextEditingController(text: addr.customLabelName);
+    _selectedLabel       = addr.label;
   }
 
   @override
@@ -41,13 +50,60 @@ class _EditAddressPageState extends State<EditAddressPage> {
     super.dispose();
   }
 
+  // ── Reverse geocode: LatLng → address string via Nominatim ───────────────
+  Future<void> _reverseGeocode(LatLng pos) async {
+    if (_isGeocoding) return;
+    setState(() => _isGeocoding = true);
+
+    try {
+      final uri = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse'
+            '?lat=${pos.latitude}&lon=${pos.longitude}'
+            '&format=json&addressdetails=1',
+      );
+      final response = await http.get(
+        uri,
+        headers: {'User-Agent': 'NuBurnApp/1.0 (support@nuburn.app)'},
+      ).timeout(const Duration(seconds: 8));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as Map<String, dynamic>;
+        final displayName = data['display_name'] as String? ?? '';
+
+        // Build a cleaner address from structured parts
+        final addr   = data['address'] as Map<String, dynamic>? ?? {};
+        final road   = addr['road']           as String? ?? '';
+        final suburb = addr['suburb']         as String?
+            ?? addr['neighbourhood']          as String? ?? '';
+        final city   = addr['city']           as String?
+            ?? addr['town']                   as String?
+            ?? addr['village']                as String? ?? '';
+        final state  = addr['state']          as String? ?? '';
+        final postcode = addr['postcode']     as String? ?? '';
+
+        final parts = [road, suburb, city, state, postcode]
+            .where((p) => p.isNotEmpty)
+            .toList();
+        final formatted = parts.isNotEmpty ? parts.join(', ') : displayName;
+
+        if (mounted) {
+          setState(() => _addressCtrl.text = formatted);
+        }
+      }
+    } catch (_) {
+      // Silently fail — user can still type manually
+    } finally {
+      if (mounted) setState(() => _isGeocoding = false);
+    }
+  }
+
   void _save() {
-    widget.ctrl.updateAddress(        // ← was context.read<CheckoutController>()
+    widget.ctrl.updateAddress(
       AddressModel(
-        name: _nameCtrl.text,
-        phone: _phoneCtrl.text,
-        address: _addressCtrl.text,
-        label: _selectedLabel,
+        name:            _nameCtrl.text,
+        phone:           _phoneCtrl.text,
+        address:         _addressCtrl.text,
+        label:           _selectedLabel,
         customLabelName: _customLabelCtrl.text,
       ),
     );
@@ -81,18 +137,32 @@ class _EditAddressPageState extends State<EditAddressPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Map placeholder ──
-            _MapPlaceholder(),
+            // ── Interactive Map ───────────────────────────────────────────
+            _buildInteractiveMap(),
+            const SizedBox(height: 10),
+
+            // Helper text
+            Row(
+              children: [
+                const Icon(Icons.touch_app_outlined, size: 14, color: Color(0xFF8A8A8A)),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Tap anywhere on the map to pin your location — address will auto-fill below.',
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
 
-            // ── Current address ──
+            // ── Current address ───────────────────────────────────────────
             Row(
               children: [
                 const Icon(Icons.location_on, color: _green, size: 20),
                 const SizedBox(width: 8),
                 const Text('Current Set Address',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 14)),
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
               ],
             ),
             const SizedBox(height: 4),
@@ -100,17 +170,30 @@ class _EditAddressPageState extends State<EditAddressPage> {
               padding: const EdgeInsets.only(left: 28),
               child: Text(
                 widget.ctrl.deliveryAddress.address,
-                style: const TextStyle(
-                    fontSize: 12, color: Color(0xFF6B6B6B)),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF6B6B6B)),
               ),
             ),
             const Divider(height: 28),
 
-            // ── Form fields ──
+            // ── New Address (auto-filled or manual) ───────────────────────
             _FieldLabel('New Address'),
-            _InputField(
-              controller: _addressCtrl,
-              hint: 'Address Details (e.g., Block/Unit Number, Landmarks)',
+            Stack(
+              children: [
+                _InputField(controller: _addressCtrl, hint: 'Tap map above or type here'),
+                if (_isGeocoding)
+                  Positioned(
+                    right: 12,
+                    top: 12,
+                    child: const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: _green,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 14),
 
@@ -122,43 +205,55 @@ class _EditAddressPageState extends State<EditAddressPage> {
             _InputField(controller: _phoneCtrl, hint: '012-345 6789'),
             const Divider(height: 28),
 
-            // ── Label Address As ──
+            // ── Label Address As ──────────────────────────────────────────
             _FieldLabel('Label Address As'),
             const SizedBox(height: 10),
             Row(
               children: [
                 _LabelChip(
-                  icon: Icons.home_outlined,
-                  label: 'Home',
-                  value: AddressLabel.home,
+                  icon:     Icons.home_outlined,
+                  label:    'Home',
+                  value:    AddressLabel.home,
                   selected: _selectedLabel,
-                  onTap: (v) => setState(() => _selectedLabel = v),
+                  onTap:    (v) => setState(() {
+                    _selectedLabel = v;
+                    // Clear custom name when switching away from Others
+                    if (v != AddressLabel.others) _customLabelCtrl.clear();
+                  }),
                 ),
                 const SizedBox(width: 10),
                 _LabelChip(
-                  icon: Icons.work_outline,
-                  label: 'Home', // matches design text
-                  value: AddressLabel.work,
+                  icon:     Icons.work_outline,
+                  label:    'Work',
+                  value:    AddressLabel.work,
                   selected: _selectedLabel,
-                  onTap: (v) => setState(() => _selectedLabel = v),
+                  onTap:    (v) => setState(() {
+                    _selectedLabel = v;
+                    if (v != AddressLabel.others) _customLabelCtrl.clear();
+                  }),
                 ),
                 const SizedBox(width: 10),
                 _LabelChip(
-                  icon: Icons.add,
-                  label: 'Others',
-                  value: AddressLabel.others,
+                  icon:     Icons.add,
+                  label:    'Others',
+                  value:    AddressLabel.others,
                   selected: _selectedLabel,
-                  onTap: (v) => setState(() => _selectedLabel = v),
+                  onTap:    (v) => setState(() => _selectedLabel = v),
                 ),
               ],
             ),
             const SizedBox(height: 14),
 
-            _FieldLabel('Label Name'),
-            _InputField(controller: _customLabelCtrl, hint: 'Custom Name'),
-            const SizedBox(height: 28),
+            // ── Label Name — only shown for "Others" ──────────────────────
+            if (_selectedLabel == AddressLabel.others) ...[
+              _FieldLabel('Label Name'),
+              _InputField(controller: _customLabelCtrl, hint: 'e.g. Gym, Parents\' Home'),
+              const SizedBox(height: 14),
+            ],
 
-            // ── Update button ──
+            const SizedBox(height: 14),
+
+            // ── Update button ─────────────────────────────────────────────
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -180,6 +275,128 @@ class _EditAddressPageState extends State<EditAddressPage> {
                 ),
               ),
             ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Interactive flutter_map ───────────────────────────────────────────────
+  Widget _buildInteractiveMap() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        height: 220,
+        child: Stack(
+          children: [
+            FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: _markerPos,
+                initialZoom: 15.0,
+                // On tap: move marker + reverse geocode
+                onTap: (tapPos, latLng) {
+                  setState(() => _markerPos = latLng);
+                  _reverseGeocode(latLng);
+                },
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate:
+                  'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                  subdomains: const ['a', 'b', 'c', 'd'],
+                  userAgentPackageName: 'com.nuburn.nutritionapp.mealshop.v4',
+                ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: _markerPos,
+                      width: 48,
+                      height: 48,
+                      child: const Icon(
+                        Icons.location_pin,
+                        color: Color(0xFFD95F2B),
+                        size: 48,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            // ── Top-right: "Locate Me" hint badge ────────────────────────
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 6,
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.touch_app, size: 14, color: Color(0xFF1E4620)),
+                    SizedBox(width: 4),
+                    Text(
+                      'Tap to pin',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E4620),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Loading overlay while geocoding ───────────────────────────
+            if (_isGeocoding)
+              Positioned(
+                bottom: 10,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.65),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 1.5,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Getting address…',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -188,8 +405,6 @@ class _EditAddressPageState extends State<EditAddressPage> {
 }
 
 // ── Label Chip ─────────────────────────────────────────────────────────────────
-// Terracotta border + white fill = unselected
-// Terracotta fill + white text  = selected
 
 class _LabelChip extends StatelessWidget {
   final IconData icon;
@@ -272,30 +487,14 @@ class _InputField extends StatelessWidget {
     style: const TextStyle(fontSize: 13),
     decoration: InputDecoration(
       hintText: hint,
-      hintStyle:
-      const TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
+      hintStyle: const TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
       filled: true,
       fillColor: const Color(0xFFEEEBDE),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
         borderSide: BorderSide.none,
       ),
-      contentPadding:
-      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-    ),
-  );
-}
-
-class _MapPlaceholder extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => Container(
-    height: 120,
-    decoration: BoxDecoration(
-      color: const Color(0xFFD9D5C5),
-      borderRadius: BorderRadius.circular(10),
-    ),
-    child: const Center(
-      child: Icon(Icons.map_outlined, size: 40, color: Color(0xFF9E9880)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     ),
   );
 }

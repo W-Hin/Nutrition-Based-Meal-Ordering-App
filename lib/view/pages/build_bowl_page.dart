@@ -880,8 +880,8 @@ class _BottomSummary extends StatelessWidget {
                     final cart = Provider.of<CartController>(context, listen: false);
                     List<String> details = [];
                     details.add('Base: ${bowl.selectedBase!.name}');
-                    bowl.selectedProteins.forEach((k, v) => details.add('${k.name} x$v'));
-                    bowl.selectedVeggies.forEach((k, v) => details.add('${k.name} x$v'));
+                    bowl.selectedProteins.forEach((k, v) => details.add('Protein: ${k.name} x$v'));
+                    bowl.selectedVeggies.forEach((k, v) => details.add('Veggies: ${k.name} x$v'));
                     if (bowl.selectedSauce != null) details.add('Sauce: ${bowl.selectedSauce!.name}');
 
                     cart.addItem(CartItem(

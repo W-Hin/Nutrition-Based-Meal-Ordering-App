@@ -1,0 +1,225 @@
+create table public.address (
+  address_id uuid not null default gen_random_uuid (),
+  user_id uuid null,
+  name text null,
+  phone text null,
+  address text null,
+  label text null,
+  label_name text null,
+  is_default boolean null default false,
+  created_at timestamp without time zone null default now(),
+  constraint address_pkey primary key (address_id),
+  constraint address_user_id_fkey foreign KEY (user_id) references "user" (user_id)
+) TABLESPACE pg_default;
+
+create table public.calorie_logs (
+  id uuid not null default gen_random_uuid (),
+  user_id uuid not null,
+  log_date date not null,
+  total_calories numeric null default 0,
+  total_protein_g numeric null default 0,
+  total_carbs_g numeric null default 0,
+  total_fat_g numeric null default 0,
+  constraint calorie_logs_pkey primary key (id),
+  constraint calorie_logs_user_date_unique unique (user_id, log_date),
+  constraint calorie_logs_user_id_fkey foreign KEY (user_id) references auth.users (id)
+) TABLESPACE pg_default;
+
+create table public.cart_items (
+  cart_item_id uuid not null default gen_random_uuid (),
+  user_id uuid not null,
+  store_id text null,
+  food_id uuid null,
+  item_type text not null default 'preset'::text,
+  name text not null,
+  price numeric not null,
+  quantity integer not null default 1,
+  add_ons text[] null default '{}'::text[],
+  custom_details jsonb null,
+  image_url text null,
+  created_at timestamp with time zone not null default now(),
+  constraint cart_items_pkey primary key (cart_item_id),
+  constraint cart_items_food_id_fkey foreign KEY (food_id) references menu_items (food_id),
+  constraint cart_items_store_id_fkey foreign KEY (store_id) references stores (id),
+  constraint cart_items_user_id_fkey foreign KEY (user_id) references auth.users (id)
+) TABLESPACE pg_default;
+
+create table public.ingredients (
+  ingredient_id uuid not null default gen_random_uuid (),
+  name text not null,
+  category text not null,
+  price numeric(10, 2) not null default 0.00,
+  calories integer not null default 0,
+  protein_g numeric(10, 2) null default 0.00,
+  carbs_g numeric(10, 2) null default 0.00,
+  fat_g numeric(10, 2) null default 0.00,
+  fiber_g numeric(10, 2) null default 0.00,
+  description text null,
+  image_url text null,
+  is_available boolean null default true,
+  created_at timestamp with time zone null default now(),
+  store_id text null,
+  constraint ingredients_pkey primary key (ingredient_id),
+  constraint fk_store_ing foreign KEY (store_id) references stores (id) on delete CASCADE
+) TABLESPACE pg_default;
+
+create table public.menu_items (
+  food_id uuid not null default gen_random_uuid (),
+  name text not null,
+  description text null,
+  price numeric not null,
+  image_url text null,
+  categories text[] null,
+  dietary_preferences text[] null,
+  is_available boolean null default true,
+  calories numeric null,
+  protein numeric null,
+  carbs numeric null,
+  fats numeric null,
+  fiber numeric null,
+  sugar numeric null,
+  sodium numeric null,
+  cholesterol numeric null,
+  serving_size text null,
+  allergen text[] null,
+  remarks text null,
+  created_at timestamp with time zone null,
+  store_id text null,
+  constraint menu_items_pkey primary key (food_id),
+  constraint fk_store foreign KEY (store_id) references stores (id) on delete CASCADE
+) TABLESPACE pg_default;
+
+create table public.order_items (
+  order_item_id bigint generated always as identity not null,
+  order_id bigint not null,
+  food_id uuid null,
+  name text null,
+  price numeric null,
+  add_ons text[] null default '{}'::text[],
+  constraint order_items_pkey primary key (order_item_id),
+  constraint order_items_food_id_fkey foreign KEY (food_id) references menu_items (food_id),
+  constraint order_items_order_id_fkey foreign KEY (order_id) references orders (order_id)
+) TABLESPACE pg_default;
+
+create index IF not exists order_items_order_id_idx on public.order_items using btree (order_id) TABLESPACE pg_default;
+
+create table public.orders (
+  order_id bigint generated always as identity not null,
+  store_id text null,
+  user_id uuid not null,
+  order_type text not null,
+  status text not null,
+  to_name text null,
+  to_phone text null,
+  to_address text not null,
+  subtotal numeric not null,
+  service_fee numeric not null default 0,
+  total numeric not null,
+  payment_method text null,
+  remark text null,
+  is_cancellable boolean null default true,
+  created_at timestamp with time zone not null default now(),
+  order_date timestamp with time zone null,
+  delivery_fee numeric not null default 0,
+  constraint orders_pkey primary key (order_id),
+  constraint orders_store_id_fkey foreign KEY (store_id) references stores (id),
+  constraint orders_user_id_fkey foreign KEY (user_id) references auth.users (id)
+) TABLESPACE pg_default;
+
+create table public.payments (
+  payment_id bigint generated always as identity not null,
+  order_id bigint not null,
+  user_id uuid not null,
+  amount numeric(10, 2) not null,
+  currency text not null default 'MYR'::text,
+  payment_method text not null,
+  stripe_payment_intent_id text null,
+  payer_name text null,
+  payer_email text null,
+  payer_phone text null,
+  status text not null default 'succeeded'::text,
+  created_at timestamp with time zone not null default now(),
+  constraint payments_pkey primary key (payment_id),
+  constraint payments_order_id_fkey foreign KEY (order_id) references orders (order_id) on delete CASCADE,
+  constraint payments_user_id_fkey foreign KEY (user_id) references auth.users (id)
+) TABLESPACE pg_default;
+
+create index IF not exists payments_order_id_idx on public.payments using btree (order_id) TABLESPACE pg_default;
+
+create index IF not exists payments_user_id_idx on public.payments using btree (user_id) TABLESPACE pg_default;
+
+create table public.profiles (
+  id uuid not null default gen_random_uuid (),
+  user_id uuid not null,
+  full_name text null,
+  phone text null,
+  height_cm numeric null,
+  weight_kg numeric null,
+  age integer null,
+  gender text null,
+  activity_level text null,
+  bmi numeric null,
+  daily_calorie_goal numeric null,
+  protein_goal_g numeric null,
+  carbs_goal_g numeric null,
+  fat_goal_g numeric null,
+  updated_at timestamp with time zone null default now(),
+  constraint profiles_pkey primary key (id),
+  constraint profiles_user_id_key unique (user_id),
+  constraint profiles_user_id_fkey foreign KEY (user_id) references auth.users (id)
+) TABLESPACE pg_default;
+
+create table public.reviews (
+  id uuid not null default gen_random_uuid (),
+  user_id uuid null,
+  store_id text null,
+  order_id text null,
+  rating integer null,
+  comment text null,
+  admin_reply text null,
+  replied_at timestamp with time zone null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint reviews_pkey primary key (id),
+  constraint reviews_store_id_fkey foreign KEY (store_id) references stores (id),
+  constraint reviews_user_id_fkey foreign KEY (user_id) references auth.users (id),
+  constraint reviews_rating_check check (
+    (
+      (rating >= 1)
+      and (rating <= 5)
+    )
+  )
+) TABLESPACE pg_default;
+
+create table public.stores (
+  id text not null,
+  name text not null,
+  address text not null,
+  logo_url text not null,
+  rating double precision null default 5.0,
+  latitude double precision null,
+  longitude double precision null,
+  distance_km double precision null,
+  open_time text null default '09:00'::text,
+  close_time text null default '22:00'::text,
+  constraint stores_pkey primary key (id)
+) TABLESPACE pg_default;
+
+create table public.user (
+  user_id uuid not null,
+  custom_id text not null default (
+    'C'::text || lpad(
+      (nextval('user_custom_id_seq'::regclass))::text,
+      2,
+      '0'::text
+    )
+  ),
+  first_name text null,
+  last_name text null,
+  email text null,
+  phone text null,
+  created_at timestamp without time zone null default now(),
+  constraint user_pkey primary key (user_id),
+  constraint user_custom_id_key unique (custom_id),
+  constraint user_user_id_fkey foreign KEY (user_id) references auth.users (id)
+) TABLESPACE pg_default;

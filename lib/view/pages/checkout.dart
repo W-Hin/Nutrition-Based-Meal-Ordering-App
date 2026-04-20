@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:nutrition_based_meal_ordering_app/view/pages/payment.dart';
 import 'package:provider/provider.dart';
 import '../../controller/checkout_controller.dart';
 import '../../controller/cart_controller.dart';
+import '../../controller/store_controller.dart';
 import '../../model/address_model.dart';
 import 'edit_address.dart';
 
@@ -177,13 +180,16 @@ class _DeliveryContent extends StatelessWidget {
             context,
             MaterialPageRoute(builder: (_) => EditAddressPage(ctrl: ctrl)),
           ),
+          // For delivery, show the user's address on the map
+          mapLat: 5.4164,   // Default Penang coords — will be replaced by geocoding in future
+          mapLng: 100.3327,
+          mapLabel: ctrl.deliveryAddress.address,
         ),
         const SizedBox(height: 16),
 
         _SectionHeader(icon: Icons.directions_bike_outlined, title: 'Delivery Options'),
         const SizedBox(height: 8),
 
-        // Eco
         _DeliveryOptionTile(
           label:      'Eco',
           subtitle:   '~40 mins',
@@ -194,7 +200,6 @@ class _DeliveryContent extends StatelessWidget {
         ),
         const SizedBox(height: 8),
 
-        // Standard
         _DeliveryOptionTile(
           label:      'Standard',
           subtitle:   '~20 mins',
@@ -205,7 +210,6 @@ class _DeliveryContent extends StatelessWidget {
         ),
         const SizedBox(height: 8),
 
-        // Fast
         _DeliveryOptionTile(
           label:      'Fast',
           subtitle:   '~10 mins',
@@ -216,7 +220,6 @@ class _DeliveryContent extends StatelessWidget {
         ),
         const SizedBox(height: 8),
 
-        // Order For Later
         _DeliveryOptionTile(
           label:      'Order For Later',
           subtitle:   'Choose your preferred time',
@@ -226,7 +229,6 @@ class _DeliveryContent extends StatelessWidget {
           onChanged:  ctrl.setDeliveryOption,
         ),
 
-        // Time dropdown — only shows when Order For Later is selected
         if (ctrl.deliveryOption == DeliveryOption.orderLater) ...[
           const SizedBox(height: 8),
           _TimeDropdown(
@@ -251,9 +253,20 @@ class _SelfCollectContent extends StatelessWidget {
   final CheckoutController ctrl;
   const _SelfCollectContent({required this.ctrl});
 
+  // NuBurn Tanjung Burma store coordinates
+  static const _storeLat = 5.4379;
+  static const _storeLng = 100.3074;
+
   @override
   Widget build(BuildContext context) {
     final slots = ctrl.generateTimeSlots();
+    // Try to get actual store coordinates from StoreController
+    final storeCtrl = context.read<StoreController>();
+    final store = storeCtrl.selectedStore;
+    final lat = store?.latitude ?? _storeLat;
+    final lng = store?.longitude ?? _storeLng;
+    final storeName = store?.name ?? 'NuBurn - Tanjung Burma';
+    final storeAddress = store?.address ?? '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21, ...';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,19 +275,21 @@ class _SelfCollectContent extends StatelessWidget {
         const SizedBox(height: 8),
         _AddressCard(
           address: AddressModel(
-            name:    'NuBurn - Tanjung Burma',
+            name:    storeName,
             phone:   '',
-            address: '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21, ...',
+            address: storeAddress,
           ),
           showArrow:     false,
           showSetCustom: false,
+          mapLat: lat,
+          mapLng: lng,
+          mapLabel: storeName,
         ),
         const SizedBox(height: 16),
 
         _SectionHeader(icon: Icons.shopping_basket_outlined, title: 'Self Collection Options'),
         const SizedBox(height: 8),
 
-        // Pick Up Now
         _DeliveryOptionTile(
           label:      'Pick Up Now',
           subtitle:   'Ready in ~9 mins',
@@ -286,7 +301,6 @@ class _SelfCollectContent extends StatelessWidget {
         ),
         const SizedBox(height: 8),
 
-        // Order For Later
         _DeliveryOptionTile(
           label:      'Order For Later',
           subtitle:   'Choose your preferred time',
@@ -297,7 +311,6 @@ class _SelfCollectContent extends StatelessWidget {
           feeIsGreen: true,
         ),
 
-        // Time dropdown
         if (ctrl.selfCollectOption == DeliveryOption.selfLater) ...[
           const SizedBox(height: 8),
           _TimeDropdown(
@@ -316,7 +329,7 @@ class _SelfCollectContent extends StatelessWidget {
   }
 }
 
-// ── Delivery Option Tile (replaces old _RadioOption) ──────────────────────────
+// ── Delivery Option Tile ───────────────────────────────────────────────────────
 
 class _DeliveryOptionTile extends StatelessWidget {
   final String label;
@@ -357,7 +370,6 @@ class _DeliveryOptionTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Radio circle
             Container(
               width:  20,
               height: 20,
@@ -382,8 +394,6 @@ class _DeliveryOptionTile extends StatelessWidget {
                   : null,
             ),
             const SizedBox(width: 12),
-
-            // Label + subtitle
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -400,8 +410,6 @@ class _DeliveryOptionTile extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Fee badge
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
@@ -483,7 +491,7 @@ class _TimeDropdown extends StatelessWidget {
   }
 }
 
-// ── Shared widgets (unchanged from original) ───────────────────────────────────
+// ── Section Header ─────────────────────────────────────────────────────────────
 
 class _SectionHeader extends StatelessWidget {
   final IconData icon;
@@ -506,11 +514,16 @@ class _SectionHeader extends StatelessWidget {
   );
 }
 
+// ── Address Card with embedded flutter_map ─────────────────────────────────────
+
 class _AddressCard extends StatelessWidget {
   final AddressModel address;
   final VoidCallback? onTap;
   final bool showArrow;
   final bool showSetCustom;
+  final double mapLat;
+  final double mapLng;
+  final String mapLabel;
 
   static const _green = Color(0xFF1E4620);
 
@@ -519,6 +532,9 @@ class _AddressCard extends StatelessWidget {
     this.onTap,
     this.showArrow    = true,
     this.showSetCustom = true,
+    this.mapLat = 5.4164,
+    this.mapLng = 100.3327,
+    this.mapLabel = '',
   });
 
   @override
@@ -574,16 +590,47 @@ class _AddressCard extends StatelessWidget {
                       color: Color(0xFF6B6B6B), size: 20),
               ],
             ),
-            const SizedBox(height: 8),
-            Container(
-              height: 80,
-              decoration: BoxDecoration(
-                color:        const Color(0xFFD9D5C5),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Center(
-                child: Icon(Icons.map_outlined,
-                    size: 30, color: Color(0xFF9E9880)),
+            const SizedBox(height: 10),
+            // ── Real Map ──────────────────────────────────────────────────
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                height: 130,
+                child: AbsorbPointer(
+                  // Absorb touches so tapping the map still triggers the card's onTap
+                  child: FlutterMap(
+                    options: MapOptions(
+                      initialCenter: LatLng(mapLat, mapLng),
+                      initialZoom: 15.0,
+                      interactionOptions: const InteractionOptions(
+                        flags: InteractiveFlag.none, // static map in card
+                      ),
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                        subdomains: const ['a', 'b', 'c', 'd'],
+                        userAgentPackageName:
+                        'com.nuburn.nutritionapp.mealshop.v4',
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: LatLng(mapLat, mapLng),
+                            width: 40,
+                            height: 40,
+                            child: const Icon(
+                              Icons.location_pin,
+                              color: Color(0xFFD95F2B),
+                              size: 40,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],
@@ -592,6 +639,8 @@ class _AddressCard extends StatelessWidget {
     );
   }
 }
+
+// ── Remarks Field ──────────────────────────────────────────────────────────────
 
 class _RemarksField extends StatelessWidget {
   final ValueChanged<String> onChanged;
@@ -615,6 +664,8 @@ class _RemarksField extends StatelessWidget {
     ),
   );
 }
+
+// ── Bottom Bar ─────────────────────────────────────────────────────────────────
 
 class _BottomBar extends StatelessWidget {
   final double subtotal;
@@ -652,7 +703,6 @@ class _BottomBar extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Show delivery fee breakdown if delivery
           if (isDelivery && deliveryFee > 0) ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -674,7 +724,7 @@ class _BottomBar extends StatelessWidget {
                   const Text('Total',
                       style: TextStyle(
                           fontSize: 11, color: Color(0xFF8A8A8A))),
-                   Text(
+                  Text(
                     'RM ${grandTotal % 1 == 0 ? grandTotal.toInt().toString() : grandTotal.toStringAsFixed(2)}',
                     style: const TextStyle(
                         fontWeight: FontWeight.w800,

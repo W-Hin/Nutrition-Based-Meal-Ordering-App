@@ -53,7 +53,6 @@ class _PaymentViewState extends State<_PaymentView> {
   static const _terracotta = Color(0xFFD95F2B);
   static const _bg         = Color(0xFFF5F5F0);
 
-  /// Hardcoded dev user ID — mirrors the pattern used in CartService etc.
   static const _devUserId = 'fc33ae36-657a-4055-b81e-f6fe3de23278';
 
   bool _prefillLoaded = false;
@@ -61,11 +60,11 @@ class _PaymentViewState extends State<_PaymentView> {
   @override
   void initState() {
     super.initState();
-    // Prefill name / email / phone from Supabase profile after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) => _prefillUserInfo());
   }
 
   /// Reads the current user's info from Supabase and fills the form fields.
+  /// Strategy: email from auth session, then try `profiles` table, then `users` table.
   Future<void> _prefillUserInfo() async {
     if (_prefillLoaded) return;
     _prefillLoaded = true;
@@ -73,27 +72,48 @@ class _PaymentViewState extends State<_PaymentView> {
     final ctrl = context.read<PaymentController>();
 
     try {
-      final uid = supabase.auth.currentUser?.id ?? _devUserId;
-
-      // Email is always available from the auth session
+      final uid   = supabase.auth.currentUser?.id ?? _devUserId;
       final email = supabase.auth.currentUser?.email ?? '';
+
+      // 1. Always fill email from auth session — most reliable source
       if (email.isNotEmpty && ctrl.emailCtrl.text.isEmpty) {
         ctrl.emailCtrl.text = email;
       }
 
-      // Full name & phone from the profiles table
-      final row = await supabase
+      // 2. Try `profiles` table first (has full_name, phone set during onboarding)
+      final profileRow = await supabase
           .from('profiles')
           .select('full_name, phone')
           .eq('user_id', uid)
           .maybeSingle();
 
-      if (row != null && mounted) {
-        final name  = row['full_name'] as String? ?? '';
-        final phone = row['phone']     as String? ?? '';
+      if (profileRow != null) {
+        final name  = (profileRow['full_name'] as String?)?.trim() ?? '';
+        final phone = (profileRow['phone']     as String?)?.trim() ?? '';
+
         if (name.isNotEmpty  && ctrl.nameCtrl.text.isEmpty)  ctrl.nameCtrl.text  = name;
         if (phone.isNotEmpty && ctrl.phoneCtrl.text.isEmpty) ctrl.phoneCtrl.text = phone;
       }
+
+      // 3. If still empty, fall back to `users` table
+      if ((ctrl.nameCtrl.text.isEmpty || ctrl.phoneCtrl.text.isEmpty) && mounted) {
+        final userRow = await supabase
+            .from('users')
+            .select('full_name, phone')
+            .eq('id', uid)
+            .maybeSingle();
+
+        if (userRow != null) {
+          final name  = (userRow['full_name'] as String?)?.trim() ?? '';
+          final phone = (userRow['phone']     as String?)?.trim() ?? '';
+
+          if (name.isNotEmpty  && ctrl.nameCtrl.text.isEmpty)  ctrl.nameCtrl.text  = name;
+          if (phone.isNotEmpty && ctrl.phoneCtrl.text.isEmpty) ctrl.phoneCtrl.text = phone;
+        }
+      }
+
+      // 4. Trigger a rebuild so fields show the pre-filled values
+      if (mounted) setState(() {});
     } catch (_) {
       // Silently ignore — user can fill manually
     }
@@ -182,7 +202,30 @@ class _PaymentViewState extends State<_PaymentView> {
               keyboardType: TextInputType.phone,
               onChanged:    (_) => ctrl.phoneError = null,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
+
+            // ── Pre-filled notice ──────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: _green.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: _green.withOpacity(0.15)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 14, color: _green.withOpacity(0.7)),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Details are pre-filled from your profile. You may edit them before paying.',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF4A6B4A)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
 
             _PaymentChannelsCard(),
             const SizedBox(height: 24),
@@ -283,7 +326,6 @@ class _PaymentViewState extends State<_PaymentView> {
       final isDelivery   = checkoutCtrl.activeTab == CheckoutTab.delivery;
       final storeId      = context.read<StoreController>().selectedStore?.id;
 
-      // Build delivery address info
       final toName    = isDelivery
           ? checkoutCtrl.deliveryAddress.name
           : 'NuBurn - Tanjung Burma';
@@ -292,7 +334,6 @@ class _PaymentViewState extends State<_PaymentView> {
           ? checkoutCtrl.deliveryAddress.address
           : '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21';
 
-      // Place order + record payment in Supabase
       await context.read<OrderController>().placeOrder(
         cartItems:   cart.items.toList(),
         subtotal:    cart.subtotal,
@@ -304,7 +345,6 @@ class _PaymentViewState extends State<_PaymentView> {
         toAddress:   toAddress,
         storeId:     storeId,
         remark:      checkoutCtrl.remarks,
-        // Payment details → stored in payments table
         totalPaid:   grandTotal,
         payerName:   ctrl.nameCtrl.text.trim(),
         payerEmail:  ctrl.emailCtrl.text.trim(),
@@ -384,7 +424,7 @@ class _PaymentViewState extends State<_PaymentView> {
                 width: double.infinity, height: 48,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context); // close dialog
+                    Navigator.pop(context);
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
