@@ -14,7 +14,7 @@
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>This app needs access to location to provide a better shopping experience and distance-based store recommendations.</string>
 	<key>CFBundleDisplayName</key>
-	<string>Nutrition Based Meal Ordering App</string>
+	<string>NuBurn</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -22,7 +22,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>nutrition_based_meal_ordering_app</string>
+	<string>NuBurn</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

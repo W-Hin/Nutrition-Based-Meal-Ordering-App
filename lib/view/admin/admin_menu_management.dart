@@ -807,18 +807,20 @@ class _ItemCard extends StatelessWidget {
   }
 
   Widget _buildPlaceholder() {
-    return Container(
+    return Image.asset(
+      'assets/images/no_image_placeholder.png',
       height: 180,
-      color: Colors.grey[200],
-      child: const Icon(Icons.image_outlined, color: Colors.grey, size: 40),
+      width: double.infinity,
+      fit: BoxFit.cover,
     );
   }
 
   Widget _buildErrorImage() {
-    return Container(
+    return Image.asset(
+      'assets/images/no_image_placeholder.png',
       height: 180,
-      color: Colors.grey[300],
-      child: const Icon(Icons.broken_image, size: 40),
+      width: double.infinity,
+      fit: BoxFit.cover,
     );
   }
 }

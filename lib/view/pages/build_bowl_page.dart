@@ -325,25 +325,21 @@ class _IngredientCard extends StatelessWidget {
                 Expanded(
                   child: ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-                    child: ingredient.imageUrl.startsWith('http')
-                      ? Image.network(
-                          ingredient.imageUrl,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: Colors.grey[100],
-                            child: const Icon(Icons.rice_bowl, color: Colors.grey),
-                          ),
-                        )
-                      : Image.asset(
-                          ingredient.imageUrl,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: Colors.grey[100],
-                            child: const Icon(Icons.rice_bowl, color: Colors.grey),
-                          ),
-                        ),
+                    child: ingredient.imageUrl.isEmpty 
+                      ? _buildPlaceholder(height: 100)
+                      : (ingredient.imageUrl.startsWith('http')
+                        ? Image.network(
+                            ingredient.imageUrl,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            errorBuilder: (context, error, stackTrace) => _buildPlaceholder(height: 100),
+                          )
+                        : Image.asset(
+                            ingredient.imageUrl,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            errorBuilder: (context, error, stackTrace) => _buildPlaceholder(height: 100),
+                          )),
                   ),
                 ),
                 Padding(
@@ -416,21 +412,23 @@ class _ProteinTile extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: ingredient.imageUrl.startsWith('http')
-                  ? Image.network(
-                      ingredient.imageUrl,
-                      width: 60,
-                      height: 40,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-                    )
-                  : Image.asset(
-                      ingredient.imageUrl,
-                      width: 60,
-                      height: 40,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-                    ),
+                child: ingredient.imageUrl.isEmpty 
+                  ? _buildPlaceholder(width: 60, height: 40)
+                  : (ingredient.imageUrl.startsWith('http')
+                    ? Image.network(
+                        ingredient.imageUrl,
+                        width: 60,
+                        height: 40,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(width: 60, height: 40),
+                      )
+                    : Image.asset(
+                        ingredient.imageUrl,
+                        width: 60,
+                        height: 40,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(width: 60, height: 40),
+                      )),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -546,21 +544,23 @@ class _SimpleTile extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: ingredient.imageUrl.startsWith('http')
-                    ? Image.network(
-                        ingredient.imageUrl,
-                        width: 60,
-                        height: 40,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-                      )
-                    : Image.asset(
-                        ingredient.imageUrl,
-                        width: 60,
-                        height: 40,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-                      ),
+                  child: ingredient.imageUrl.isEmpty 
+                    ? _buildPlaceholder(width: 60, height: 40)
+                    : (ingredient.imageUrl.startsWith('http')
+                      ? Image.network(
+                          ingredient.imageUrl,
+                          width: 60,
+                          height: 40,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => _buildPlaceholder(width: 60, height: 40),
+                        )
+                      : Image.asset(
+                          ingredient.imageUrl,
+                          width: 60,
+                          height: 40,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => _buildPlaceholder(width: 60, height: 40),
+                        )),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -808,30 +808,51 @@ class _BottomSummary extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Custom Details', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E4620))),
-                  IconButton(
-                    icon: const Icon(Icons.cancel, color: Color(0xFFBF5D32)),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const Divider(),
-              const SizedBox(height: 12),
-              Center(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Custom Details',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E4620),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFD25432),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, color: Colors.white, size: 20),
+                      ),
+                    ),
+                  ],
+                ),
+              const Divider(thickness: 1.2, color: Color(0xFFEEEEEE)),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/custom_bowl.png',
+                  width: double.infinity,
+                  height: 180,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 180,
+                    width: double.infinity,
                     color: const Color(0xFFF5F5F0),
                     child: const Icon(Icons.rice_bowl, size: 60, color: Color(0xFF1E4620)),
                   ),
@@ -888,6 +909,7 @@ class _BottomSummary extends StatelessWidget {
                       name: 'Custom Bowl',
                       price: bowl.totalPrice,
                       addOns: details,
+                      imageUrl: 'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/custom_bowl.png',
                       quantity: 1,
                     ));
                     bowl.reset();
@@ -910,8 +932,9 @@ class _BottomSummary extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _NutritionTotalsInfo extends StatelessWidget {
@@ -998,11 +1021,11 @@ class _SummaryItem extends StatelessWidget {
   }
 }
 
-Widget _buildPlaceholder() {
-  return Container(
-    width: 60,
-    height: 40,
-    color: Colors.grey[100],
-    child: const Icon(Icons.restaurant, color: Colors.grey),
+Widget _buildPlaceholder({double? width, double? height}) {
+  return Image.asset(
+    'assets/images/no_image_placeholder.png',
+    width: width,
+    height: height,
+    fit: BoxFit.cover,
   );
 }

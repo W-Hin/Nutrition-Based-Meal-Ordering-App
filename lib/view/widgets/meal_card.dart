@@ -29,21 +29,23 @@ class MealCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: meal.imageUrl.startsWith('http')
+                  child: meal.imageUrl.isEmpty 
+                    ? _buildPlaceholder()
+                    : (meal.imageUrl.startsWith('http')
                       ? Image.network(
-                    meal.imageUrl,
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
-                  )
+                          meal.imageUrl,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                        )
                       : Image.asset(
-                    meal.imageUrl,
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
-                  ),
+                          meal.imageUrl,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                        )),
                 ),
               ],
             ),
@@ -181,11 +183,12 @@ class MealCard extends StatelessWidget {
     );
   }
 
-  Widget _buildErrorImage() {
-    return Container(
+  Widget _buildPlaceholder() {
+    return Image.asset(
+      'assets/images/no_image_placeholder.png',
       height: 200,
-      color: Colors.grey[300],
-      child: const Icon(Icons.broken_image, size: 50),
+      width: double.infinity,
+      fit: BoxFit.cover,
     );
   }
 }

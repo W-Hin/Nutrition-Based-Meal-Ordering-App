@@ -21,348 +21,353 @@ class StoreDetailBottomSheet extends StatelessWidget {
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(
-          topLeft:  Radius.circular(20),
+          topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
         ),
       ),
-      child: Scrollbar(
-        thumbVisibility: true,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize:      MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 12),
-                  width:  40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color:        Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Fixed Top Handle
+          Center(
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
               ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+            ),
+          ),
+          
+          // Scrollable Content
+          Expanded(
+            child: Scrollbar(
+              thumbVisibility: true,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.asset(
-                        store.logoUrl,
-                        width:  140,
-                        height: 140,
-                        fit:    BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          width:  140,
-                          height: 140,
-                          color:  const Color(0xFFF5F5F0),
-                          child:  const Icon(Icons.store,
-                              color: Color(0xFF1E4620), size: 50),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => _showRatingConfirmation(context),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              store.name,
-                              style: const TextStyle(
-                                fontSize:   20,
-                                fontWeight: FontWeight.bold,
-                                color:      Color(0xFF1E4620),
-                                height:     1.1,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.asset(
+                              store.logoUrl,
+                              width: 140,
+                              height: 140,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                width: 140,
+                                height: 140,
+                                color: const Color(0xFFF5F5F0),
+                                child: const Icon(Icons.store,
+                                    color: Color(0xFF1E4620), size: 50),
                               ),
-                              maxLines:  2,
-                              overflow:  TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(Icons.star,
-                                    color: Colors.amber, size: 16),
-                                const SizedBox(width: 4),
-                                Consumer<StoreController>(
-                                  builder: (context, storeCtrl, _) {
-                                    double? distance;
-                                    if (storeCtrl.userPosition != null) {
-                                      distance = LocationService.calculateDistance(
-                                        storeCtrl.userPosition!.latitude,
-                                        storeCtrl.userPosition!.longitude,
-                                        store.latitude,
-                                        store.longitude,
-                                      ) / 1000;
-                                    }
-                                    return Text(
-                                      '${store.rating} • ${distance?.toStringAsFixed(1) ?? store.distanceKm.toStringAsFixed(1)} km',
-                                      style: TextStyle(
-                                          color:      Colors.grey[700],
-                                          fontWeight: FontWeight.w600,
-                                          fontSize:   13),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Icon(Icons.circle,
-                                    color: store.isOpen
-                                        ? Colors.green
-                                        : Colors.red,
-                                    size: 10),
-                                const SizedBox(width: 4),
-                                Text(
-                                  store.isOpen ? 'Open' : 'Closed',
-                                  style: TextStyle(
-                                    color:      store.isOpen
-                                        ? Colors.green
-                                        : Colors.red,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize:   13,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => _showRatingConfirmation(context),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    store.name,
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF1E4620),
+                                      height: 1.1,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  '${store.openTime} - ${store.closeTime}',
-                                  style: TextStyle(
-                                      color:   Colors.grey[600],
-                                      fontSize: 13),
-                                ),
-                              ],
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.star,
+                                          color: Colors.amber, size: 16),
+                                      const SizedBox(width: 4),
+                                      Consumer<StoreController>(
+                                        builder: (context, storeCtrl, _) {
+                                          double? distance;
+                                          if (storeCtrl.userPosition != null) {
+                                            distance = LocationService.calculateDistance(
+                                              storeCtrl.userPosition!.latitude,
+                                              storeCtrl.userPosition!.longitude,
+                                              store.latitude,
+                                              store.longitude,
+                                            ) / 1000;
+                                          }
+                                          return Text(
+                                            '${store.rating} • ${distance?.toStringAsFixed(1) ?? store.distanceKm.toStringAsFixed(1)} km',
+                                            style: TextStyle(
+                                                color: Colors.grey[700],
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 13),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.circle,
+                                          color: store.isOpen
+                                              ? Colors.green
+                                              : Colors.red,
+                                          size: 10),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        store.isOpen ? 'Open' : 'Closed',
+                                        style: TextStyle(
+                                          color: store.isOpen
+                                              ? Colors.green
+                                              : Colors.red,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '${store.openTime} - ${store.closeTime}',
+                                        style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 13),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Set Meals',
-                  style: TextStyle(
-                      fontSize:   20,
-                      fontWeight: FontWeight.bold,
-                      color:      Color(0xFF1E4620)),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              FutureBuilder<List<Meal>>(
-                future: MealService.fetchMeals(storeId: store.id),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 40),
-                        child:   CircularProgressIndicator(
+                    const SizedBox(height: 24),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        'Set Meals',
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                             color: Color(0xFF1E4620)),
                       ),
-                    );
-                  }
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        child: Text('Error loading menu: ${snapshot.error}',
-                            style: const TextStyle(color: Colors.red)),
-                      ),
-                    );
-                  }
-
-                  final meals = snapshot.data ?? [];
-                  if (meals.isEmpty) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 40),
-                        child: Text('No meals found for this store.'),
-                      ),
-                    );
-                  }
-
-                  return ListView.separated(
-                    shrinkWrap: true,
-                    physics:    const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: meals.length,
-                    separatorBuilder: (_, __) => Divider(
-                      height:    32,
-                      thickness: 1,
-                      color:     Colors.grey.withOpacity(0.3),
                     ),
-                    itemBuilder: (context, index) {
-                      final meal      = meals[index];
-                      final isInStock = meal.isAvailable;
-
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 12),
+                    FutureBuilder<List<Meal>>(
+                      future: MealService.fetchMeals(storeId: store.id),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 40),
+                              child: CircularProgressIndicator(
+                                  color: Color(0xFF1E4620)),
+                            ),
+                          );
+                        }
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              child: Text('Error loading menu: ${snapshot.error}',
+                                  style: const TextStyle(color: Colors.red)),
+                            ),
+                          );
+                        }
+                        final meals = snapshot.data ?? [];
+                        if (meals.isEmpty) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 40),
+                              child: Text('No meals found for this store.'),
+                            ),
+                          );
+                        }
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: meals.length,
+                          separatorBuilder: (_, __) => Divider(
+                            height: 32,
+                            thickness: 1,
+                            color: Colors.grey.withOpacity(0.3),
+                          ),
+                          itemBuilder: (context, index) {
+                            final meal = meals[index];
+                            final isInStock = meal.isAvailable;
+                            return Row(
                               children: [
-                                Text(meal.name,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize:   16)),
-                                const SizedBox(height: 4),
-                                Text(meal.description,
-                                    style: TextStyle(
-                                        color:   Colors.grey[600],
-                                        fontSize: 12),
-                                    maxLines:  2,
-                                    overflow:  TextOverflow.ellipsis),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Text(
-                                      'RM ${meal.price % 1 == 0 ? meal.price.toInt().toString() : meal.price.toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize:   16),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: isInStock
-                                            ? const Color(0xFFE8F5E9)
-                                            : const Color(0xFFFFEBEE),
-                                        borderRadius:
-                                        BorderRadius.circular(20),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            isInStock
-                                                ? Icons.check_circle
-                                                : Icons.cancel,
-                                            size:  14,
-                                            color: isInStock
-                                                ? Colors.green
-                                                : Colors.red,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            isInStock
-                                                ? 'In Stock'
-                                                : 'Sold Out',
-                                            style: TextStyle(
-                                              color: isInStock
-                                                  ? Colors.green[700]
-                                                  : Colors.red[700],
-                                              fontSize:   12,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(meal.name,
+                                          style: const TextStyle(
                                               fontWeight: FontWeight.bold,
+                                              fontSize: 16)),
+                                      const SizedBox(height: 4),
+                                      Text(meal.description,
+                                          style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 12),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            'RM ${meal.price % 1 == 0 ? meal.price.toInt().toString() : meal.price.toStringAsFixed(2)}',
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: isInStock
+                                                  ? const Color(0xFFE8F5E9)
+                                                  : const Color(0xFFFFEBEE),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  isInStock
+                                                      ? Icons.check_circle
+                                                      : Icons.cancel,
+                                                  size: 14,
+                                                  color: isInStock
+                                                      ? Colors.green
+                                                      : Colors.red,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  isInStock
+                                                      ? 'In Stock'
+                                                      : 'Sold Out',
+                                                  style: TextStyle(
+                                                    color: isInStock
+                                                        ? Colors.green[700]
+                                                        : Colors.red[700],
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: meal.imageUrl.startsWith('http')
+                                      ? Image.network(
+                                          meal.imageUrl,
+                                          width: 100,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              _buildErrorImage(),
+                                        )
+                                      : Image.asset(
+                                          meal.imageUrl,
+                                          width: 100,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              _buildErrorImage(),
+                                        ),
                                 ),
                               ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: meal.imageUrl.startsWith('http')
-                                ? Image.network(
-                              meal.imageUrl,
-                              width:  100,
-                              height: 80,
-                              fit:    BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  _buildErrorImage(),
-                            )
-                                : Image.asset(
-                              meal.imageUrl,
-                              width:  100,
-                              height: 80,
-                              fit:    BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  _buildErrorImage(),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-              ),
-
-              // Action Button
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          final storeCtrl =
-                          Provider.of<StoreController>(context,
-                              listen: false);
-                          final userPos = storeCtrl.userPosition;
-
-                          if (userPos != null) {
-                            final distance =
-                            LocationService.calculateDistance(
-                              userPos.latitude,
-                              userPos.longitude,
-                              store.latitude,
-                              store.longitude,
                             );
-                            if (distance > 5000) {
-                              _showFarStoreWarning(
-                                  context, distance / 1000);
-                              return;
-                            }
-                          }
-
-                          _completeStoreSelection(context);
-                        },
-                        icon:  const Icon(Icons.shopping_basket),
-                        label: const Text(
-                          'Order from this Store',
-                          style: TextStyle(
-                              fontSize:   18,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFABC270),
-                          foregroundColor: const Color(0xFF1E4620),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15)),
-                        ),
-                      ),
+                          },
+                        );
+                      },
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Estimated time: 25-35 mins',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+          
+          // Fixed Bottom Button Section
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final storeCtrl = Provider.of<StoreController>(context, listen: false);
+                      final userPos = storeCtrl.userPosition;
+                      if (userPos != null) {
+                        final distance = LocationService.calculateDistance(
+                          userPos.latitude,
+                          userPos.longitude,
+                          store.latitude,
+                          store.longitude,
+                        );
+                        if (distance > 5000) {
+                          _showFarStoreWarning(context, distance / 1000);
+                          return;
+                        }
+                      }
+                      _completeStoreSelection(context);
+                    },
+                    icon: const Icon(Icons.shopping_basket),
+                    label: const Text(
+                      'Order from this Store',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFABC270),
+                      foregroundColor: const Color(0xFF1E4620),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Estimated time: 25-35 mins',
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -19,6 +19,7 @@ class NutritionDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -56,21 +57,23 @@ class NutritionDialog extends StatelessWidget {
               // Image
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: meal.imageUrl.startsWith('http')
+                child: meal.imageUrl.isEmpty 
+                  ? _buildPlaceholder()
+                  : (meal.imageUrl.startsWith('http')
                     ? Image.network(
                         meal.imageUrl,
                         width: double.infinity,
                         height: 180,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
+                        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
                       )
                     : Image.asset(
                         meal.imageUrl,
                         width: double.infinity,
                         height: 180,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
-                      ),
+                        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                      )),
               ),
 
               const SizedBox(height: 16),
@@ -156,7 +159,7 @@ class NutritionDialog extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              const Divider(thickness: 1.2, color: Color(0xFFEEEEEE)),
+              const Divider(),
               const SizedBox(height: 12),
 
               // Nutritional Information Header
@@ -267,11 +270,12 @@ class NutritionDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildErrorImage() {
-    return Container(
+  Widget _buildPlaceholder() {
+    return Image.asset(
+      'assets/images/no_image_placeholder.png',
       height: 180,
-      color: Colors.grey[200],
-      child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+      width: double.infinity,
+      fit: BoxFit.cover,
     );
   }
 }

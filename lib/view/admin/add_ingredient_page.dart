@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../model/ingredient_model.dart';
 import '../../service/ingredient_service.dart';
+import '../widgets/ingredient_confirmation_dialog.dart';
 
 class AddIngredientPage extends StatefulWidget {
   final Ingredient? initialIngredient;
@@ -185,9 +187,14 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
   }
 
   bool get _isValid {
+    final priceStr = _priceController.text;
+    final caloriesStr = _caloriesController.text;
+    final price = double.tryParse(priceStr);
+    final calories = int.tryParse(caloriesStr);
+    
     return _nameController.text.isNotEmpty &&
-           _priceController.text.isNotEmpty &&
-           _caloriesController.text.isNotEmpty;
+           priceStr.isNotEmpty && price != null && price > 0 &&
+           caloriesStr.isNotEmpty && calories != null && calories >= 0;
   }
 
   void _save() async {
@@ -197,11 +204,6 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
     
     try {
       String imageUrl = _currentImageUrl ?? '';
-      if (_imageFile != null) {
-        imageUrl = await IngredientService.uploadImage(_imageFile!);
-        if (!mounted) return;
-      }
-
       final ingredient = Ingredient(
         id: widget.initialIngredient?.id,
         name: _nameController.text,
@@ -218,15 +220,28 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
         storeId: widget.storeId,
       );
 
-      Ingredient saved;
-      if (widget.initialIngredient != null) {
-        saved = await IngredientService.updateIngredient(ingredient);
-      } else {
-        saved = await IngredientService.addIngredient(ingredient);
-      }
-      if (!mounted) return;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => IngredientConfirmationDialog(ingredient: ingredient, localImage: _imageFile),
+      );
 
-      if (mounted) Navigator.pop(context, saved);
+      if (!context.mounted) return;
+
+      if (confirmed == true) {
+        String finalImageUrl = imageUrl;
+        if (_imageFile != null) {
+          finalImageUrl = await IngredientService.uploadImage(_imageFile!);
+          if (!mounted) return;
+        }
+
+        Ingredient saved;
+        if (widget.initialIngredient != null) {
+          saved = await IngredientService.updateIngredient(ingredient.copyWith(imageUrl: finalImageUrl));
+        } else {
+          saved = await IngredientService.addIngredient(ingredient.copyWith(imageUrl: finalImageUrl));
+        }
+        if (mounted) Navigator.pop(context, saved);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -283,7 +298,12 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
             _buildTypeDropdown(),
             const SizedBox(height: 16),
             _buildLabel('Price (RM) *'),
-            _buildTextField(_priceController, '4.50', keyboardType: TextInputType.number),
+            _buildTextField(
+              _priceController, 
+              '4.50', 
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+            ),
             const SizedBox(height: 16),
             _buildLabel('Description'),
             _buildTextField(_descriptionController, 'Describe this ingredient...', maxLines: 3),
@@ -291,7 +311,12 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
             _buildSectionHeader(Icons.monitor_heart_outlined, 'Nutrition (per serving)'),
             const SizedBox(height: 20),
             _buildLabel('Calories (cal) *'),
-            _buildTextField(_caloriesController, '150', keyboardType: TextInputType.number),
+            _buildTextField(
+              _caloriesController, 
+              '150', 
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -357,11 +382,18 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, {TextInputType keyboardType = TextInputType.text, int maxLines = 1}) {
+  Widget _buildTextField(
+    TextEditingController controller, 
+    String hint, {
+    TextInputType keyboardType = TextInputType.text, 
+    int maxLines = 1,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
+      inputFormatters: inputFormatters,
       onChanged: (_) => setState(() {}),
       decoration: InputDecoration(
         hintText: hint,
@@ -381,7 +413,12 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildLabel(label),
-        _buildTextField(controller, hint, keyboardType: TextInputType.number),
+        _buildTextField(
+          controller, 
+          hint, 
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+        ),
       ],
     );
   }

@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../model/meal_model.dart';
+import '../../model/ingredient_model.dart';
 
-class MealConfirmationDialog extends StatelessWidget {
-  final Meal meal;
+class IngredientConfirmationDialog extends StatelessWidget {
+  final Ingredient ingredient;
   final File? localImage;
 
-  const MealConfirmationDialog({super.key, required this.meal, this.localImage});
+  const IngredientConfirmationDialog({super.key, required this.ingredient, this.localImage});
 
   @override
   Widget build(BuildContext context) {
@@ -22,18 +22,18 @@ class MealConfirmationDialog extends StatelessWidget {
             // ── Image Section ──
             SizedBox(
               width: double.infinity,
-              height: 220,
+              height: 200,
               child: localImage != null 
                   ? Image.file(localImage!, fit: BoxFit.cover)
-                  : (meal.imageUrl.startsWith('http')
+                  : (ingredient.imageUrl.startsWith('http')
                       ? Image.network(
-                          meal.imageUrl,
+                          ingredient.imageUrl,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
                         )
-                      : (meal.imageUrl.isNotEmpty 
+                      : (ingredient.imageUrl.isNotEmpty 
                           ? Image.asset(
-                              meal.imageUrl,
+                              ingredient.imageUrl,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
                             )
@@ -51,7 +51,7 @@ class MealConfirmationDialog extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          meal.name,
+                          ingredient.name,
                           style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -60,7 +60,7 @@ class MealConfirmationDialog extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'RM ${meal.price % 1 == 0 ? meal.price.toInt().toString() : meal.price.toStringAsFixed(2)}',
+                        'RM ${ingredient.price % 1 == 0 ? ingredient.price.toInt().toString() : ingredient.price.toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -73,7 +73,7 @@ class MealConfirmationDialog extends StatelessWidget {
 
                   // ── Category ──
                   Text(
-                    meal.categories.isNotEmpty ? meal.categories.first : '',
+                    _capitalize(ingredient.type.name),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -83,49 +83,32 @@ class MealConfirmationDialog extends StatelessWidget {
                   const SizedBox(height: 12),
 
                   // ── Description ──
-                  Text(
-                    meal.description,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFF555555),
-                      height: 1.4,
+                  if (ingredient.description.isNotEmpty)
+                    Text(
+                      ingredient.description,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF555555),
+                        height: 1.4,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // ── Serving Size ──
-                  Text(
-                    meal.servingSize,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFF555555),
-                    ),
-                  ),
                   const SizedBox(height: 16),
 
                   // ── Nutrition Facts ──
-                  // ── Nutrition Facts ──
-                  ...meal.nutritionData.entries.map((entry) {
-                    return _buildNutritionRow(entry.key, entry.value);
-                  }),
-
-                  const SizedBox(height: 16),
-
-                  // ── Dietary Tags ──
-                  if (meal.dietaryPreferences.isNotEmpty)
-                    Wrap(
-                      spacing: 16,
-                      children: meal.dietaryPreferences.map((pref) {
-                        return Text(
-                          pref,
-                          style: const TextStyle(
-                            color: Color(0xFF9C4DB1), // Purple color from mockup
-                            fontWeight: FontWeight.w500,
-                            fontSize: 15,
-                          ),
-                        );
-                      }).toList(),
+                  if (ingredient.nutritionData.isNotEmpty) ...[
+                    const Text(
+                      'Nutritional Info',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E4620),
+                      ),
                     ),
+                    const SizedBox(height: 12),
+                    ...ingredient.nutritionData.entries.map((entry) {
+                      return _buildNutritionRow(entry.key, entry.value);
+                    }),
+                  ],
 
                   const SizedBox(height: 24),
 
@@ -214,4 +197,6 @@ class MealConfirmationDialog extends StatelessWidget {
       fit: BoxFit.cover,
     );
   }
+
+  String _capitalize(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1).toLowerCase();
 }

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../model/meal_model.dart';
 import '../widgets/meal_confirmation_dialog.dart';
@@ -137,9 +138,10 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
   }
 
   bool get _isStep1Valid {
+    final price = double.tryParse(_priceController.text);
     return _nameController.text.isNotEmpty &&
            _categorySelections.values.contains(true) &&
-           _priceController.text.isNotEmpty;
+           price != null && price > 0;
   }
 
   void _nextStep() {
@@ -249,14 +251,9 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
       );
     }
 
-    String finalImageUrl = _currentImageUrl ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1000&auto=format&fit=crop';
+    String finalImageUrl = _currentImageUrl ?? '';
     
     try {
-      // if a new image was picked, upload it first
-      if (_imageFile != null) {
-        finalImageUrl = await MealService.uploadImage(_imageFile!);
-      }
-
       final meal = Meal(
         name: _nameController.text,
         description: _descriptionController.text,
@@ -290,17 +287,25 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
 
       final confirmed = await showDialog<bool>(
         context: context,
-        builder: (dialogContext) => MealConfirmationDialog(meal: meal),
+        builder: (dialogContext) => MealConfirmationDialog(meal: meal, localImage: _imageFile),
       );
 
       if (!context.mounted) return;
 
       if (confirmed == true) {
+        // if a new image was picked, upload it now
+        if (_imageFile != null) {
+          finalImageUrl = await MealService.uploadImage(_imageFile!);
+        }
+
         Meal savedMeal;
         if (widget.initialMeal != null) {
-          savedMeal = await MealService.updateMeal(meal.copyWith(id: widget.initialMeal!.id));
+          savedMeal = await MealService.updateMeal(meal.copyWith(
+            id: widget.initialMeal!.id,
+            imageUrl: finalImageUrl,
+          ));
         } else {
-          savedMeal = await MealService.addMeal(meal);
+          savedMeal = await MealService.addMeal(meal.copyWith(imageUrl: finalImageUrl));
         }
         
         if (mounted) Navigator.pop(context, savedMeal);
@@ -421,7 +426,12 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
           _buildTextField(_descriptionController, 'Describe your menu item...', maxLines: 3),
           const SizedBox(height: 16),
           _buildLabel('Price (RM) *'),
-          _buildTextField(_priceController, '12.99', keyboardType: TextInputType.number),
+          _buildTextField(
+            _priceController, 
+            '12.99', 
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+          ),
           const SizedBox(height: 16),
           _buildLabel('Serving Size'),
           _buildTextField(_servingSizeController, '1 bowl (350g)'),
@@ -450,7 +460,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
           const SizedBox(height: 20),
           Row(
             children: [
-              Expanded(child: _buildNutritionField(_caloriesController, 'Calories (cal) *', '450')),
+              Expanded(child: _buildNutritionField(_caloriesController, 'Calories (cal) *', '450', isInteger: true)),
               const SizedBox(width: 16),
               Expanded(child: _buildNutritionField(_proteinController, 'Protein (g)', '25.5')),
             ],
@@ -474,9 +484,9 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(child: _buildNutritionField(_sodiumController, 'Sodium (mg)', '480')),
+              Expanded(child: _buildNutritionField(_sodiumController, 'Sodium (mg)', '480', isInteger: true)),
               const SizedBox(width: 16),
-              Expanded(child: _buildNutritionField(_cholesterolController, 'Cholesterol (mg)', '0')),
+              Expanded(child: _buildNutritionField(_cholesterolController, 'Cholesterol (mg)', '370', isInteger: true)),
             ],
           ),
           const SizedBox(height: 100),
@@ -577,11 +587,18 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, {int maxLines = 1, TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildTextField(
+    TextEditingController controller, 
+    String hint, {
+    int maxLines = 1, 
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       onChanged: (_) => setState(() {}),
       decoration: InputDecoration(
         hintText: hint,
@@ -605,12 +622,21 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     );
   }
 
-  Widget _buildNutritionField(TextEditingController controller, String label, String hint) {
+  Widget _buildNutritionField(TextEditingController controller, String label, String hint, {bool isInteger = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildLabel(label),
-        _buildTextField(controller, hint, keyboardType: TextInputType.number),
+        _buildTextField(
+          controller, 
+          hint, 
+          keyboardType: TextInputType.numberWithOptions(decimal: !isInteger),
+          inputFormatters: [
+            isInteger 
+                ? FilteringTextInputFormatter.digitsOnly 
+                : FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+          ],
+        ),
       ],
     );
   }

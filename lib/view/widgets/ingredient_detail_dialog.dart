@@ -203,11 +203,11 @@ class IngredientDetailDialog extends StatelessWidget {
   }
 
   Widget _buildPlaceholder() {
-    return Container(
+    return Image.asset(
+      'assets/images/no_image_placeholder.png',
       height: 180,
       width: double.infinity,
-      color: Colors.grey[200],
-      child: const Icon(Icons.inventory_2_outlined, size: 50, color: Colors.grey),
+      fit: BoxFit.cover,
     );
   }
 }
