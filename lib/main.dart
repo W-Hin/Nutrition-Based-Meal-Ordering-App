@@ -74,10 +74,10 @@ void main() async {
 class AppScrollBehavior extends MaterialScrollBehavior {
   @override
   Set<PointerDeviceKind> get dragDevices => {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-        PointerDeviceKind.trackpad,
-      };
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+  };
 }
 
 // ── Root App ──────────────────────────────────────────────────────────────────
@@ -94,25 +94,22 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E4620)),
         fontFamily: 'Roboto',
       ),
-      // Bypassed Auth for UI testing — switch back to `const AuthWrapper()` when done
       home: const MainShell(),
-      // Named routes
       routes: {
-        '/auth':              (_) => const AuthWrapper(),
-        '/login':             (_) => const LoginPage(),
-        '/register':          (_) => const RegisterPage(),
-        '/terms':             (_) => const TermsPage(),
-        '/onboarding':        (_) => const OnboardingPersonalPage(),
-        '/onboarding/bmi':    (_) => const OnboardingBmiPage(),
-        '/onboarding/address':(_) => const OnboardingAddressPage(),
-        '/home':              (_) => const MainShell(),
+        '/auth':               (_) => const AuthWrapper(),
+        '/login':              (_) => const LoginPage(),
+        '/register':           (_) => const RegisterPage(),
+        '/terms':              (_) => const TermsPage(),
+        '/onboarding':         (_) => const OnboardingPersonalPage(),
+        '/onboarding/bmi':     (_) => const OnboardingBmiPage(),
+        '/onboarding/address': (_) => const OnboardingAddressPage(),
+        '/home':               (_) => const MainShell(),
       },
     );
   }
 }
 
 // ── Auth Wrapper ──────────────────────────────────────────────────────────────
-/// Checks session → role → profile and routes accordingly.
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
@@ -121,25 +118,21 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
-
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<AuthState>(
       stream: Supabase.instance.client.auth.onAuthStateChange,
       builder: (context, snapshot) {
-        // Loading
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const _LoadingScreen();
         }
 
         final session = Supabase.instance.client.auth.currentSession;
 
-        // Not logged in
         if (session == null) {
           return const WelcomePage();
         }
 
-        // Logged in — check role and profile
         return FutureBuilder<Map<String, dynamic>>(
           future: _resolveDestination(),
           builder: (context, snap) {
@@ -167,7 +160,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
   }
 
   Future<Map<String, dynamic>> _resolveDestination() async {
-    final ctrl = context.read<AuthController>();
+    final ctrl       = context.read<AuthController>();
     final role       = await ctrl.getUserRole() ?? 'user';
     final hasProfile = await ctrl.hasProfile();
     return {'role': role, 'hasProfile': hasProfile};
@@ -191,7 +184,7 @@ class _LoadingScreen extends StatelessWidget {
   }
 }
 
-// ── Main Shell (customer app with bottom nav) ─────────────────────────────────
+// ── Main Shell ─────────────────────────────────────────────────────────────────
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -202,36 +195,6 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
   final _tabNotifier = ValueNotifier<int>(0);
-
-  @override
-  Widget build(BuildContext context) {
-    final List<Widget> pages = [
-      const HomeDashboardPage(),
-      MenuPage(onBack: () => setState(() => _selectedIndex = 0)),
-      MyOrdersPage(tabNotifier: _tabNotifier),
-      const ProfilePage(),
-    ];
-
-    return Scaffold(
-      body: Stack(
-        children: [
-          IndexedStack(index: _selectedIndex, children: pages),
-          Positioned(
-            top: 48,
-            right: 16,
-            child: _CartFab(),
-          ),
-        ],
-      ),
-      bottomNavigationBar: CustomBottomNavBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: (index) {
-          setState(() => _selectedIndex = index);
-          _tabNotifier.value = index;
-        },
-      ),
-    );
-  }
 
   @override
   void initState() {
@@ -246,61 +209,32 @@ class _MainShellState extends State<MainShell> {
     _tabNotifier.dispose();
     super.dispose();
   }
-}
 
-// ── Cart FAB ───────────────────────────────────────────────────────────────────
-class _CartFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Consumer<CartController>(
-      builder: (context, cart, _) {
-        return GestureDetector(
-          onTap: () => Navigator.push(
+    final List<Widget> pages = [
+      const HomeDashboardPage(),
+      MenuPage(onBack: () => setState(() => _selectedIndex = 0)),
+      MyOrdersPage(tabNotifier: _tabNotifier),
+      const ProfilePage(),
+    ];
+
+    return Scaffold(
+      // No more top-right FAB — cart lives in the nav bar now
+      body: IndexedStack(index: _selectedIndex, children: pages),
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: (index) {
+          setState(() => _selectedIndex = index);
+          _tabNotifier.value = index;
+        },
+        onCartTapped: () {
+          Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const CartPage()),
-          ),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF1E4620),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.shopping_cart_outlined,
-                  color: Colors.white,
-                  size: 26,
-                ),
-              ),
-              if (cart.totalItemCount > 0)
-                Positioned(
-                  top: -4,
-                  right: -4,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFCC4E2A),
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
-                    child: Text(
-                      cart.totalItemCount > 99 ? '99+' : '${cart.totalItemCount}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

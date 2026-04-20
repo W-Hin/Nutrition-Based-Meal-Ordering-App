@@ -1,46 +1,153 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../controller/cart_controller.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
+  final VoidCallback onCartTapped;
 
   const CustomBottomNavBar({
     super.key,
     required this.selectedIndex,
     required this.onItemTapped,
+    required this.onCartTapped,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 70,
-      color: const Color(0xFF1E4620), // dark green background
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.bottomCenter,
         children: [
-          _NavItem(
-            icon: Icons.home,
-            label: 'Home',
-            isSelected: selectedIndex == 0,
-            onTap: () => onItemTapped(0),
+          // ── Bottom bar background ──────────────────────────────────────
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 80,
+              color: const Color(0xFF1E4620),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  // Left side: Home + Explore
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _NavItem(
+                          icon: Icons.home,
+                          label: 'Home',
+                          isSelected: selectedIndex == 0,
+                          onTap: () => onItemTapped(0),
+                        ),
+                        _NavItem(
+                          icon: Icons.explore,
+                          label: 'Explore',
+                          isSelected: selectedIndex == 1,
+                          onTap: () => onItemTapped(1),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Center gap for the floating cart button
+                  const SizedBox(width: 72),
+
+                  // Right side: Order + Profile
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _NavItem(
+                          icon: Icons.assignment,
+                          label: 'Order',
+                          isSelected: selectedIndex == 2,
+                          onTap: () => onItemTapped(2),
+                        ),
+                        _NavItem(
+                          icon: Icons.person,
+                          label: 'Profile',
+                          isSelected: selectedIndex == 3,
+                          onTap: () => onItemTapped(3),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          _NavItem(
-            icon: Icons.explore,
-            label: 'Explore',
-            isSelected: selectedIndex == 1,
-            onTap: () => onItemTapped(1),
-          ),
-          _NavItem(
-            icon: Icons.assignment,
-            label: 'Order',
-            isSelected: selectedIndex == 2,
-            onTap: () => onItemTapped(2),
-          ),
-          _NavItem(
-            icon: Icons.person,
-            label: 'Profile',
-            isSelected: selectedIndex == 3,
-            onTap: () => onItemTapped(3),
+
+          // ── Floating Cart Button ───────────────────────────────────────
+          Positioned(
+            bottom: 50,
+            child: Consumer<CartController>(
+              builder: (context, cart, _) {
+                return GestureDetector(
+                  onTap: onCartTapped,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 65,
+                        height: 65,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2A5C2E),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 4,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.25),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.shopping_cart_outlined,
+                          color: Colors.white,
+                          size: 32,
+                        ),
+                      ),
+                      if (cart.totalItemCount > 0)
+                        Positioned(
+                          top: -4,
+                          right: -4,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFCC4E2A),
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 22,
+                              minHeight: 22,
+                            ),
+                            child: Text(
+                              cart.totalItemCount > 99
+                                  ? '99+'
+                                  : '${cart.totalItemCount}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -63,42 +170,39 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Define colors once, reuse for both icon and text
-    final Color activeColor = const Color(0xFFB5CC30);   // lime green
+    final Color activeColor = const Color(0xFFB5CC30);
     final Color inactiveColor = Colors.white;
     final Color itemColor = isSelected ? activeColor : inactiveColor;
 
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          color: Colors.transparent, // background never changes
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Icon color switches, nothing else
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 180),
-                child: Icon(
-                  icon,
-                  key: ValueKey(isSelected), // triggers animation on change
-                  color: itemColor,
-                  size: 22,
-                ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        color: Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: Icon(
+                icon,
+                key: ValueKey(isSelected),
+                color: itemColor,
+                size: 22,
               ),
-              const SizedBox(height: 4),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 180),
-                style: TextStyle(
-                  color: itemColor,
-                  fontSize: 12,
-                  fontWeight:
-                  isSelected ? FontWeight.w600 : FontWeight.normal,
-                ),
-                child: Text(label),
+            ),
+            const SizedBox(height: 4),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 180),
+              style: TextStyle(
+                color: itemColor,
+                fontSize: 12,
+                fontWeight:
+                isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
-            ],
-          ),
+              child: Text(label),
+            ),
+          ],
         ),
       ),
     );
