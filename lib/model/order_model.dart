@@ -11,7 +11,7 @@ class OrderModel {
   final String orderId;
   final DateTime orderDate;
   final String paymentMethod;
-  final String? storeId;        // ← NEW: links to stores table
+  final String? storeId;
   final String fromName;
   final String fromAddress;
   final String toName;
@@ -22,7 +22,8 @@ class OrderModel {
   final double serviceFee;
   final double deliveryFee;
   final OrderType orderType;
-  final String remark;          // ← NEW: nullable in DB, empty string here
+  final String remark;
+  final String? collectionCode; // ← 3-digit random code for self-collect orders
   OrderStatus status;
 
   OrderModel({
@@ -41,6 +42,7 @@ class OrderModel {
     required this.deliveryFee,
     required this.orderType,
     this.remark = '',
+    this.collectionCode,
     this.status = OrderStatus.submitted,
   });
 
@@ -86,7 +88,7 @@ class OrderModel {
         case OrderStatus.readyOrOutForDelivery:
           return 'Your order is ready! Please collect your order within 2 hours of ordering.';
         case OrderStatus.completed:
-          return 'This order has been picked up. Please order from us again!';
+          return 'This order has been picked up. Please Order from Us Again!';
       }
     }
   }
@@ -99,11 +101,15 @@ class OrderModel {
       case OrderStatus.preparing:
         return 'assets/images/cooking_icon.png';
       case OrderStatus.readyOrOutForDelivery:
-        return orderType == OrderType.delivery
-            ? 'assets/images/delivery_boy.png'
-            : 'assets/images/collect_food_icon.png';
+        if (orderType == OrderType.delivery) {
+          return 'assets/images/delivery_boy.png';
+        }
+        return 'assets/images/carry_food_icon.jpg';
       case OrderStatus.completed:
-        return 'assets/images/collect_food_success_icon.png';
+        if (orderType == OrderType.delivery) {
+          return 'assets/images/collect_food_success_icon.png';
+        }
+        return 'assets/images/carry_food_icon.jpg';
     }
   }
 }
@@ -112,10 +118,12 @@ class OrderItemModel {
   final String name;
   final List<String> addOns;
   final double price;
+  final String? imageUrl; // ← now carried through for display
 
   OrderItemModel({
     required this.name,
     required this.addOns,
     required this.price,
+    this.imageUrl,
   });
 }

@@ -150,8 +150,8 @@ class _MyOrdersPageState extends State<MyOrdersPage>
         ),
         actions: [
           IconButton(
-            icon:     const Icon(Icons.refresh, color: _green),
-            tooltip:  'Refresh',
+            icon:      const Icon(Icons.refresh, color: _green),
+            tooltip:   'Refresh',
             onPressed: _fetchOrders,
           ),
         ],
@@ -179,12 +179,10 @@ class _MyOrdersPageState extends State<MyOrdersPage>
               style: const TextStyle(fontSize: 13),
               decoration: InputDecoration(
                 hintText:   'Search by status or restaurant',
-                hintStyle:  const TextStyle(
-                    color: Color(0xFFAAAAAA), fontSize: 12),
-                prefixIcon: const Icon(Icons.search,
-                    size: 18, color: Color(0xFF8A8A8A)),
-                filled:    true,
-                fillColor: const Color(0xFFEEEBDE),
+                hintStyle:  const TextStyle(color: Color(0xFFAAAAAA), fontSize: 12),
+                prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF8A8A8A)),
+                filled:     true,
+                fillColor:  const Color(0xFFEEEBDE),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide:   BorderSide.none,
@@ -198,12 +196,9 @@ class _MyOrdersPageState extends State<MyOrdersPage>
           // ── Body ─────────────────────────────────────────────────────────
           Expanded(
             child: _loading
-                ? const Center(
-                child: CircularProgressIndicator(
-                    color: Color(0xFF1E4620)))
+                ? const Center(child: CircularProgressIndicator(color: Color(0xFF1E4620)))
                 : _error != null
-                ? _ErrorState(
-                message: _error!, onRetry: _fetchOrders)
+                ? _ErrorState(message: _error!, onRetry: _fetchOrders)
                 : TabBarView(
               controller: _tabCtrl,
               children: [
@@ -272,7 +267,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
                     historyOrderId: id.toString(),
                   ),
                 ),
-              ).then((_) => _fetchOrders()); // refresh on return
+              ).then((_) => _fetchOrders());
             },
           );
         },
@@ -309,8 +304,7 @@ class _OrderCard extends StatelessWidget {
     final total     = (order['total'] as num?)?.toDouble() ?? 0.0;
     final dateStr   = _formatDate(
         order['order_date'] as String? ?? order['created_at'] as String?);
-    final storeName = (order['store_name'] as String?)
-        ?? 'NuBurn - Tanjung Burma';
+    final storeName = (order['store_name'] as String?) ?? 'NuBurn - Tanjung Burma';
 
     final first      = items.isNotEmpty ? items.first : null;
     final extraCount = items.length - 1;
@@ -354,8 +348,7 @@ class _OrderCard extends StatelessWidget {
                   ),
                   Text(
                     dateStr,
-                    style: const TextStyle(
-                        fontSize: 11, color: Color(0xFF8A8A8A)),
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)),
                   ),
                 ],
               ),
@@ -374,8 +367,7 @@ class _OrderCard extends StatelessWidget {
               const Divider(height: 12, indent: 14, endIndent: 14),
               ...items.skip(1).map(
                     (item) => Padding(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
                   child: _ItemRow(item: item),
                 ),
               ),
@@ -384,21 +376,17 @@ class _OrderCard extends StatelessWidget {
             // ── Show more / less ───────────────────────────────────────────
             if (hasMore)
               GestureDetector(
-                onTap: () {
-                  onExpand(); // toggle expand WITHOUT triggering onTap (card nav)
-                },
-                behavior: HitTestBehavior.opaque,
+                onTap:     onExpand,
+                behavior:  HitTestBehavior.opaque,
                 child: Container(
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     border: Border(
-                        top: BorderSide(
-                            color: Color(0xFFEEEBDE), width: 1)),
-                    borderRadius: BorderRadius.vertical(
-                        bottom: Radius.circular(12)),
+                        top: BorderSide(color: Color(0xFFEEEBDE), width: 1)),
+                    borderRadius:
+                    BorderRadius.vertical(bottom: Radius.circular(12)),
                   ),
-                  padding:
-                  const EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -437,8 +425,7 @@ class _OrderCard extends StatelessWidget {
                     alignment: Alignment.centerRight,
                     child: Text(
                       'Service Fee (5%) included *',
-                      style: TextStyle(
-                          fontSize: 10, color: Color(0xFF8A8A8A)),
+                      style: TextStyle(fontSize: 10, color: Color(0xFF8A8A8A)),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -467,24 +454,18 @@ class _OrderCard extends StatelessWidget {
 
             // ── Footer: type · status + RATE ──────────────────────────────
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: const BoxDecoration(
-                border: Border(
-                    top: BorderSide(color: Color(0xFFEEEBDE))),
+                border: Border(top: BorderSide(color: Color(0xFFEEEBDE))),
               ),
               child: Row(
                 children: [
                   Text(
-                    orderType == 'delivery'
-                        ? 'Delivery'
-                        : 'Self Collect',
-                    style: const TextStyle(
-                        fontSize: 11, color: Color(0xFF8A8A8A)),
+                    orderType == 'delivery' ? 'Delivery' : 'Self Collect',
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)),
                   ),
                   const Text(' · ',
-                      style: TextStyle(
-                          fontSize: 11, color: Color(0xFF8A8A8A))),
+                      style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A))),
                   Text(
                     _statusLabel(status, orderType),
                     style: TextStyle(
@@ -530,11 +511,10 @@ class _OrderCard extends StatelessWidget {
       v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(2);
 }
 
-// ── Item Row (with food image from order_items.image_url or menu_items) ────────
+// ── Item Row — now shows food image from order_items.image_url ─────────────────
 
 class _ItemRow extends StatelessWidget {
   final Map<String, dynamic> item;
-
   const _ItemRow({required this.item});
 
   @override
@@ -542,9 +522,7 @@ class _ItemRow extends StatelessWidget {
     final name     = item['name']      as String? ?? '';
     final price    = (item['price']    as num?)?.toDouble() ?? 0.0;
     final addOns   = List<String>.from(item['add_ons'] as List? ?? []);
-    // image_url is not stored in order_items per schema — use a placeholder.
-    // If you later add image_url to order_items, read it here:
-    final imageUrl = item['image_url'] as String?;
+    final imageUrl = item['image_url'] as String?; // ← from order_items
 
     final half = (addOns.length / 2).ceil();
     final col1 = addOns.isNotEmpty ? addOns.sublist(0, half) : <String>[];
@@ -555,7 +533,6 @@ class _ItemRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Food image ──────────────────────────────────────────────────
           _FoodImage(imageUrl: imageUrl),
           const SizedBox(width: 10),
           Expanded(
@@ -571,8 +548,7 @@ class _ItemRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(child: _addOnCol(col1)),
-                      if (col2.isNotEmpty)
-                        Expanded(child: _addOnCol(col2)),
+                      if (col2.isNotEmpty) Expanded(child: _addOnCol(col2)),
                     ],
                   ),
               ],
@@ -580,8 +556,7 @@ class _ItemRow extends StatelessWidget {
           ),
           Text(
             'RM ${price % 1 == 0 ? price.toInt().toString() : price.toStringAsFixed(2)}',
-            style: const TextStyle(
-                fontSize: 12, color: Color(0xFF6B6B6B)),
+            style: const TextStyle(fontSize: 12, color: Color(0xFF6B6B6B)),
           ),
         ],
       ),
@@ -592,22 +567,19 @@ class _ItemRow extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: items
         .map((a) => Text('+ $a',
-        style: const TextStyle(
-            fontSize: 10, color: Color(0xFF8A8A8A))))
+        style: const TextStyle(fontSize: 10, color: Color(0xFF8A8A8A))))
         .toList(),
   );
 }
 
-// ── Food Image widget with network + fallback support ─────────────────────────
+// ── Food Image widget ──────────────────────────────────────────────────────────
 
 class _FoodImage extends StatelessWidget {
   final String? imageUrl;
-
   const _FoodImage({this.imageUrl});
 
   @override
   Widget build(BuildContext context) {
-    // Fallback grey box with icon
     Widget fallback = Container(
       width:  60,
       height: 60,
@@ -654,7 +626,6 @@ class _FoodImage extends StatelessWidget {
 class _EmptyState extends StatelessWidget {
   final IconData icon;
   final String   message;
-
   const _EmptyState({required this.icon, required this.message});
 
   @override
@@ -666,8 +637,7 @@ class _EmptyState extends StatelessWidget {
           Icon(icon, size: 48, color: const Color(0xFFCCC9B8)),
           const SizedBox(height: 12),
           Text(message,
-              style: const TextStyle(
-                  color: Color(0xFF8A8A8A), fontSize: 14)),
+              style: const TextStyle(color: Color(0xFF8A8A8A), fontSize: 14)),
         ],
       ),
     );
@@ -677,9 +647,8 @@ class _EmptyState extends StatelessWidget {
 // ── Error State ────────────────────────────────────────────────────────────────
 
 class _ErrorState extends StatelessWidget {
-  final String   message;
+  final String       message;
   final VoidCallback onRetry;
-
   const _ErrorState({required this.message, required this.onRetry});
 
   @override
@@ -695,8 +664,7 @@ class _ErrorState extends StatelessWidget {
             const SizedBox(height: 12),
             const Text('Failed to load orders.',
                 style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color:      Color(0xFF2C2C2C))),
+                    fontWeight: FontWeight.w600, color: Color(0xFF2C2C2C))),
             const SizedBox(height: 6),
             Text(message,
                 textAlign: TextAlign.center,
@@ -705,12 +673,12 @@ class _ErrorState extends StatelessWidget {
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: onRetry,
-              icon:      const Icon(Icons.refresh, size: 16),
-              label:     const Text('Retry'),
+              icon:  const Icon(Icons.refresh, size: 16),
+              label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1E4620),
                 foregroundColor: Colors.white,
-                elevation:       0,
+                elevation: 0,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
               ),

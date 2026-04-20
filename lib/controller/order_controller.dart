@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../model/order_model.dart';
 import '../model/cart_item.dart';
@@ -31,28 +32,34 @@ class OrderController extends ChangeNotifier {
     String  payerEmail = '',
     String  payerPhone = '',
   }) async {
-    // Default status is always 'submitted' on creation
+    // Generate a 3-digit collection code for self-collect orders
+    final collectionCode = orderType == OrderType.selfCollect
+        ? _generateCollectionCode()
+        : null;
+
     currentOrder = OrderModel(
-      orderId:       _generateLocalId(),
-      orderDate:     DateTime.now(),
-      paymentMethod: 'Credit / Debit Card',
-      storeId:       storeId,
-      fromName:      'NuBurn - Tanjung Burma',
-      fromAddress:   '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21, ....',
-      toName:        toName,
-      toPhone:       toPhone,
-      toAddress:     toAddress,
+      orderId:        _generateLocalId(),
+      orderDate:      DateTime.now(),
+      paymentMethod:  'Credit / Debit Card',
+      storeId:        storeId,
+      fromName:       'NuBurn - Tanjung Burma',
+      fromAddress:    '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21, ....',
+      toName:         toName,
+      toPhone:        toPhone,
+      toAddress:      toAddress,
       items: cartItems.map((c) => OrderItemModel(
-        name:   c.name,
-        addOns: c.addOns,
-        price:  c.price,
+        name:     c.name,
+        addOns:   c.addOns,
+        price:    c.price,
+        imageUrl: c.imageUrl,
       )).toList(),
-      subtotal:    subtotal,
-      serviceFee:  serviceFee,
-      deliveryFee: deliveryFee,
-      orderType:   orderType,
-      remark:      remark,
-      status:      OrderStatus.submitted, // ← always starts as submitted
+      subtotal:       subtotal,
+      serviceFee:     serviceFee,
+      deliveryFee:    deliveryFee,
+      orderType:      orderType,
+      remark:         remark,
+      collectionCode: collectionCode,
+      status:         OrderStatus.submitted,
     );
 
     // 1. Insert order + order_items rows; get back real DB order_id
@@ -94,9 +101,15 @@ class OrderController extends ChangeNotifier {
     isCancelled  = true;
     isCancelling = false;
 
-    // Update local status so UI reflects cancellation immediately
-    currentOrder!.status = OrderStatus.submitted; // keep last known; banner overrides
+    currentOrder!.status = OrderStatus.submitted;
     notifyListeners();
+  }
+
+  // ── Generate a random 3-digit collection code (100–999) ──────────────────
+  String _generateCollectionCode() {
+    final rng = Random();
+    final code = 100 + rng.nextInt(900); // 100..999
+    return code.toString().padLeft(3, '0');
   }
 
   // ── Generate a short local order ID (used before DB returns real ID) ─────

@@ -23,7 +23,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
 
   // ── State for history-mode (loaded from Supabase directly) ────────────────
   Map<String, dynamic>? _historyRow;
-  bool  _historyLoading  = false;
+  bool  _historyLoading    = false;
   bool  _historyCancelling = false;
   bool  _historyCancelled  = false;
   String? _historyError;
@@ -61,7 +61,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     }
   }
 
-  // ── Cancel a history-mode order (updates DB then refreshes local state) ───
+  // ── Cancel a history-mode order ───────────────────────────────────────────
   Future<void> _cancelHistoryOrder() async {
     setState(() { _historyCancelling = true; });
     try {
@@ -73,7 +73,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       setState(() {
         _historyCancelled = true;
         if (_historyRow != null) {
-          _historyRow!['status']        = 'cancelled';
+          _historyRow!['status']         = 'cancelled';
           _historyRow!['is_cancellable'] = false;
         }
       });
@@ -89,9 +89,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   // ── Confirm cancel dialog ─────────────────────────────────────────────────
-  void _showCancelDialog({
-    required VoidCallback onConfirm,
-  }) {
+  void _showCancelDialog({required VoidCallback onConfirm}) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -150,7 +148,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       return const Scaffold(body: Center(child: Text('No order found.')));
     }
 
-    final isCancelled = ctrl.isCancelled;
+    final isCancelled  = ctrl.isCancelled;
+    final isSelfCollect = order.orderType == OrderType.selfCollect;
 
     return Scaffold(
       backgroundColor: _bg,
@@ -169,31 +168,39 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               isCancelled:       isCancelled,
             ),
             const SizedBox(height: 16),
+
             if (!isCancelled)
-              _StatusTracker(
-                  status: order.status, orderType: order.orderType),
-            const SizedBox(height: 16),
-            _InfoSection(
-                title: 'From',
-                lines: [order.fromName, order.fromAddress]),
-            const SizedBox(height: 12),
-            _InfoSection(
-              title: order.orderType == OrderType.delivery
-                  ? 'Deliver To'
-                  : 'Self Collection',
-              lines: [
-                order.orderType == OrderType.delivery
-                    ? '${order.toName}  |  ${order.toPhone}'
-                    : order.toName,
-                order.toAddress,
-              ],
-            ),
+              _StatusTracker(status: order.status, orderType: order.orderType),
             const SizedBox(height: 16),
 
-            // ── Item Details with cancel ──
-            _LiveItemDetailsSection(ctrl: ctrl, order: order,
-                onCancelTap: () => _showCancelDialog(
-                    onConfirm: ctrl.cancelOrder)),
+            // ── Self Collect: show collection code + Collect At ──
+            if (isSelfCollect) ...[
+              _SelfCollectCodeCard(
+                collectionCode: order.collectionCode,
+                status:         order.status,
+              ),
+              const SizedBox(height: 12),
+              _CollectAtCard(
+                storeName:    order.fromName,
+                storeAddress: order.fromAddress,
+              ),
+            ] else ...[
+              // Delivery: show From + Deliver To
+              _InfoSection(title: 'From',
+                  lines: [order.fromName, order.fromAddress]),
+              const SizedBox(height: 12),
+              _InfoSection(
+                title: 'Deliver To',
+                lines: ['${order.toName}  |  ${order.toPhone}', order.toAddress],
+              ),
+            ],
+            const SizedBox(height: 16),
+
+            _LiveItemDetailsSection(
+              ctrl:       ctrl,
+              order:      order,
+              onCancelTap: () => _showCancelDialog(onConfirm: ctrl.cancelOrder),
+            ),
             const SizedBox(height: 16),
             _LiveOrderInfoSection(order: order),
             const SizedBox(height: 24),
@@ -222,16 +229,14 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline,
-                  size: 48, color: Color(0xFFCCC9B8)),
+              const Icon(Icons.error_outline, size: 48, color: Color(0xFFCCC9B8)),
               const SizedBox(height: 12),
               const Text('Failed to load order details.'),
               const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: _loadHistoryOrder,
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: _green,
-                    foregroundColor: Colors.white),
+                    backgroundColor: _green, foregroundColor: Colors.white),
                 child: const Text('Retry'),
               ),
             ],
@@ -240,41 +245,46 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       );
     }
 
-    final row       = _historyRow!;
-    final status    = (row['status']     as String? ?? '').toLowerCase();
-    final orderType = (row['order_type'] as String? ?? '').toLowerCase();
-    final items     = List<Map<String, dynamic>>.from(
+    final row            = _historyRow!;
+    final status         = (row['status']        as String? ?? '').toLowerCase();
+    final orderType      = (row['order_type']    as String? ?? '').toLowerCase();
+    final isSelfCollect  = orderType == 'selfcollect' || orderType == 'self_collect';
+    final items          = List<Map<String, dynamic>>.from(
         row['order_items'] as List? ?? []);
-    final subtotal  = (row['subtotal']    as num?)?.toDouble() ?? 0.0;
-    final svcFee    = (row['service_fee'] as num?)?.toDouble() ?? 0.0;
-    final delFee    = (row['delivery_fee']as num?)?.toDouble() ?? 0.0;
-    final total     = (row['total']       as num?)?.toDouble() ?? 0.0;
-    final fromName  = 'NuBurn - Tanjung Burma';
-    final fromAddr  = row['store_id'] as String? ?? '';
-    final toName    = row['to_name']    as String? ?? '';
-    final toPhone   = row['to_phone']   as String? ?? '';
-    final toAddress = row['to_address'] as String? ?? '';
-    final remark    = row['remark']     as String? ?? '';
-    final payMethod = row['payment_method'] as String? ?? 'Credit / Debit Card';
-    final orderId   = row['order_id'].toString();
-    final rawDate   = row['order_date'] as String?
+    final subtotal       = (row['subtotal']      as num?)?.toDouble() ?? 0.0;
+    final svcFee         = (row['service_fee']   as num?)?.toDouble() ?? 0.0;
+    final delFee         = (row['delivery_fee']  as num?)?.toDouble() ?? 0.0;
+    final total          = (row['total']         as num?)?.toDouble() ?? 0.0;
+    final toName         = row['to_name']        as String? ?? '';
+    final toPhone        = row['to_phone']       as String? ?? '';
+    final toAddress      = row['to_address']     as String? ?? '';
+    final payMethod      = row['payment_method'] as String? ?? 'Credit / Debit Card';
+    final orderId        = row['order_id'].toString();
+    final collectionCode = row['collection_code'] as String?;
+
+    // Build store name / address from store_id (or fallback)
+    final fromName    = 'NuBurn - Tanjung Burma';
+    final storeIdVal  = row['store_id'] as String? ?? '';
+    final fromAddress = toAddress.isNotEmpty && !isSelfCollect
+        ? toAddress
+        : '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21, ....';
+
+    final rawDate   = row['order_date']  as String?
         ?? row['created_at'] as String? ?? '';
     final orderDate = rawDate.isNotEmpty
         ? DateTime.tryParse(rawDate)?.toLocal() ?? DateTime.now()
         : DateTime.now();
 
-    final isCancelled = _historyCancelled || status == 'cancelled';
-    final isCancellable =
-        !isCancelled && (row['is_cancellable'] as bool? ?? false);
+    final isCancelled   = _historyCancelled || status == 'cancelled';
+    final isCancellable = !isCancelled && (row['is_cancellable'] as bool? ?? false);
 
     final statusLabel = _historyStatusLabel(status, orderType, isCancelled);
     final statusDesc  = _historyStatusDesc(status, orderType, isCancelled);
 
-    // Map DB status string → enum for the tracker
     final trackerStatus = _mapStatus(status);
-    final trackerType   = orderType == 'delivery'
-        ? OrderType.delivery
-        : OrderType.selfCollect;
+    final trackerType   = isSelfCollect
+        ? OrderType.selfCollect
+        : OrderType.delivery;
 
     return Scaffold(
       backgroundColor: _bg,
@@ -291,40 +301,46 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               isCancelled:       isCancelled,
             ),
             const SizedBox(height: 16),
+
             if (!isCancelled)
-              _StatusTracker(
-                  status: trackerStatus, orderType: trackerType),
-            const SizedBox(height: 16),
-            _InfoSection(
-                title: 'From',
-                lines: [fromName, fromAddr.isNotEmpty ? fromAddr : '—']),
-            const SizedBox(height: 12),
-            _InfoSection(
-              title: orderType == 'delivery'
-                  ? 'Deliver To'
-                  : 'Self Collection',
-              lines: [
-                orderType == 'delivery' && toPhone.isNotEmpty
-                    ? '$toName  |  $toPhone'
-                    : toName,
-                toAddress,
-              ],
-            ),
+              _StatusTracker(status: trackerStatus, orderType: trackerType),
             const SizedBox(height: 16),
 
-            // ── Item Details ──
+            // ── Self Collect: collection code + Collect At ──
+            if (isSelfCollect) ...[
+              _SelfCollectCodeCard(
+                collectionCode: collectionCode,
+                status:         trackerStatus,
+              ),
+              const SizedBox(height: 12),
+              _CollectAtCard(
+                storeName:    fromName,
+                storeAddress: '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21, ....',
+              ),
+            ] else ...[
+              // Delivery: show From + Deliver To
+              _InfoSection(title: 'From', lines: [fromName, storeIdVal.isNotEmpty ? storeIdVal : '—']),
+              const SizedBox(height: 12),
+              _InfoSection(
+                title: 'Deliver To',
+                lines: [
+                  toPhone.isNotEmpty ? '$toName  |  $toPhone' : toName,
+                  toAddress,
+                ],
+              ),
+            ],
+            const SizedBox(height: 16),
+
             _HistoryItemDetailsSection(
-              items:          items,
-              subtotal:       subtotal,
-              total:          total,
-              isCancellable:  isCancellable,
-              isCancelling:   _historyCancelling,
-              onCancelTap:    () => _showCancelDialog(
-                  onConfirm: _cancelHistoryOrder),
+              items:         items,
+              subtotal:      subtotal,
+              total:         total,
+              isCancellable: isCancellable,
+              isCancelling:  _historyCancelling,
+              onCancelTap:   () => _showCancelDialog(onConfirm: _cancelHistoryOrder),
             ),
             const SizedBox(height: 16),
 
-            // ── Order Info ──
             _HistoryOrderInfoSection(
               orderId:       orderId,
               orderDate:     orderDate,
@@ -369,8 +385,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     }
   }
 
-  String _historyStatusLabel(
-      String status, String orderType, bool isCancelled) {
+  String _historyStatusLabel(String status, String orderType, bool isCancelled) {
     if (isCancelled) return 'Order Cancelled';
     switch (status) {
       case 'preparing':            return 'Preparing';
@@ -379,24 +394,24 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       case 'completed':
       case 'delivered':
       case 'retrieved':
-        return orderType == 'delivery' ? 'Delivered' : 'Completed';
+        final isSC = orderType == 'selfcollect' || orderType == 'self_collect';
+        return isSC ? 'Completed' : 'Delivered';
       default:                     return 'Order Submitted';
     }
   }
 
-  String _historyStatusDesc(
-      String status, String orderType, bool isCancelled) {
+  String _historyStatusDesc(String status, String orderType, bool isCancelled) {
     if (isCancelled) {
       return 'Your order has been cancelled. Refund will be processed within 3–5 business days.';
     }
-    final isDelivery = orderType == 'delivery';
+    final isSC = orderType == 'selfcollect' || orderType == 'self_collect';
     switch (status) {
       case 'submitted':
         return 'We will prepare your order shortly. You may cancel your order before it is being prepared.';
       case 'preparing':
-        return isDelivery
-            ? "Your order is being prepared. You'll receive a notification when your order is out for delivery."
-            : "Your order is being prepared. You'll receive a notification when your order is ready for collection.";
+        return isSC
+            ? "Your order is being prepared. You'll receive a notification when your order is ready for collection."
+            : "Your order is being prepared. You'll receive a notification when your order is out for delivery.";
       case 'out_for_delivery':
         return 'Your order is on the way! Please be ready to retrieve your meal.';
       case 'ready_for_collection':
@@ -404,33 +419,174 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       case 'completed':
       case 'delivered':
       case 'retrieved':
-        return isDelivery
-            ? 'This order has been delivered. Please order from us again!'
-            : 'This order has been picked up. Please order from us again!';
+        return isSC
+            ? 'This order has been picked up. Please order from us again!'
+            : 'This order has been delivered. Please order from us again!';
       default:
         return '';
     }
   }
 
   String _historyImagePath(String status, String orderType) {
+    final isSC = orderType == 'selfcollect' || orderType == 'self_collect';
     switch (status) {
       case 'preparing':
         return 'assets/images/cooking_icon.png';
       case 'out_for_delivery':
         return 'assets/images/delivery_boy.png';
       case 'ready_for_collection':
-        return 'assets/images/collect_food_icon.png';
+        return isSC
+            ? 'assets/images/carry_food_icon.jpg'
+            : 'assets/images/collect_food_icon.png';
       case 'completed':
       case 'delivered':
       case 'retrieved':
-        return 'assets/images/collect_food_success_icon.png';
+        return isSC
+            ? 'assets/images/carry_food_icon.jpg'
+            : 'assets/images/collect_food_success_icon.png';
       default:
         return 'assets/images/order_submitted_tick_icon.png';
     }
   }
 }
 
-// ── Submitted Banner ───────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Self-Collect specific widgets
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Shows the collection code pill + status label, matching the UI mockup.
+class _SelfCollectCodeCard extends StatelessWidget {
+  final String? collectionCode;
+  final OrderStatus status;
+
+  static const _green = Color(0xFF1E4620);
+
+  const _SelfCollectCodeCard({
+    required this.collectionCode,
+    required this.status,
+  });
+
+  String get _statusLabel {
+    switch (status) {
+      case OrderStatus.submitted:
+      case OrderStatus.preparing:
+        return 'Waiting to be Collected';
+      case OrderStatus.readyOrOutForDelivery:
+        return 'Order Waiting to be Collected';
+      case OrderStatus.completed:
+        return 'Order Collected';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final code = collectionCode ?? '---';
+    return Container(
+      width:   double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+      decoration: BoxDecoration(
+        color:        Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border:       Border.all(color: const Color(0xFFDDDDD0)),
+      ),
+      child: Row(
+        children: [
+          // Carry-bag icon inside a circle border
+          Container(
+            width:  48,
+            height: 48,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: _green, width: 1.5),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: ClipOval(
+              child: Image.asset(
+                'assets/images/carry_food_icon.jpg',
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.shopping_bag_outlined,
+                  color: _green,
+                  size: 28,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Self Collection Code #$code',
+                style: const TextStyle(
+                  color:      _green,
+                  fontWeight: FontWeight.w800,
+                  fontSize:   15,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _statusLabel,
+                style: const TextStyle(
+                  color:   Color(0xFF6B6B6B),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Collect At" card showing store name + address.
+class _CollectAtCard extends StatelessWidget {
+  final String storeName;
+  final String storeAddress;
+
+  const _CollectAtCard({
+    required this.storeName,
+    required this.storeAddress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width:   double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color:        Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border:       Border.all(color: const Color(0xFFDDDDD0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Collect At',
+            style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize:   14,
+                color:      Color(0xFF2C2C2C)),
+          ),
+          const SizedBox(height: 6),
+          Text(storeName,
+              style: const TextStyle(
+                  fontSize: 12, color: Color(0xFF2C2C2C), fontWeight: FontWeight.w600)),
+          const SizedBox(height: 2),
+          Text(storeAddress,
+              style: const TextStyle(
+                  fontSize: 12, color: Color(0xFF6B6B6B), height: 1.5)),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared widgets (used by both delivery & self-collect, live & history)
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _SubmittedBanner extends StatelessWidget {
   final String statusLabel;
@@ -469,9 +625,7 @@ class _SubmittedBanner extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(statusDescription,
                     style: const TextStyle(
-                        fontSize: 12,
-                        color:    Color(0xFF6B6B6B),
-                        height:   1.5)),
+                        fontSize: 12, color: Color(0xFF6B6B6B), height: 1.5)),
               ],
             ),
           ),
@@ -487,24 +641,34 @@ class _SubmittedBanner extends StatelessWidget {
             child: const Icon(Icons.cancel_outlined,
                 color: Colors.red, size: 32),
           )
-              : Image.asset(
-            statusImagePath,
-            width:  72,
-            height: 72,
-            fit:    BoxFit.contain,
-            errorBuilder: (_, __, ___) => Container(
-              width:  72,
-              height: 72,
-              decoration: BoxDecoration(
-                shape:  BoxShape.circle,
-                border: Border.all(
-                    color: const Color(0xFFD95F2B), width: 2),
-              ),
-              child: const Icon(Icons.shopping_basket_outlined,
-                  color: Color(0xFFD95F2B), size: 32),
-            ),
-          ),
+              : _StatusImage(path: statusImagePath),
         ],
+      ),
+    );
+  }
+}
+
+/// Renders the status image — handles both .png assets and .jpg assets.
+class _StatusImage extends StatelessWidget {
+  final String path;
+  const _StatusImage({required this.path});
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      path,
+      width:  72,
+      height: 72,
+      fit:    BoxFit.contain,
+      errorBuilder: (_, __, ___) => Container(
+        width:  72,
+        height: 72,
+        decoration: BoxDecoration(
+          shape:  BoxShape.circle,
+          border: Border.all(color: const Color(0xFFD95F2B), width: 2),
+        ),
+        child: const Icon(Icons.shopping_basket_outlined,
+            color: Color(0xFFD95F2B), size: 32),
       ),
     );
   }
@@ -522,22 +686,18 @@ class _StatusTracker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSC = orderType == OrderType.selfCollect;
+
     final steps = [
       _Step(icon: Icons.receipt_outlined,     label: 'Order\nSubmitted'),
       _Step(icon: Icons.soup_kitchen_outlined, label: 'Preparing'),
       _Step(
-        icon: orderType == OrderType.delivery
-            ? Icons.directions_bike_outlined
-            : Icons.storefront_outlined,
-        label: orderType == OrderType.delivery
-            ? 'Out For\nDelivery'
-            : 'Ready For\nCollection',
+        icon:  isSC ? Icons.storefront_outlined : Icons.directions_bike_outlined,
+        label: isSC ? 'Ready For\nCollection' : 'Out For\nDelivery',
       ),
       _Step(
-        icon: orderType == OrderType.delivery
-            ? Icons.home_outlined
-            : Icons.check_circle_outline,
-        label: 'Completed',
+        icon:  isSC ? Icons.shopping_bag_outlined : Icons.home_outlined,
+        label: 'Collected',
       ),
     ];
 
@@ -576,9 +736,7 @@ class _StatusTracker extends StatelessWidget {
                 ),
                 child: Icon(step.icon,
                     size:  18,
-                    color: isCompleted
-                        ? Colors.white
-                        : const Color(0xFFAAAAAA)),
+                    color: isCompleted ? Colors.white : const Color(0xFFAAAAAA)),
               ),
               const SizedBox(height: 6),
               Text(
@@ -586,10 +744,8 @@ class _StatusTracker extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize:   9,
-                  fontWeight: isCompleted
-                      ? FontWeight.w700
-                      : FontWeight.w400,
-                  color: isCompleted ? _green : const Color(0xFFAAAAAA),
+                  fontWeight: isCompleted ? FontWeight.w700 : FontWeight.w400,
+                  color:      isCompleted ? _green : const Color(0xFFAAAAAA),
                 ),
               ),
             ],
@@ -606,7 +762,7 @@ class _Step {
   const _Step({required this.icon, required this.label});
 }
 
-// ── Info Section ───────────────────────────────────────────────────────────────
+// ── Info Section (delivery orders) ────────────────────────────────────────────
 
 class _InfoSection extends StatelessWidget {
   final String       title;
@@ -635,16 +791,14 @@ class _InfoSection extends StatelessWidget {
           const SizedBox(height: 6),
           ...lines.map((l) => Text(l,
               style: const TextStyle(
-                  fontSize: 12,
-                  color:    Color(0xFF6B6B6B),
-                  height:   1.5))),
+                  fontSize: 12, color: Color(0xFF6B6B6B), height: 1.5))),
         ],
       ),
     );
   }
 }
 
-// ── Live Item Details (uses OrderController for cancel) ───────────────────────
+// ── Live Item Details ──────────────────────────────────────────────────────────
 
 class _LiveItemDetailsSection extends StatelessWidget {
   final OrderController ctrl;
@@ -686,8 +840,7 @@ class _LiveItemDetailsSection extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      border:       Border.all(
-                          color: _terracotta, width: 1.2),
+                      border:       Border.all(color: _terracotta, width: 1.2),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: ctrl.isCancelling
@@ -695,26 +848,24 @@ class _LiveItemDetailsSection extends StatelessWidget {
                       width:  14,
                       height: 14,
                       child:  CircularProgressIndicator(
-                          strokeWidth: 1.5,
-                          color: _terracotta),
+                          strokeWidth: 1.5, color: _terracotta),
                     )
-                        : const Text(
-                      'CANCEL ORDER',
-                      style: TextStyle(
-                        color:         _terracotta,
-                        fontSize:      11,
-                        fontWeight:    FontWeight.w700,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
+                        : const Text('CANCEL ORDER',
+                        style: TextStyle(
+                          color:         _terracotta,
+                          fontSize:      11,
+                          fontWeight:    FontWeight.w700,
+                          letterSpacing: 0.5,
+                        )),
                   ),
                 ),
             ],
           ),
           const SizedBox(height: 12),
           ...order.items.map((item) => _OrderItemRow(
-            name:   item.name,
-            addOns: item.addOns,
+            name:     item.name,
+            addOns:   item.addOns,
+            imageUrl: null, // live order items don't carry imageUrl
           )),
           const Divider(height: 20),
           Align(
@@ -727,16 +878,14 @@ class _LiveItemDetailsSection extends StatelessWidget {
                         fontSize: 13, color: Color(0xFF2C2C2C))),
                 const SizedBox(height: 4),
                 const Text('Service Fee (5%) included *',
-                    style: TextStyle(
-                        fontSize: 11, color: Color(0xFF8A8A8A))),
+                    style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A))),
                 const SizedBox(height: 4),
                 Text(
                   'Total ${order.items.length} item(s): RM ${_fmt(order.total)}',
                   style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize:   14,
-                    color:      Color(0xFF2C2C2C),
-                  ),
+                      fontWeight: FontWeight.w800,
+                      fontSize:   14,
+                      color:      Color(0xFF2C2C2C)),
                 ),
               ],
             ),
@@ -750,7 +899,7 @@ class _LiveItemDetailsSection extends StatelessWidget {
       v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(2);
 }
 
-// ── History Item Details (uses Supabase row data for cancel) ──────────────────
+// ── History Item Details ───────────────────────────────────────────────────────
 
 class _HistoryItemDetailsSection extends StatelessWidget {
   final List<Map<String, dynamic>> items;
@@ -798,8 +947,7 @@ class _HistoryItemDetailsSection extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      border:       Border.all(
-                          color: _terracotta, width: 1.2),
+                      border:       Border.all(color: _terracotta, width: 1.2),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: isCancelling
@@ -807,27 +955,24 @@ class _HistoryItemDetailsSection extends StatelessWidget {
                       width:  14,
                       height: 14,
                       child:  CircularProgressIndicator(
-                          strokeWidth: 1.5,
-                          color: _terracotta),
+                          strokeWidth: 1.5, color: _terracotta),
                     )
-                        : const Text(
-                      'CANCEL ORDER',
-                      style: TextStyle(
-                        color:         _terracotta,
-                        fontSize:      11,
-                        fontWeight:    FontWeight.w700,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
+                        : const Text('CANCEL ORDER',
+                        style: TextStyle(
+                          color:         _terracotta,
+                          fontSize:      11,
+                          fontWeight:    FontWeight.w700,
+                          letterSpacing: 0.5,
+                        )),
                   ),
                 ),
             ],
           ),
           const SizedBox(height: 12),
           ...items.map((item) => _OrderItemRow(
-            name:   item['name']  as String? ?? '',
-            addOns: List<String>.from(
-                item['add_ons'] as List? ?? []),
+            name:     item['name']      as String? ?? '',
+            addOns:   List<String>.from(item['add_ons'] as List? ?? []),
+            imageUrl: item['image_url'] as String?,
           )),
           const Divider(height: 20),
           Align(
@@ -840,16 +985,14 @@ class _HistoryItemDetailsSection extends StatelessWidget {
                         fontSize: 13, color: Color(0xFF2C2C2C))),
                 const SizedBox(height: 4),
                 const Text('Service Fee (5%) included *',
-                    style: TextStyle(
-                        fontSize: 11, color: Color(0xFF8A8A8A))),
+                    style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A))),
                 const SizedBox(height: 4),
                 Text(
                   'Total ${items.length} item(s): RM ${_fmt(total)}',
                   style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize:   14,
-                    color:      Color(0xFF2C2C2C),
-                  ),
+                      fontWeight: FontWeight.w800,
+                      fontSize:   14,
+                      color:      Color(0xFF2C2C2C)),
                 ),
               ],
             ),
@@ -863,35 +1006,31 @@ class _HistoryItemDetailsSection extends StatelessWidget {
       v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(2);
 }
 
-// ── Shared item row ────────────────────────────────────────────────────────────
+// ── Shared item row (now shows food image from order_items.image_url) ─────────
 
 class _OrderItemRow extends StatelessWidget {
   final String       name;
   final List<String> addOns;
+  final String?      imageUrl;
 
-  const _OrderItemRow({required this.name, required this.addOns});
+  const _OrderItemRow({
+    required this.name,
+    required this.addOns,
+    this.imageUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
     final half = (addOns.length / 2).ceil();
-    final col1 = addOns.isNotEmpty ? addOns.sublist(0, half) : <String>[];
-    final col2 = addOns.length > 1  ? addOns.sublist(half)   : <String>[];
+    final col1 = addOns.isNotEmpty ? addOns.sublist(0, half)            : <String>[];
+    final col2 = addOns.length > 1  ? addOns.sublist(half)              : <String>[];
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width:  64,
-            height: 64,
-            decoration: BoxDecoration(
-              color:        const Color(0xFFD9D5C5),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.fastfood_outlined,
-                color: Color(0xFF9E9880), size: 28),
-          ),
+          _FoodThumb(imageUrl: imageUrl),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -921,13 +1060,57 @@ class _OrderItemRow extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: items
         .map((a) => Text('+ $a',
-        style: const TextStyle(
-            fontSize: 10, color: Color(0xFF8A8A8A))))
+        style: const TextStyle(fontSize: 10, color: Color(0xFF8A8A8A))))
         .toList(),
   );
 }
 
-// ── Live Order Info ────────────────────────────────────────────────────────────
+/// Food thumbnail with network image support + fallback.
+class _FoodThumb extends StatelessWidget {
+  final String? imageUrl;
+  const _FoodThumb({this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget fallback = Container(
+      width:  64,
+      height: 64,
+      decoration: BoxDecoration(
+        color:        const Color(0xFFD9D5C5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Icon(Icons.fastfood_outlined,
+          color: Color(0xFF9E9880), size: 28),
+    );
+
+    if (imageUrl == null || imageUrl!.isEmpty) return fallback;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.network(
+        imageUrl!,
+        width:  64,
+        height: 64,
+        fit:    BoxFit.cover,
+        loadingBuilder: (_, child, progress) {
+          if (progress == null) return child;
+          return Container(
+            width:  64,
+            height: 64,
+            color:  const Color(0xFFEEEBDE),
+            child: const Center(
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: Color(0xFF1E4620)),
+            ),
+          );
+        },
+        errorBuilder: (_, __, ___) => fallback,
+      ),
+    );
+  }
+}
+
+// ── Order Info sections ────────────────────────────────────────────────────────
 
 class _LiveOrderInfoSection extends StatelessWidget {
   final OrderModel order;
@@ -949,8 +1132,6 @@ class _LiveOrderInfoSection extends StatelessWidget {
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
   ][m];
 }
-
-// ── History Order Info ─────────────────────────────────────────────────────────
 
 class _HistoryOrderInfoSection extends StatelessWidget {
   final String   orderId;
@@ -1023,7 +1204,6 @@ class _OrderInfoBox extends StatelessWidget {
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
-
   const _InfoRow({required this.label, required this.value});
 
   @override
@@ -1032,8 +1212,7 @@ class _InfoRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label,
-            style: const TextStyle(
-                fontSize: 12, color: Color(0xFF6B6B6B))),
+            style: const TextStyle(fontSize: 12, color: Color(0xFF6B6B6B))),
         Flexible(
           child: Text(
             value,

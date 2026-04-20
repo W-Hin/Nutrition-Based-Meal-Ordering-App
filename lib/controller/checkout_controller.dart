@@ -14,13 +14,22 @@ class CheckoutController extends ChangeNotifier {
 
   // ── Address ───────────────────────────────────────────────────
   AddressModel deliveryAddress = AddressModel(
-    name: 'Ali',
-    phone: '012-345 6789',
+    name:    'Ali',
+    phone:   '012-345 6789',
     address: 'A-B-C, Jalan Roti Bakar 6, Taman 7, 11200 Bayan Fah...',
   );
 
-  void updateAddress(AddressModel updated) {
+  /// The map coordinates that correspond to [deliveryAddress].
+  /// Updated by EditAddressPage when the user pins a location.
+  double deliveryLat = 5.4164;
+  double deliveryLng = 100.3327;
+
+  /// Update address AND the matching map coordinates at the same time,
+  /// so checkout.dart's map always reflects the pinned location.
+  void updateAddress(AddressModel updated, {double? lat, double? lng}) {
     deliveryAddress = updated;
+    if (lat != null) deliveryLat = lat;
+    if (lng != null) deliveryLng = lng;
     notifyListeners();
   }
 
@@ -58,17 +67,15 @@ class CheckoutController extends ChangeNotifier {
   double get deliveryFee {
     if (activeTab == CheckoutTab.selfCollect) return 0;
     switch (deliveryOption) {
-      case DeliveryOption.eco:         return 2.0;
-      case DeliveryOption.standard:    return 4.0;
-      case DeliveryOption.fast:        return 8.0;
-      case DeliveryOption.orderLater:  return 4.0;
-      default:                         return 0;
+      case DeliveryOption.eco:        return 2.0;
+      case DeliveryOption.standard:   return 4.0;
+      case DeliveryOption.fast:       return 8.0;
+      case DeliveryOption.orderLater: return 4.0;
+      default:                        return 0;
     }
   }
 
   // ── Delivery type label for DB storage ───────────────────────
-  /// Returns the delivery method string to store in orders table.
-  /// Null for self-collect (no delivery involved).
   String? get deliveryTypeLabel {
     if (activeTab == CheckoutTab.selfCollect) return null;
     switch (deliveryOption) {
@@ -80,7 +87,7 @@ class CheckoutController extends ChangeNotifier {
     }
   }
 
-  // ── Scheduled time (for "Order For Later") ────────────────────
+  // ── Scheduled time ────────────────────────────────────────────
   String? get scheduledTime {
     if (activeTab == CheckoutTab.delivery &&
         deliveryOption == DeliveryOption.orderLater) {
@@ -97,7 +104,6 @@ class CheckoutController extends ChangeNotifier {
   String remarks = '';
   void setRemarks(String value) {
     remarks = value;
-    // no notifyListeners needed — read only at submit time
   }
 
   // ── Generate 30-min time slots from now until 9pm ────────────
