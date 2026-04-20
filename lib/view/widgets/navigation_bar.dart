@@ -16,8 +16,10 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Increased height from 70 to 115+ to ensure the floating cart button
+    // (at bottom: 50 with height 65) is within the tappable bounds.
     return SizedBox(
-      height: 70,
+      height: 115,
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.bottomCenter,
@@ -89,6 +91,7 @@ class CustomBottomNavBar extends StatelessWidget {
               builder: (context, cart, _) {
                 return GestureDetector(
                   onTap: onCartTapped,
+                  behavior: HitTestBehavior.opaque, // Ensures the entire area is tappable
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [

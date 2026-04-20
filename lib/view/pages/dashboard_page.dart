@@ -129,10 +129,11 @@ class _DashboardHeaderDelegate extends SliverPersistentHeaderDelegate {
   static const double _greetingHeight = 56.0;
   static const double _tabBarHeight   = 48.0;
 
+  // By setting minExtent = maxExtent, the header becomes completely fixed and non-collapsible.
   @override
-  double get minExtent => _tabBarHeight;
+  double get minExtent => _greetingHeight + _tabBarHeight + 60;
   @override
-  double get maxExtent => _greetingHeight + _tabBarHeight + 20;
+  double get maxExtent => _greetingHeight + _tabBarHeight + 60;
 
   @override
   bool shouldRebuild(covariant _DashboardHeaderDelegate old) =>
@@ -142,106 +143,72 @@ class _DashboardHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    // Determine opacity: fades out as user scrolls up
-    final double opacity = (1.0 - (shrinkOffset / (_greetingHeight / 2))).clamp(0.0, 1.0);
-
     return Container(
-      color: const Color(0xFFF0ECE4), // Cream background matching the page body
+      color: const Color(0xFFF5F0E8),
       child: SafeArea(
         bottom: false,
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // ── Greeting row — fades as user scrolls ─────────────────────
+            // ── Greeting row ─────────────────────
             Positioned(
-              top: 10, // top margin
+              top: 10,
               left: 16,
               right: 16,
               height: _greetingHeight,
-              child: Opacity(
-                opacity: opacity,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Avatar
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: _orange,
-                      child: Text(
-                        initials,
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white),
-                      ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Avatar
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: _orange,
+                    child: Text(
+                      initials,
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white),
                     ),
-                    const SizedBox(width: 12),
-                    // Greeting + BMI
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            greeting,
-                            style: const TextStyle(color: _dark, fontSize: 16, fontWeight: FontWeight.w800),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (bmiLabel != null)
-                            Text(
-                              bmiLabel!,
-                              style: TextStyle(color: _dark.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w700),
-                            ),
-                        ],
-                      ),
-                    ),
-                    // Cart icon
-                    Stack(
-                      clipBehavior: Clip.none,
+                  ),
+                  const SizedBox(width: 12),
+                  // Greeting + BMI
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        GestureDetector(
-                          onTap: onCartTap,
-                          child: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF859A7A), // Greenish color
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 24),
-                          ),
+                        Text(
+                          greeting,
+                          style: const TextStyle(color: _dark, fontSize: 16, fontWeight: FontWeight.w800),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        Positioned(
-                          top: -2,
-                          right: -4,
-                          child: Consumer<CartController>(
-                            builder: (context, cart, _) {
-                              if (cart.totalItemCount == 0) return const SizedBox.shrink();
-                              return Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: _orange.withValues(alpha: 0.85),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Text('${cart.totalItemCount}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
-                              );
-                            },
+                        if (bmiLabel != null)
+                          Text(
+                            bmiLabel!,
+                            style: TextStyle(color: _dark.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w700),
                           ),
-                        ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
 
             // ── Tab Bar — anchored to bottom ──────────────────────────────────
             Positioned(
-              bottom: 6,
+              bottom: 12, // Increased bottom margin to lower the bar
               left: 16,
               right: 16,
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: TabBar(
                   controller: tabController,
