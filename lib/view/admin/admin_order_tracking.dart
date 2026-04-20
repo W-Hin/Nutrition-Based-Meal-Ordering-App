@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../service/supabase_conn.dart';
-import '../../model/order_model.dart';
 
 // ── Status helpers ─────────────────────────────────────────────────────────────
 
@@ -74,7 +73,7 @@ String _statusImage(String status) {
     case 'ready_for_collection':
       return 'assets/images/collect_food_icon.png';
     case 'out_for_delivery':
-      return 'assets/images/delivery_boy.png';
+      return 'assets/images/delivery_boy_icon.png';
     case 'completed':
       return 'assets/images/collect_food_success_icon.png';
     default:

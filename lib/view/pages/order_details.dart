@@ -496,13 +496,13 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         return 'assets/images/delivery_boy.png';
       case 'ready_for_collection':
         return isSC
-            ? 'assets/images/carry_food_icon.jpg'
+            ? 'assets/images/collect_food_icon.png'
             : 'assets/images/collect_food_icon.png';
       case 'completed':
       case 'delivered':
       case 'retrieved':
         return isSC
-            ? 'assets/images/carry_food_icon.jpg'
+            ? 'assets/images/collect_food_success_icon.png'
             : 'assets/images/collect_food_success_icon.png';
       default:
         return 'assets/images/order_submitted_tick_icon.png';
