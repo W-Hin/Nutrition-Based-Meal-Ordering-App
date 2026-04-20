@@ -2,13 +2,14 @@ import '../model/order_model.dart';
 import 'supabase_conn.dart';
 
 class OrderService {
-  // ── Save a new order + its items in one go ───────────────────
+  // ── Save a new order ─────────────────────────────────────────
   Future<String> placeOrder(OrderModel order) async {
-    // Insert order row
     final orderResponse = await supabase
         .from('orders')
         .insert({
-      'user_id':        supabase.auth.currentUser?.id ?? 'fc33ae36-657a-4055-b81e-f6fe3de23278',
+      'user_id':        supabase.auth.currentUser?.id
+          ?? 'fc33ae36-657a-4055-b81e-f6fe3de23278',
+      'store_id':       order.storeId,
       'order_type':     order.orderType.name,
       'status':         order.status.name,
       'to_name':        order.toName,
@@ -17,7 +18,11 @@ class OrderService {
       'subtotal':       order.subtotal,
       'service_fee':    order.serviceFee,
       'delivery_fee':   order.deliveryFee,
+      'total':          order.total,          // ← DB has total column
       'payment_method': order.paymentMethod,
+      'remark':         order.remark.isEmpty ? null : order.remark,
+      'is_cancellable': true,
+      'order_date':     DateTime.now().toIso8601String(),
     })
         .select('order_id')
         .single();
@@ -26,14 +31,12 @@ class OrderService {
 
     // Insert all order items linked to that order
     await supabase.from('order_items').insert(
-      order.items
-          .map((item) => {
+      order.items.map((item) => {
         'order_id': orderId,
         'name':     item.name,
         'price':    item.price,
         'add_ons':  item.addOns,
-      })
-          .toList(),
+      }).toList(),
     );
 
     return orderId;
@@ -44,7 +47,7 @@ class OrderService {
     return await supabase
         .from('orders')
         .select('*, order_items(*)')
-        .eq('order_id', orderId)   // ← was 'id'
+        .eq('order_id', orderId)
         .single();
   }
 
@@ -53,15 +56,16 @@ class OrderService {
     return await supabase
         .from('orders')
         .select('*, order_items(*)')
-        .eq('user_id', supabase.auth.currentUser?.id ?? 'fc33ae36-657a-4055-b81e-f6fe3de23278')
+        .eq('user_id', supabase.auth.currentUser?.id
+        ?? 'fc33ae36-657a-4055-b81e-f6fe3de23278')
         .order('created_at', ascending: false);
   }
 
-  // ── Listen to real-time status changes (for order details page)
+  // ── Real-time status stream ───────────────────────────────────
   Stream<Map<String, dynamic>> watchOrderStatus(String orderId) {
     return supabase
         .from('orders')
-        .stream(primaryKey: ['order_id'])   // ← was ['id']
+        .stream(primaryKey: ['order_id'])
         .eq('order_id', orderId)
         .map((rows) => rows.first);
   }
@@ -70,7 +74,7 @@ class OrderService {
   Future<void> cancelOrder(String orderId) async {
     await supabase
         .from('orders')
-        .update({'status': 'cancelled'})
+        .update({'status': 'cancelled', 'is_cancellable': false})
         .eq('order_id', orderId);
   }
 }

@@ -14,16 +14,19 @@ class OrderController extends ChangeNotifier {
     required List<CartItem> cartItems,
     required double subtotal,
     required double serviceFee,
-    required double deliveryFee,  // ← ADD
+    required double deliveryFee,
     required String toName,
     required String toPhone,
     required String toAddress,
     required OrderType orderType,
+    String? storeId,          // ← NEW
+    String remark = '',       // ← NEW
   }) async {
     currentOrder = OrderModel(
       orderId:       _generateOrderId(),
       orderDate:     DateTime.now(),
       paymentMethod: 'Credit / Debit Card',
+      storeId:       storeId,
       fromName:      'NuBurn - Tanjung Burma',
       fromAddress:   '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21, ....',
       toName:        toName,
@@ -36,8 +39,9 @@ class OrderController extends ChangeNotifier {
       )).toList(),
       subtotal:    subtotal,
       serviceFee:  serviceFee,
-      deliveryFee: deliveryFee,  // ← ADD
+      deliveryFee: deliveryFee,
       orderType:   orderType,
+      remark:      remark,
       status:      OrderStatus.submitted,
     );
 

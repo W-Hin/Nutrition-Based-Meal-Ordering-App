@@ -25,7 +25,7 @@ class CheckoutController extends ChangeNotifier {
   }
 
   // ── Delivery option ───────────────────────────────────────────
-  DeliveryOption deliveryOption   = DeliveryOption.standard;
+  DeliveryOption deliveryOption    = DeliveryOption.standard;
   DeliveryOption selfCollectOption = DeliveryOption.pickUpNow;
 
   void setDeliveryOption(DeliveryOption option) {
@@ -58,25 +58,54 @@ class CheckoutController extends ChangeNotifier {
   double get deliveryFee {
     if (activeTab == CheckoutTab.selfCollect) return 0;
     switch (deliveryOption) {
-      case DeliveryOption.eco:      return 2.0;
-      case DeliveryOption.standard: return 4.0;
-      case DeliveryOption.fast:     return 8.0;
-      case DeliveryOption.orderLater: return 4.0; // standard rate for later
-      default: return 0;
+      case DeliveryOption.eco:         return 2.0;
+      case DeliveryOption.standard:    return 4.0;
+      case DeliveryOption.fast:        return 8.0;
+      case DeliveryOption.orderLater:  return 4.0;
+      default:                         return 0;
     }
+  }
+
+  // ── Delivery type label for DB storage ───────────────────────
+  /// Returns the delivery method string to store in orders table.
+  /// Null for self-collect (no delivery involved).
+  String? get deliveryTypeLabel {
+    if (activeTab == CheckoutTab.selfCollect) return null;
+    switch (deliveryOption) {
+      case DeliveryOption.eco:        return 'Eco';
+      case DeliveryOption.standard:   return 'Standard';
+      case DeliveryOption.fast:       return 'Fast';
+      case DeliveryOption.orderLater: return 'Order For Later';
+      default:                        return null;
+    }
+  }
+
+  // ── Scheduled time (for "Order For Later") ────────────────────
+  String? get scheduledTime {
+    if (activeTab == CheckoutTab.delivery &&
+        deliveryOption == DeliveryOption.orderLater) {
+      return selectedLaterTime;
+    }
+    if (activeTab == CheckoutTab.selfCollect &&
+        selfCollectOption == DeliveryOption.selfLater) {
+      return selectedSelfLaterTime;
+    }
+    return null;
   }
 
   // ── Remarks ───────────────────────────────────────────────────
   String remarks = '';
-  void setRemarks(String value) => remarks = value;
+  void setRemarks(String value) {
+    remarks = value;
+    // no notifyListeners needed — read only at submit time
+  }
 
   // ── Generate 30-min time slots from now until 9pm ────────────
   List<String> generateTimeSlots() {
     final now    = DateTime.now();
-    final cutoff = DateTime(now.year, now.month, now.day, 21, 0); // 9pm
+    final cutoff = DateTime(now.year, now.month, now.day, 21, 0);
     final slots  = <String>[];
 
-    // Start from next 30-min boundary + 30 mins buffer
     var current = DateTime(
       now.year, now.month, now.day,
       now.hour,
@@ -88,10 +117,10 @@ class CheckoutController extends ChangeNotifier {
     current = current.add(const Duration(minutes: 30));
 
     while (!current.isAfter(cutoff)) {
-      final h     = current.hour;
-      final m     = current.minute == 0 ? '00' : '30';
-      final amPm  = h >= 12 ? 'PM' : 'AM';
-      final h12   = h > 12 ? h - 12 : (h == 0 ? 12 : h);
+      final h    = current.hour;
+      final m    = current.minute == 0 ? '00' : '30';
+      final amPm = h >= 12 ? 'PM' : 'AM';
+      final h12  = h > 12 ? h - 12 : (h == 0 ? 12 : h);
       slots.add('$h12:$m $amPm');
       current = current.add(const Duration(minutes: 30));
     }

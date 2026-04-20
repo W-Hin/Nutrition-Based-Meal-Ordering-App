@@ -11,6 +11,7 @@ class OrderModel {
   final String orderId;
   final DateTime orderDate;
   final String paymentMethod;
+  final String? storeId;        // ← NEW: links to stores table
   final String fromName;
   final String fromAddress;
   final String toName;
@@ -19,14 +20,16 @@ class OrderModel {
   final List<OrderItemModel> items;
   final double subtotal;
   final double serviceFee;
-  final OrderType orderType;
   final double deliveryFee;
+  final OrderType orderType;
+  final String remark;          // ← NEW: nullable in DB, empty string here
   OrderStatus status;
 
   OrderModel({
     required this.orderId,
     required this.orderDate,
     required this.paymentMethod,
+    this.storeId,
     required this.fromName,
     required this.fromAddress,
     required this.toName,
@@ -35,8 +38,9 @@ class OrderModel {
     required this.items,
     required this.subtotal,
     required this.serviceFee,
-    required this.orderType,
     required this.deliveryFee,
+    required this.orderType,
+    this.remark = '',
     this.status = OrderStatus.submitted,
   });
 
@@ -65,9 +69,9 @@ class OrderModel {
     if (orderType == OrderType.delivery) {
       switch (status) {
         case OrderStatus.submitted:
-          return 'We will prepare your order shortly. You may cancel order before your order is being prepared your order is wrong.';
+          return 'We will prepare your order shortly. You may cancel your order before it is being prepared.';
         case OrderStatus.preparing:
-          return 'Your order is being prepared. You\'ll receive a notification when your order is out for delivery.';
+          return "Your order is being prepared. You'll receive a notification when your order is out for delivery.";
         case OrderStatus.readyOrOutForDelivery:
           return 'Your order is on the way! Please be ready to retrieve your meal.';
         case OrderStatus.completed:
@@ -76,9 +80,9 @@ class OrderModel {
     } else {
       switch (status) {
         case OrderStatus.submitted:
-          return 'We will prepare your order shortly. You may cancel order before your order is being prepared.';
+          return 'We will prepare your order shortly. You may cancel your order before it is being prepared.';
         case OrderStatus.preparing:
-          return 'Your order is being prepared. You\'ll receive a notification when your order is ready for collection.';
+          return "Your order is being prepared. You'll receive a notification when your order is ready for collection.";
         case OrderStatus.readyOrOutForDelivery:
           return 'Your order is ready! Please collect your order within 2 hours of ordering.';
         case OrderStatus.completed:
