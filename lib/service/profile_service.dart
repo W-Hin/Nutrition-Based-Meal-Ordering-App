@@ -2,8 +2,9 @@ import '../model/profile_model.dart';
 import 'supabase_conn.dart';
 
 class ProfileService {
-  String get _uid => supabase.auth.currentUser?.id ?? 'fc33ae36-657a-4055-b81e-f6fe3de23278';
-
+  // TODO(TESTING): Bypass dummy UUID used for UI layout testing.
+  // Original should be: String get _uid => supabase.auth.currentUser?.id ?? '';
+  String get _uid => supabase.auth.currentUser?.id ?? '00000000-0000-0000-0000-000000000000';
   // ── Profile CRUD ─────────────────────────────────────────────────────────
 
   Future<void> createProfile(ProfileModel profile) async {
@@ -78,32 +79,39 @@ class ProfileService {
 
   // ── Fetch last 7 days for the weekly chart ────────────────────────────────
   Future<List<Map<String, dynamic>>> fetchWeeklyHistory() async {
-    final sevenDaysAgo = DateTime.now()
-        .subtract(const Duration(days: 6))
-        .toIso8601String()
-        .substring(0, 10);
+    final now = DateTime.now();
+    // Monday is weekday=1, so subtract (weekday - 1)
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final startOfWeek = monday.toIso8601String().substring(0, 10);
 
     final rows = await supabase
         .from('calorie_logs')
         .select()
         .eq('user_id', _uid)
-        .gte('log_date', sevenDaysAgo)
+        .gte('log_date', startOfWeek)
         .order('log_date', ascending: true);
 
     return List<Map<String, dynamic>>.from(rows);
   }
 
-  // ── Fetch current month for the monthly chart ─────────────────────────────
-  Future<List<Map<String, dynamic>>> fetchMonthlyHistory() async {
-    final now       = DateTime.now();
-    final firstDay  = '${now.year}-${now.month.toString().padLeft(2, '0')}-01';
+  // ── Fetch specific month for the monthly chart ─────────────────────────────
+  Future<List<Map<String, dynamic>>> fetchMonthlyHistory({DateTime? targetMonth}) async {
+    final monthObj = targetMonth ?? DateTime.now();
+    final firstDay = '${monthObj.year}-${monthObj.month.toString().padLeft(2, '0')}-01';
+
+    // Calculate the start of the exact next month to act as a strict < upper boundary
+    final nextMonth = DateTime(monthObj.year, monthObj.month + 1, 1);
+    final lastDay = '${nextMonth.year}-${nextMonth.month.toString().padLeft(2, '0')}-01';
+
     final rows = await supabase
         .from('calorie_logs')
         .select()
         .eq('user_id', _uid)
         .gte('log_date', firstDay)
+        .lt('log_date', lastDay)
         .order('log_date', ascending: true);
 
     return List<Map<String, dynamic>>.from(rows);
   }
 }
+

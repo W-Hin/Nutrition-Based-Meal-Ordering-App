@@ -41,7 +41,9 @@ class _AddressesPageState extends State<AddressesPage> {
   void _showAddDialog() {
     final streetCtrl  = TextEditingController();
     final cityCtrl    = TextEditingController();
+    final stateCtrl   = TextEditingController();
     final postcodeCtrl = TextEditingController();
+    final instrCtrl   = TextEditingController();
     String label = 'Home';
 
     showDialog(
@@ -79,7 +81,12 @@ class _AddressesPageState extends State<AddressesPage> {
                 const SizedBox(height: 10),
                 _dialogField(cityCtrl,     'City'),
                 const SizedBox(height: 10),
-                _dialogField(postcodeCtrl, 'Postcode', type: TextInputType.number),
+                _dialogField(stateCtrl,    'State'),
+                const SizedBox(height: 10),
+                _dialogField(postcodeCtrl, 'Postcode (5 digits)', type: TextInputType.number,
+                    maxLength: 5),
+                const SizedBox(height: 10),
+                _dialogField(instrCtrl, 'Delivery Instruction (optional)'),
                 const SizedBox(height: 20),
                 Row(children: [
                   Expanded(child: OutlinedButton(
@@ -95,12 +102,15 @@ class _AddressesPageState extends State<AddressesPage> {
                   Expanded(child: ElevatedButton(
                     onPressed: () async {
                       final uid = supabase.auth.currentUser?.id ?? '';
-                      final full = '${streetCtrl.text.trim()}, ${cityCtrl.text.trim()}, ${postcodeCtrl.text.trim()}';
                       await supabase.from('addresses').insert({
-                        'user_id': uid,
-                        'address': full,
-                        'label':   label,
-                        'is_default': _addresses.isEmpty,
+                        'user_id':              uid,
+                        'street':               streetCtrl.text.trim(),
+                        'city':                 cityCtrl.text.trim(),
+                        'state':                stateCtrl.text.trim(),
+                        'postcode':             postcodeCtrl.text.trim(),
+                        'delivery_instruction': instrCtrl.text.trim(),
+                        'label':                label,
+                        'is_default':           _addresses.isEmpty,
                       });
                       if (ctx.mounted) Navigator.pop(ctx);
                       await _load();
@@ -122,10 +132,12 @@ class _AddressesPageState extends State<AddressesPage> {
     );
   }
 
-  Widget _dialogField(TextEditingController ctrl, String hint, {TextInputType type = TextInputType.text}) {
+  Widget _dialogField(TextEditingController ctrl, String hint,
+      {TextInputType type = TextInputType.text, int? maxLength}) {
     return TextField(
       controller: ctrl,
       keyboardType: type,
+      maxLength: maxLength,
       style: const TextStyle(fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
@@ -231,9 +243,16 @@ class _AddressesPageState extends State<AddressesPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(a['label'] ?? 'Address', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _dark)),
+                Text(a['label'] ?? 'Address',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 13, color: _dark)),
                 const SizedBox(height: 2),
-                Text(a['address'] ?? '', style: TextStyle(fontSize: 12, color: _dark.withValues(alpha: 0.55))),
+                Text(
+                  [
+                    a['street'], a['city'], a['state'], a['postcode']
+                  ].where((v) => v != null && (v as String).isNotEmpty).join(', '),
+                  style: TextStyle(fontSize: 12, color: _dark.withValues(alpha: 0.55)),
+                ),
               ],
             ),
           ),

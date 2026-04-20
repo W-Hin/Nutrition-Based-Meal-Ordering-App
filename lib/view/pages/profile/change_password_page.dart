@@ -143,7 +143,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               setState(() => _obscureNew = !_obscureNew);
             }),
             const SizedBox(height: 16),
-            _passField('Confirm New Password *', _confirmPassCtrl, _obscureConfirm, () {
+            _passField('Confirm Password *', _confirmPassCtrl, _obscureConfirm, () {
               setState(() => _obscureConfirm = !_obscureConfirm);
             }),
             const SizedBox(height: 32),
@@ -153,7 +153,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               child: ElevatedButton(
                 onPressed: _saving ? null : _save,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _green,
+                  backgroundColor: _orange,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

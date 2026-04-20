@@ -154,7 +154,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
                 // ── T&C Checkbox ──────────────────────────────────────────
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     SizedBox(
                       width: 24, height: 24,
@@ -166,7 +167,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Expanded(
+                    Flexible(
                       child: RichText(
                         text: TextSpan(
                           style: TextStyle(color: _dark.withValues(alpha: 0.7), fontSize: 13),

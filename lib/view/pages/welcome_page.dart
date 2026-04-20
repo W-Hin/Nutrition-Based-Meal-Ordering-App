@@ -1,7 +1,32 @@
 import 'package:flutter/material.dart';
 
-class WelcomePage extends StatelessWidget {
+class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
+
+  @override
+  State<WelcomePage> createState() => _WelcomePageState();
+}
+
+class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _fadeAnim;
+  late Animation<Offset> _slideAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
+    _fadeAnim  = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _slideAnim = Tween<Offset>(begin: const Offset(0, 0.12), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,130 +38,136 @@ class WelcomePage extends StatelessWidget {
         child: Stack(
           children: [
             // ── Decorative corners ──────────────────────────────
-            // Top-left cucumber
             Positioned(
-              top: -10,
-              left: -10,
+              top: -20, left: -20,
               child: Transform.rotate(
                 angle: -0.3,
                 child: Opacity(
-                  opacity: 0.75,
-                  child: Image.asset(
-                    'assets/images/cucumber.png',
-                    width: 110,
-                  ),
+                  opacity: 0.85,
+                  child: Image.asset('assets/images/cucumber.png', width: 150),
                 ),
               ),
             ),
-            // Top-right fire
             Positioned(
-              top: 0,
-              right: -5,
+              top: -5, right: -10,
               child: Transform.rotate(
                 angle: 0.2,
                 child: Opacity(
-                  opacity: 0.75,
-                  child: Image.asset(
-                    'assets/images/fire.png',
-                    width: 90,
-                  ),
+                  opacity: 0.85,
+                  child: Image.asset('assets/images/fire.png', width: 130),
                 ),
               ),
             ),
-            // Bottom-left fire
             Positioned(
-              bottom: 60,
-              left: -5,
+              bottom: 50, left: -10,
               child: Transform.rotate(
                 angle: 0.15,
                 child: Opacity(
-                  opacity: 0.75,
-                  child: Image.asset(
-                    'assets/images/fire.png',
-                    width: 80,
-                  ),
+                  opacity: 0.85,
+                  child: Image.asset('assets/images/fire.png', width: 110),
                 ),
               ),
             ),
-            // Bottom-right cucumber
             Positioned(
-              bottom: 40,
-              right: -10,
+              bottom: 30, right: -15,
               child: Transform.rotate(
                 angle: 0.4,
                 child: Opacity(
-                  opacity: 0.75,
-                  child: Image.asset(
-                    'assets/images/cucumber.png',
-                    width: 100,
-                  ),
+                  opacity: 0.85,
+                  child: Image.asset('assets/images/cucumber.png', width: 145),
                 ),
               ),
             ),
 
             // ── Main content ────────────────────────────────────
             Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Welcome text
-                    const Text(
-                      'Welcome!',
-                      style: TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E4620), // Dark green
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-
-                    // Logo
-                    Image.asset(
-                      'assets/images/NuBurnLogoWithWord.png',
-                      width: size.width * 0.55,
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Tagline
-                    const Text(
-                      'BURN OLD ME, BORN NEW ME.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.2,
-                        color: Color(0xFFD95B2B), // Orange tagline
-                      ),
-                    ),
-                    const SizedBox(height: 48),
-
-                    // Get Started button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/login');
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFD95B2B),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Get Started',
+              child: FadeTransition(
+                opacity: _fadeAnim,
+                child: SlideTransition(
+                  position: _slideAnim,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Welcome text with shadow
+                        const Text(
+                          'Welcome!',
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 40,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF1E4620),
+                            shadows: [
+                              Shadow(
+                                color: Color(0x331E4620),
+                                blurRadius: 12,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 24),
+
+                        // Logo
+                        Image.asset(
+                          'assets/images/NuBurnLogoWithWord.png',
+                          width: size.width * 0.75,
+                        ),
+                        const SizedBox(height: 28),
+
+                        // Multi-colored slogan matching prototype
+                        RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.4,
+                            ),
+                            children: [
+                              const TextSpan(text: '🔥  '),
+                              const TextSpan(
+                                text: 'BURN OLD ME, ',
+                                style: TextStyle(color: Color(0xFFD95B2B)),
+                              ),
+                              const TextSpan(
+                                text: 'BORN NEW ME.',
+                                style: TextStyle(color: Color(0xFF1E4620)),
+                              ),
+                              const TextSpan(text: '  🔥'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 52),
+
+                        // Get Started button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pushNamed(context, '/login'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFD95B2B),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 4,
+                              shadowColor: const Color(0xFFD95B2B).withValues(alpha: 0.45),
+                            ),
+                            child: const Text(
+                              'Get Started',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),

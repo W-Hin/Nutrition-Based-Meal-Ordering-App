@@ -13,6 +13,7 @@ class ProfileController extends ChangeNotifier {
   Map<String, dynamic>?    todayLog;
   List<Map<String, dynamic>> weeklyHistory  = [];
   List<Map<String, dynamic>> monthlyHistory = [];
+  DateTime selectedMonth = DateTime.now();
 
   // ── Load Profile ──────────────────────────────────────────────────────────
   Future<void> loadProfile() async {
@@ -55,6 +56,7 @@ class ProfileController extends ChangeNotifier {
         _loadTodayLog(),
         _loadWeeklyHistory(),
         _loadMonthlyHistory(),
+        loadUserName(),           // loads first_name/last_name from public.user
       ]);
     } finally {
       isLoading = false;
@@ -75,7 +77,20 @@ class ProfileController extends ChangeNotifier {
   }
 
   Future<void> _loadMonthlyHistory() async {
-    monthlyHistory = await _profileService.fetchMonthlyHistory();
+    monthlyHistory = await _profileService.fetchMonthlyHistory(targetMonth: selectedMonth);
+  }
+
+  // ── Month Selection ───────────────────────────────────────────────────────
+  Future<void> changeMonth(DateTime newMonth) async {
+    selectedMonth = newMonth;
+    isLoading = true;
+    notifyListeners();
+    try {
+      await _loadMonthlyHistory();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   // ── Computed dashboard helpers ────────────────────────────────────────────
@@ -94,11 +109,45 @@ class ProfileController extends ChangeNotifier {
   double get carbsProgress   => carbsGoal   > 0 ? (todayCarbs    / carbsGoal).clamp(0, 1)   : 0;
   double get fatProgress     => fatGoal     > 0 ? (todayFat      / fatGoal).clamp(0, 1)     : 0;
 
-  // ── User greeting name ────────────────────────────────────────────────────
+  // ── User display name (from public.user, not profiles) ───────────────────
+  // Name lives in public.user, not profiles — loaded separately.
+  String? _firstName;
+  String? _lastName;
+  String? _userPhone;
+
+  /// Call after login to cache the user's name from public.user table.
+  Future<void> loadUserName() async {
+    try {
+      final uid = supabase.auth.currentUser?.id;
+      if (uid == null) return;
+      final row = await supabase
+          .from('user')
+          .select('first_name, last_name, phone')
+          .eq('user_id', uid)
+          .maybeSingle();
+      if (row != null) {
+        _firstName = row['first_name'] as String?;
+        _lastName  = row['last_name']  as String?;
+        _userPhone = row['phone']       as String?;
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
+  // Public getters for UI
+  String get firstName => _firstName ?? '';
+  String get lastName  => _lastName  ?? '';
+  String get userPhone => _userPhone  ?? '';
+
   String get displayName {
-    if (profile?.fullName != null && profile!.fullName!.isNotEmpty) {
-      return profile!.fullName!.split(' ').first;
-    }
+    if (_firstName != null && _firstName!.isNotEmpty) return _firstName!;
     return supabase.auth.currentUser?.email?.split('@').first ?? 'there';
+  }
+
+  String get fullDisplayName {
+    final parts = [_firstName, _lastName]
+        .where((p) => p != null && p.isNotEmpty)
+        .toList();
+    return parts.isNotEmpty ? parts.join(' ') : displayName;
   }
 }

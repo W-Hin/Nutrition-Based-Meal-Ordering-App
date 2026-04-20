@@ -112,34 +112,28 @@ class OnboardingController extends ChangeNotifier {
     try {
       final uid = supabase.auth.currentUser!.id;
 
-      // Calculate age from DOB
-      final age = dob != null
-          ? (DateTime.now().difference(dob!).inDays / 365).floor()
-          : null;
-
       final profile = ProfileModel(
-        userId:          uid,
-        fullName:        fullName,
-        phone:           phone,
-        heightCm:        heightCm,
-        weightKg:        weightKg,
-        age:             age,
-        gender:          gender,
-        activityLevel:   activityLevel,
-        bmi:             bmi,
+        userId:           uid,
+        dateOfBirth:      dob,
+        gender:           gender,
+        heightCm:         heightCm,
+        weightKg:         weightKg,
+        bmi:              bmi,
         dailyCalorieGoal: dailyCalorieGoal,
-        proteinGoalG:    proteinGoalG,
-        carbsGoalG:      carbsGoalG,
-        fatGoalG:        fatGoalG,
+        proteinGoalG:     proteinGoalG,
+        carbsGoalG:       carbsGoalG,
+        fatGoalG:         fatGoalG,
       );
 
       await _profileService.createProfile(profile);
 
-      // Also update the full_name and phone in public.users
-      await supabase.from('users').update({
-        'full_name': fullName,
-        'phone':     phone,
-      }).eq('id', uid);
+      // Save name + phone to the user table (separate from health profile)
+      final nameParts = fullName.trim().split(' ');
+      await supabase.from('user').update({
+        'first_name': nameParts.first,
+        'last_name':  nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '',
+        'phone':      phone,
+      }).eq('user_id', uid);
 
       return true;
     } catch (e) {
@@ -173,6 +167,22 @@ class OnboardingController extends ChangeNotifier {
 
   void setGender(String g) {
     gender = g;
+    notifyListeners();
+  }
+
+  /// Called from SetAddress page — updates all address fields and triggers UI rebuild.
+  void setAddress({
+    required String street,
+    required String city,
+    required String postcode,
+    required String deliveryInstruction,
+    required String label,
+  }) {
+    this.street              = street;
+    this.city                = city;
+    this.postcode            = postcode;
+    this.deliveryInstruction = deliveryInstruction;
+    deliveryLabel            = label;
     notifyListeners();
   }
 }

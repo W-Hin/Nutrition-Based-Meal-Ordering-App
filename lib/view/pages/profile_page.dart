@@ -18,18 +18,21 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   static const _cream  = Color(0xFFF5F0E8);
   static const _green  = Color(0xFF1E4620);
+  static const _orange = Color(0xFFD95B2B);
   static const _dark   = Color(0xFF2D2D2D);
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProfileController>().loadProfile();
+      final c = context.read<ProfileController>();
+      c.loadProfile();
+      c.loadUserName();
     });
   }
 
-  String _initials(String? name) {
-    if (name == null || name.isEmpty) return '?';
+  String _initials(String name) {
+    if (name.isEmpty) return '?';
     final parts = name.trim().split(' ');
     if (parts.length == 1) return parts[0][0].toUpperCase();
     return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
@@ -45,12 +48,16 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Log Out', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _dark)),
+              const Text(
+                'Are you sure you want to log out?',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _dark),
+              ),
               const SizedBox(height: 12),
               Text(
-                'Log out will remove your account to personalised NuBurn and you will miss your daily tracking.',
+                'Log out will remove your access to personalized tracking and saved data until you log back in.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: _dark.withValues(alpha: 0.65), height: 1.5),
+                style: TextStyle(fontSize: 13, color: _dark.withValues(alpha: 0.6), height: 1.5),
               ),
               const SizedBox(height: 24),
               Row(
@@ -72,13 +79,13 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(ctx, true),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade600,
+                        backgroundColor: _orange,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.w700)),
+                      child: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.w700)),
                     ),
                   ),
                 ],
@@ -100,119 +107,165 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final profCtrl = context.watch<ProfileController>();
-    final profile  = profCtrl.profile;
     final user     = supabase.auth.currentUser;
 
     return Scaffold(
       backgroundColor: _cream,
+      // ── App Bar ─────────────────────────────────────────────────────────
+      appBar: AppBar(
+        backgroundColor: _cream,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: const Text(
+          'Profile',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _dark),
+        ),
+        actions: [
+          // Exit / Logout icon
+          IconButton(
+            icon: const Icon(Icons.logout_rounded, color: _orange, size: 24),
+            tooltip: 'Log out',
+            onPressed: () => _confirmLogout(context),
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
+
       body: profCtrl.isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFD95B2B)))
-          : CustomScrollView(
-              slivers: [
-                // ── Header ─────────────────────────────────────────────────
-                SliverAppBar(
-                  pinned: true,
-                  expandedHeight: 180,
-                  backgroundColor: _green,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  automaticallyImplyLeading: false,
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: Container(
-                      color: _green,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+          ? const Center(child: CircularProgressIndicator(color: _orange))
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              children: [
+                // ── Profile Card ──────────────────────────────────────────
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 26,
+                        backgroundColor: _green,
+                        child: Text(
+                          _initials(profCtrl.fullDisplayName),
+                          style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: 50),
-                          CircleAvatar(
-                            radius: 36,
-                            backgroundColor: const Color(0xFFD95B2B),
-                            child: Text(
-                              _initials(profile?.fullName),
-                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Colors.white),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
                           Text(
-                            profile?.fullName ?? 'User',
-                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white),
+                            profCtrl.fullDisplayName.isEmpty
+                                ? 'User'
+                                : profCtrl.fullDisplayName,
+                            style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: _dark),
                           ),
+                          const SizedBox(height: 2),
                           Text(
                             user?.email ?? '',
-                            style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.65)),
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: _dark.withValues(alpha: 0.55)),
                           ),
                         ],
                       ),
-                    ),
-                    collapseMode: CollapseMode.pin,
-                  ),
-                ),
-
-                // ── Menu Items ──────────────────────────────────────────────
-                SliverToBoxAdapter(
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 8),
-                      _menuItem(
-                        icon: Icons.person_outline,
-                        label: 'My Account',
-                        onTap: () => Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => ChangeNotifierProvider.value(
-                            value: context.read<ProfileController>(),
-                            child: const MyAccountPage(),
-                          ),
-                        )),
-                      ),
-                      _menuItem(
-                        icon: Icons.lock_outline,
-                        label: 'Change Password',
-                        onTap: () => Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => const ChangePasswordPage(),
-                        )),
-                      ),
-                      _menuItem(
-                        icon: Icons.location_on_outlined,
-                        label: 'Addresses',
-                        onTap: () => Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => const AddressesPage(),
-                        )),
-                      ),
-                      _menuItem(
-                        icon: Icons.more_horiz,
-                        label: 'More',
-                        onTap: () => Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => ChangeNotifierProvider.value(
-                            value: context.read<AuthController>(),
-                            child: const MorePage(),
-                          ),
-                        )),
-                      ),
-
-                      const SizedBox(height: 8),
-                      _divider(),
-                      _menuItem(
-                        icon: Icons.logout,
-                        label: 'Log Out',
-                        labelColor: Colors.red.shade600,
-                        iconColor: Colors.red.shade600,
-                        onTap: () => _confirmLogout(context),
-                      ),
-                      const SizedBox(height: 32),
                     ],
                   ),
                 ),
+                const SizedBox(height: 12),
+
+                // ── Main Menu Group ───────────────────────────────────────
+                _menuCard([
+                  _menuItem(
+                    icon: Icons.person_outline,
+                    label: 'My Account',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => ChangeNotifierProvider.value(
+                        value: context.read<ProfileController>(),
+                        child: const MyAccountPage(),
+                      ),
+                    )),
+                  ),
+                  _dividerLine(),
+                  _menuItem(
+                    icon: Icons.lock_outline,
+                    label: 'Change Password',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => const ChangePasswordPage(),
+                    )),
+                  ),
+                  _dividerLine(),
+                  _menuItem(
+                    icon: Icons.location_on_outlined,
+                    label: 'Addresses',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => const AddressesPage(),
+                    )),
+                  ),
+                  _dividerLine(),
+                  _menuItem(
+                    icon: Icons.more_horiz,
+                    label: 'More',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => ChangeNotifierProvider.value(
+                        value: context.read<AuthController>(),
+                        child: const MorePage(),
+                      ),
+                    )),
+                  ),
+                ]),
+                const SizedBox(height: 12),
+
+                // ── Log Out ───────────────────────────────────────────────
+                _menuCard([
+                  _menuItem(
+                    icon: Icons.logout_rounded,
+                    label: 'Log Out',
+                    labelColor: Colors.red.shade600,
+                    iconColor: Colors.red.shade600,
+                    onTap: () => _confirmLogout(context),
+                  ),
+                ]),
               ],
             ),
-      floatingActionButton: FloatingActionButton( // Admin button for testing (Evelyn)
-        onPressed: () => Navigator.push( // Admin button for testing (Evelyn)
-          context, // Admin button for testing (Evelyn)
-          MaterialPageRoute(builder: (_) => const AdminShell()), // Admin button for testing (Evelyn)
-        ), // Admin button for testing (Evelyn)
-        backgroundColor: const Color(0xFFD95B2B), // Admin button for testing (Evelyn)
-        child: const Icon(Icons.admin_panel_settings, color: Colors.white), // Admin button for testing (Evelyn)
-      ), // Admin button for testing (Evelyn)
+
+      // Admin FAB for testing (Evelyn)
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminShell()),
+        ),
+        backgroundColor: _orange,
+        child: const Icon(Icons.admin_panel_settings, color: Colors.white),
+      ),
     );
   }
+
+  // ── Card wrapper ─────────────────────────────────────────────────────────
+  Widget _menuCard(List<Widget> children) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _dividerLine() => Divider(
+        height: 1,
+        indent: 56,
+        color: _dark.withValues(alpha: 0.08),
+      );
 
   Widget _menuItem({
     required IconData icon,
@@ -222,20 +275,22 @@ class _ProfilePageState extends State<ProfilePage> {
     Color? iconColor,
   }) {
     return Material(
-      color: Colors.white,
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
           child: Row(
             children: [
-              Icon(icon, size: 22, color: iconColor ?? _dark.withValues(alpha: 0.6)),
-              const SizedBox(width: 16),
+              Icon(icon, size: 22, color: iconColor ?? _dark.withValues(alpha: 0.55)),
+              const SizedBox(width: 14),
               Expanded(
                 child: Text(
                   label,
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: labelColor ?? _dark,
                   ),
@@ -248,6 +303,4 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
-
-  Widget _divider() => Container(height: 8, color: _cream);
 }

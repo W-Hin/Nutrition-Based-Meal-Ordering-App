@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../controller/onboarding_controller.dart';
 
@@ -18,11 +19,15 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
   final _formKey   = GlobalKey<FormState>();
   final _nameCtrl  = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  final _heightCtrl = TextEditingController(text: '165');
+  final _weightCtrl = TextEditingController(text: '60');
 
   @override
   void dispose() {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
+    _heightCtrl.dispose();
+    _weightCtrl.dispose();
     super.dispose();
   }
 
@@ -120,11 +125,6 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
   Widget build(BuildContext context) {
     final ctrl = context.watch<OnboardingController>();
 
-    final List<String> heights =
-    List.generate(121, (i) => '${130 + i} cm');
-    final List<String> weights =
-    List.generate(151, (i) => '${30 + i} kg');
-
     return Scaffold(
       backgroundColor: _cream,
       body: SafeArea(
@@ -201,6 +201,7 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                       _label('Phone *'),
                       const SizedBox(height: 6),
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -208,12 +209,10 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                  color: _dark.withOpacity(0.12)),
+                              border: Border.all(color: _dark.withOpacity(0.12)),
                             ),
                             child: const Text('+60',
-                                style:
-                                TextStyle(fontSize: 14, color: _dark)),
+                                style: TextStyle(fontSize: 14, color: _dark)),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -221,12 +220,48 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                               ctrl: _phoneCtrl,
                               hint: '186632510',
                               type: TextInputType.phone,
-                              validator: (v) => v!.isEmpty
+                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              validator: (v) => (v == null || v.isEmpty)
                                   ? 'Phone number is required'
                                   : null,
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 14),
+
+
+                      // ── Address ──────────────────────────────────────
+                      _label('Address *'),
+                      const SizedBox(height: 6),
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/onboarding/address'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: _dark.withOpacity(0.12)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                ctrl.street.isEmpty
+                                    ? 'Tap to set address'
+                                    : ctrl.deliveryLabel,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: ctrl.street.isEmpty
+                                      ? _dark.withOpacity(0.35)
+                                      : _dark,
+                                ),
+                              ),
+                              Icon(Icons.chevron_right,
+                                  color: _dark.withOpacity(0.4), size: 20),
+                            ],
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 14),
 
@@ -343,14 +378,20 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                               children: [
                                 _label('Height (cm) *'),
                                 const SizedBox(height: 6),
-                                _dropdown(
-                                  items: heights,
-                                  value: '${ctrl.heightCm.toInt()} cm',
+                                _textField(
+                                  ctrl: _heightCtrl,
+                                  hint: 'e.g. 165',
+                                  type: TextInputType.number,
+                                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                  validator: (v) {
+                                    if (v == null || v.isEmpty) return 'Required';
+                                    final h = int.tryParse(v);
+                                    if (h == null || h < 50 || h > 300) return '50–300 cm';
+                                    return null;
+                                  },
                                   onChanged: (v) {
-                                    if (v != null) {
-                                      ctrl.heightCm = double.parse(
-                                          v.replaceAll(' cm', ''));
-                                    }
+                                    final h = double.tryParse(v);
+                                    if (h != null) ctrl.heightCm = h;
                                   },
                                 ),
                               ],
@@ -364,14 +405,20 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                               children: [
                                 _label('Weight (kg) *'),
                                 const SizedBox(height: 6),
-                                _dropdown(
-                                  items: weights,
-                                  value: '${ctrl.weightKg.toInt()} kg',
+                                _textField(
+                                  ctrl: _weightCtrl,
+                                  hint: 'e.g. 60',
+                                  type: TextInputType.numberWithOptions(decimal: true),
+                                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+                                  validator: (v) {
+                                    if (v == null || v.isEmpty) return 'Required';
+                                    final w = double.tryParse(v);
+                                    if (w == null || w < 10 || w > 500) return '10–500 kg';
+                                    return null;
+                                  },
                                   onChanged: (v) {
-                                    if (v != null) {
-                                      ctrl.weightKg = double.parse(
-                                          v.replaceAll(' kg', ''));
-                                    }
+                                    final w = double.tryParse(v);
+                                    if (w != null) ctrl.weightKg = w;
                                   },
                                 ),
                               ],
@@ -463,12 +510,16 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
     required String hint,
     IconData? icon,
     TextInputType type = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+    ValueChanged<String>? onChanged,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: ctrl,
       keyboardType: type,
       validator: validator,
+      inputFormatters: inputFormatters,
+      onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle:
@@ -500,32 +551,6 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
     );
   }
 
-  Widget _dropdown({
-    required List<String> items,
-    required String value,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _dark.withOpacity(0.12)),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: items.contains(value) ? value : items.first,
-          isExpanded: true,
-          style: const TextStyle(fontSize: 14, color: _dark),
-          icon: Icon(Icons.arrow_drop_down, color: _dark.withOpacity(0.4)),
-          items: items
-              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-              .toList(),
-          onChanged: onChanged,
-        ),
-      ),
-    );
-  }
 }
 
 // ── Step Indicator ─────────────────────────────────────────────────────────

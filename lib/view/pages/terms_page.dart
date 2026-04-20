@@ -90,7 +90,7 @@ class TermsPage extends StatelessWidget {
               'NuBurn reserves the right to update these Terms at any time. Continued use of the App after changes constitutes acceptance of the revised Terms. We will notify registered users of significant changes via email.'),
 
             _section('10. Contact Us',
-              'For any questions regarding these Terms & Conditions, please contact us at:\n\nsupport@nuburn.app\n\nTunku Abdul Rahman University of Management and Technology (TAR UMT)\nKuala Lumpur, Malaysia'),
+              'For any questions regarding these Terms & Conditions, please contact us at:\n\nsupport@nuburn.app\n\nTunku Abdul Rahman University of Management and Technology (TAR UMT)\nPulau Pinang, Malaysia'),
 
             const SizedBox(height: 20),
 

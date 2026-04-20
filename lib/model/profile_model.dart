@@ -1,13 +1,10 @@
 class ProfileModel {
   final String? id;
   final String userId;
-  final String? fullName;
-  final String? phone;
+  final DateTime? dateOfBirth;   // replaces age
+  final String? gender;
   final double? heightCm;
   final double? weightKg;
-  final int? age;
-  final String? gender; // 'Male' or 'Female'
-  final String? activityLevel;
   final double? bmi;
   final double? dailyCalorieGoal;
   final double? proteinGoalG;
@@ -18,13 +15,10 @@ class ProfileModel {
   const ProfileModel({
     this.id,
     required this.userId,
-    this.fullName,
-    this.phone,
+    this.dateOfBirth,
+    this.gender,
     this.heightCm,
     this.weightKg,
-    this.age,
-    this.gender,
-    this.activityLevel,
     this.bmi,
     this.dailyCalorieGoal,
     this.proteinGoalG,
@@ -37,13 +31,12 @@ class ProfileModel {
     return ProfileModel(
       id:               map['id'] as String?,
       userId:           map['user_id'] as String? ?? '',
-      fullName:         map['full_name'] as String?,
-      phone:            map['phone'] as String?,
+      dateOfBirth:      map['date_of_birth'] != null
+          ? DateTime.tryParse(map['date_of_birth'])
+          : null,
+      gender:           map['gender'] as String?,
       heightCm:         (map['height_cm'] as num?)?.toDouble(),
       weightKg:         (map['weight_kg'] as num?)?.toDouble(),
-      age:              map['age'] as int?,
-      gender:           map['gender'] as String?,
-      activityLevel:    map['activity_level'] as String?,
       bmi:              (map['bmi'] as num?)?.toDouble(),
       dailyCalorieGoal: (map['daily_calorie_goal'] as num?)?.toDouble(),
       proteinGoalG:     (map['protein_goal_g'] as num?)?.toDouble(),
@@ -56,21 +49,31 @@ class ProfileModel {
   }
 
   Map<String, dynamic> toMap() => {
-        'user_id':           userId,
-        if (fullName != null) 'full_name':          fullName,
-        if (phone != null)    'phone':               phone,
-        if (heightCm != null) 'height_cm':           heightCm,
-        if (weightKg != null) 'weight_kg':           weightKg,
-        if (age != null)      'age':                 age,
-        if (gender != null)   'gender':              gender,
-        if (activityLevel != null) 'activity_level': activityLevel,
-        if (bmi != null)              'bmi':                bmi,
-        if (dailyCalorieGoal != null) 'daily_calorie_goal': dailyCalorieGoal,
-        if (proteinGoalG != null)     'protein_goal_g':     proteinGoalG,
-        if (carbsGoalG != null)       'carbs_goal_g':       carbsGoalG,
-        if (fatGoalG != null)         'fat_goal_g':         fatGoalG,
+        'user_id':            userId,
+        if (dateOfBirth != null)
+          'date_of_birth':    dateOfBirth!.toIso8601String().substring(0, 10),
+        if (gender != null)           'gender':              gender,
+        if (heightCm != null)         'height_cm':           heightCm,
+        if (weightKg != null)         'weight_kg':           weightKg,
+        if (bmi != null)              'bmi':                 bmi,
+        if (dailyCalorieGoal != null) 'daily_calorie_goal':  dailyCalorieGoal,
+        if (proteinGoalG != null)     'protein_goal_g':      proteinGoalG,
+        if (carbsGoalG != null)       'carbs_goal_g':        carbsGoalG,
+        if (fatGoalG != null)         'fat_goal_g':          fatGoalG,
         'updated_at': DateTime.now().toIso8601String(),
       };
+
+  // ── Calculated age from DOB ──────────────────────────────────────────────
+  int? get age {
+    if (dateOfBirth == null) return null;
+    final now = DateTime.now();
+    int age = now.year - dateOfBirth!.year;
+    if (now.month < dateOfBirth!.month ||
+        (now.month == dateOfBirth!.month && now.day < dateOfBirth!.day)) {
+      age--;
+    }
+    return age;
+  }
 
   // ── BMI label ────────────────────────────────────────────────────────────
   String get bmiCategory {

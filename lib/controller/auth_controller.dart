@@ -18,7 +18,7 @@ class AuthController extends ChangeNotifier {
   }
 
   // ── Login ──────────────────────────────────────────────────────────────────
-  Future<bool> login(String email, String password) async {
+  Future<bool> login(String email, String password, {String? expectedRole}) async {
     isLoading     = true;
     errorMessage  = '';
     notifyListeners();
@@ -28,6 +28,17 @@ class AuthController extends ChangeNotifier {
         email:    email.trim(),
         password: password,
       );
+
+      // Verify role if requested
+      if (expectedRole != null) {
+        final dbRole = await getUserRole() ?? 'customer';
+        if (dbRole != expectedRole) {
+          // Cross-login detected; revert the auth flow.
+          await _authService.logout();
+          throw AuthException('Invalid access. Please sign in as a $dbRole instead.');
+        }
+      }
+
       currentUser = response.user;
       return true;
     } on AuthException catch (e) {

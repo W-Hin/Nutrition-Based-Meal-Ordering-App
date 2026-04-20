@@ -77,7 +77,7 @@ class MorePage extends StatelessWidget {
           await supabase.from('addresses').delete().eq('user_id', uid);
           await supabase.from('calorie_logs').delete().eq('user_id', uid);
           await supabase.from('reviews').delete().eq('user_id', uid);
-          await supabase.from('users').delete().eq('id', uid);
+          await supabase.from('user').delete().eq('user_id', uid);
         }
         await context.read<AuthController>().logout();
         if (context.mounted) {

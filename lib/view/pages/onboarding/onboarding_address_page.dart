@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../controller/onboarding_controller.dart';
-import 'onboarding_personal_page.dart' show StepIndicator;
 
 class OnboardingAddressPage extends StatefulWidget {
   const OnboardingAddressPage({super.key});
@@ -21,6 +21,7 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
   final _cityCtrl      = TextEditingController();
   final _postcodeCtrl  = TextEditingController();
   final _instrCtrl     = TextEditingController();
+  final _customLabelCtrl = TextEditingController();
 
   final List<String> _labels  = ['Home', 'Work', 'Others'];
   final List<String> _states  = [
@@ -30,38 +31,53 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Pre-fill fields from controller so returning to this page remembers values
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctrl = context.read<OnboardingController>();
+      _streetCtrl.text   = ctrl.street;
+      _cityCtrl.text     = ctrl.city;
+      _postcodeCtrl.text = ctrl.postcode;
+      _instrCtrl.text    = ctrl.deliveryInstruction;
+      // If a custom label was previously saved, restore it
+      if (!['Home', 'Work', 'Others'].contains(ctrl.deliveryLabel)) {
+        _customLabelCtrl.text = ctrl.deliveryLabel;
+        // Set deliveryLabel to 'Others' in ctrl so the chip shows as selected
+        ctrl.deliveryLabel = 'Others';
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _streetCtrl.dispose();
     _cityCtrl.dispose();
     _postcodeCtrl.dispose();
     _instrCtrl.dispose();
+    _customLabelCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _saveAndFinish(OnboardingController ctrl) async {
+  void _setAddress(OnboardingController ctrl) {
     if (!_formKey.currentState!.validate()) return;
 
-    ctrl.street              = _streetCtrl.text.trim();
-    ctrl.city                = _cityCtrl.text.trim();
-    ctrl.postcode            = _postcodeCtrl.text.trim();
-    ctrl.deliveryInstruction = _instrCtrl.text.trim();
+    // Resolve final label
+    final label = (ctrl.deliveryLabel == 'Others' &&
+            _customLabelCtrl.text.trim().isNotEmpty)
+        ? _customLabelCtrl.text.trim()
+        : ctrl.deliveryLabel;
 
-    final profileOk  = await ctrl.saveProfile();
-    final addressOk  = await ctrl.saveAddress();
+    // Update controller and trigger notifyListeners so Personal page rebuilds
+    ctrl.setAddress(
+      street:              _streetCtrl.text.trim(),
+      city:                _cityCtrl.text.trim(),
+      postcode:            _postcodeCtrl.text.trim(),
+      deliveryInstruction: _instrCtrl.text.trim(),
+      label:               label,
+    );
 
-    if (!mounted) return;
-
-    if (profileOk && addressOk) {
-      Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Something went wrong. Please try again.'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
+    Navigator.pop(context);
   }
 
   @override
@@ -73,7 +89,29 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
       body: SafeArea(
         child: Column(
           children: [
-            StepIndicator(current: 3, total: 3),
+            // ── App Bar ─────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    decoration: const BoxDecoration(color: _green, shape: BoxShape.circle),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Set Address',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _dark),
+                    ),
+                  ),
+                  const SizedBox(width: 48),
+                ],
+              ),
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -124,26 +162,39 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
                       // ── Delivery Label ─────────────────────────────────────
                       _label('Delivery Label'),
                       const SizedBox(height: 8),
-                      Row(
+                      Wrap(
+                        spacing: 8,
                         children: _labels.map((l) {
-                          final selected = ctrl.deliveryLabel == l;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ChoiceChip(
-                              label: Text(l),
-                              selected: selected,
-                              selectedColor: _orange,
-                              backgroundColor: Colors.white,
-                              labelStyle: TextStyle(
-                                color: selected ? Colors.white : _dark,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                              onSelected: (_) => setState(() => ctrl.deliveryLabel = l),
+                          final selected = ctrl.deliveryLabel == l || (l == 'Others' && !_labels.sublist(0, 2).contains(ctrl.deliveryLabel));
+                          return ChoiceChip(
+                            label: Text(l),
+                            selected: selected,
+                            selectedColor: _orange,
+                            backgroundColor: Colors.white,
+                            labelStyle: TextStyle(
+                              color: selected ? Colors.white : _dark,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
                             ),
+                            onSelected: (_) => setState(() {
+                              ctrl.deliveryLabel = l;
+                              if (l != 'Others') _customLabelCtrl.clear();
+                            }),
                           );
                         }).toList(),
                       ),
+                      // Show custom label input when Others is selected
+                      if (ctrl.deliveryLabel == 'Others') ...[
+                        const SizedBox(height: 10),
+                        _textField(
+                          ctrl: _customLabelCtrl,
+                          hint: 'e.g. Gym, Parent\'s House...',
+                          icon: Icons.label_outline,
+                          validator: (v) => (v == null || v.isEmpty)
+                              ? 'Please enter a custom label'
+                              : null,
+                        ),
+                      ],
                       const SizedBox(height: 14),
 
                       // ── Delivery Instruction ───────────────────────────────
@@ -168,7 +219,7 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
                       ),
                       const SizedBox(height: 14),
 
-                      // ── City ──────────────────────────────────────────────
+                      // ── City ──────────────────────────────────────────────────
                       _label('City'),
                       const SizedBox(height: 6),
                       _textField(
@@ -211,6 +262,10 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
                                   hint: '47500',
                                   icon: Icons.pin_outlined,
                                   type: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    LengthLimitingTextInputFormatter(5),
+                                  ],
                                   validator: (v) {
                                     if (v!.isEmpty) return 'Required';
                                     if (v.length != 5) return '5 digits';
@@ -229,23 +284,14 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
                         width: double.infinity,
                         height: 52,
                         child: ElevatedButton(
-                          onPressed: ctrl.isSaving ? null : () => _saveAndFinish(ctrl),
+                          onPressed: () => _setAddress(ctrl),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _orange,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             elevation: 0,
                           ),
-                          child: ctrl.isSaving
-                              ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                              : const Text("Set Address & Start!", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Center(
-                        child: TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('← Back', style: TextStyle(color: _green.withValues(alpha: 0.7), fontWeight: FontWeight.w600)),
+                          child: const Text('Set Address', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -271,6 +317,7 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
     required IconData icon,
     TextInputType type = TextInputType.text,
     int maxLines = 1,
+    List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
@@ -278,6 +325,7 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
       keyboardType: type,
       maxLines:     maxLines,
       validator:    validator,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         hintText:   hint,
         hintStyle:  TextStyle(color: _dark.withValues(alpha: 0.35), fontSize: 14),

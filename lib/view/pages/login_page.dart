@@ -3,6 +3,9 @@ import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import '../../controller/auth_controller.dart';
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Login Page  — role-selector redesign
+// ─────────────────────────────────────────────────────────────────────────────
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -10,41 +13,80 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
-  static const _cream  = Color(0xFFF5F0E8);
-  static const _green  = Color(0xFF1E4620);
-  static const _orange = Color(0xFFD95B2B);
-  static const _dark   = Color(0xFF2D2D2D);
+enum _Role { customer, admin, driver }
 
-  final _formKey       = GlobalKey<FormState>();
-  final _emailCtrl     = TextEditingController();
-  final _passwordCtrl  = TextEditingController();
-  bool  _obscurePass   = true;
-  bool  _isAdminLogin  = false;
+class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixin {
+  static const _cream   = Color(0xFFF5F0E8);
+  static const _green   = Color(0xFF1E4620);
+  static const _orange  = Color(0xFFD95B2B);
+  static const _dark    = Color(0xFF2D2D2D);
+
+  final _formKey      = GlobalKey<FormState>();
+  final _emailCtrl    = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  bool  _obscurePass  = true;
+  _Role _selectedRole = _Role.customer;
+
+  // Used for the slide-in animation when the role changes
+  late AnimationController _animCtrl;
+  late Animation<double>   _fadeAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 280));
+    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeIn);
+    _animCtrl.forward();
+  }
 
   @override
   void dispose() {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
+    _animCtrl.dispose();
     super.dispose();
+  }
+
+  void _selectRole(_Role role) {
+    if (_selectedRole == role) return;
+    setState(() => _selectedRole = role);
+    _animCtrl.forward(from: 0);
   }
 
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
     final auth = context.read<AuthController>();
-    final ok = await auth.login(_emailCtrl.text, _passwordCtrl.text);
+    final ok = await auth.login(
+      _emailCtrl.text.trim(),
+      _passwordCtrl.text,
+      expectedRole: _selectedRole.name,
+    );
     if (!mounted) return;
     if (ok) {
-      // AuthWrapper will handle navigation based on role
       Navigator.pushNamedAndRemoveUntil(context, '/auth', (_) => false);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(auth.errorMessage),
-          backgroundColor: Colors.red.shade700,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(auth.errorMessage),
+        backgroundColor: Colors.red.shade700,
+        behavior: SnackBarBehavior.floating,
+      ));
+    }
+  }
+
+  // ── Role metadata ──────────────────────────────────────────────────────────
+  String get _roleLabel {
+    switch (_selectedRole) {
+      case _Role.customer: return 'Customer';
+      case _Role.admin:    return 'Admin';
+      case _Role.driver:   return 'Driver';
+    }
+  }
+
+  String get _roleSubtitle {
+    switch (_selectedRole) {
+      case _Role.customer: return 'Order healthy meals & track nutrition';
+      case _Role.admin:    return 'Admin access — authorised personnel only';
+      case _Role.driver:   return 'Delivery partner access';
     }
   }
 
@@ -56,195 +98,242 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: _cream,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Back arrow (Green circle) ──────────────────────────────
-                Container(
-                  decoration: const BoxDecoration(color: _green, shape: BoxShape.circle),
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-                const SizedBox(height: 12),
+          child: Column(
+            children: [
+              // ── Top green header ─────────────────────────────────────────
+              _buildHeader(),
 
-                // ── Logo ───────────────────────────────────────────────────
-                Center(
-                  child: Image.asset(
-                    'assets/images/NuBurnLogoWithWord.png',
-                    height: 72,
-                  ),
-                ),
-                const SizedBox(height: 28),
-
-                // ── Title ──────────────────────────────────────────────────
-                const Text(
-                  'Sign In',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: _dark,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _isAdminLogin
-                      ? 'Admin access — authorised personnel only.'
-                      : 'Fill the details to sign in account.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: _dark.withValues(alpha: 0.55),
-                  ),
-                ),
-                const SizedBox(height: 28),
-
-                // ── Admin toggle banner ────────────────────────────────────
-                if (_isAdminLogin)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: _green.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: _green.withValues(alpha: 0.3)),
-                    ),
-                    child: Row(
+              // ── Form section ────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                child: FadeTransition(
+                  opacity: _fadeAnim,
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.admin_panel_settings, color: _green, size: 18),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Signing in as Merchant / Admin',
-                          style: TextStyle(color: _green, fontSize: 13, fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                // ── Email ──────────────────────────────────────────────────
-                _buildLabel('Email *'),
-                const SizedBox(height: 6),
-                _buildTextField(
-                  controller: _emailCtrl,
-                  hint: 'abc@student.tarc.edu.my',
-                  icon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Email is required';
-                    if (!v.contains('@')) return 'Enter a valid email';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // ── Password ───────────────────────────────────────────────
-                _buildLabel('Password *'),
-                const SizedBox(height: 6),
-                TextFormField(
-                  controller: _passwordCtrl,
-                  obscureText: _obscurePass,
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Password is required';
-                    return null;
-                  },
-                  decoration: _inputDeco(
-                    hint: '••••••••',
-                    icon: Icons.lock_outline,
-                  ).copyWith(
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                        color: _dark.withValues(alpha: 0.4),
-                        size: 20,
-                      ),
-                      onPressed: () => setState(() => _obscurePass = !_obscurePass),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                // ── Sign In button ─────────────────────────────────────────
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: auth.isLoading ? null : _signIn,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _orange,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 0,
-                    ),
-                    child: auth.isLoading
-                        ? const SizedBox(
-                            width: 22, height: 22,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-                          )
-                        : const Text(
-                            'Sign In',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                          ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // ── Register link ──────────────────────────────────────────
-                Center(
-                  child: RichText(
-                    text: TextSpan(
-                      style: TextStyle(fontSize: 14, color: _dark.withValues(alpha: 0.6)),
-                      children: [
-                        const TextSpan(text: "Don't have an account? "),
-                        TextSpan(
-                          text: 'Sign Up',
+                        // Role title
+                        Text(
+                          'Sign in as $_roleLabel',
                           style: const TextStyle(
-                            color: _orange, fontWeight: FontWeight.w700,
+                            fontSize: 24, fontWeight: FontWeight.w800, color: _dark,
                           ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () => Navigator.pushNamed(context, '/register'),
                         ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _roleSubtitle,
+                          style: TextStyle(fontSize: 13, color: _dark.withValues(alpha: 0.5)),
+                        ),
+                        const SizedBox(height: 28),
+
+                        // Email
+                        _buildLabel('Email'),
+                        const SizedBox(height: 6),
+                        _buildTextField(
+                          controller: _emailCtrl,
+                          hint: 'your@email.com',
+                          icon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return 'Email is required';
+                            if (!v.contains('@')) return 'Enter a valid email';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Password
+                        _buildLabel('Password'),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          controller: _passwordCtrl,
+                          obscureText: _obscurePass,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return 'Password is required';
+                            return null;
+                          },
+                          decoration: _inputDeco(
+                            hint: '••••••••',
+                            icon: Icons.lock_outline,
+                          ).copyWith(
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                color: _dark.withValues(alpha: 0.4),
+                                size: 20,
+                              ),
+                              onPressed: () => setState(() => _obscurePass = !_obscurePass),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+
+                        // Sign In button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            onPressed: auth.isLoading ? null : _signIn,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _orange,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              elevation: 0,
+                            ),
+                            child: auth.isLoading
+                                ? const SizedBox(
+                                    width: 22, height: 22,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                                  )
+                                : Text(
+                                    'Sign In as $_roleLabel',
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                                  ),
+                          ),
+                        ),
+
+                        // Sign Up — customer only
+                        if (_selectedRole == _Role.customer) ...[
+                          const SizedBox(height: 20),
+                          Center(
+                            child: RichText(
+                              text: TextSpan(
+                                style: TextStyle(fontSize: 14, color: _dark.withValues(alpha: 0.6)),
+                                children: [
+                                  const TextSpan(text: "Don't have an account? "),
+                                  TextSpan(
+                                    text: 'Sign Up',
+                                    style: const TextStyle(color: _orange, fontWeight: FontWeight.w700),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () => Navigator.pushNamed(context, '/register'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-
-                // ── Admin / Merchant toggle ────────────────────────────────
-                Center(
-                  child: TextButton(
-                    onPressed: () => setState(() => _isAdminLogin = !_isAdminLogin),
-                    child: Text(
-                      _isAdminLogin
-                          ? 'Sign in as Customer instead'
-                          : 'Are you a Merchant? Sign in as Merchant',
-                      style: const TextStyle(
-                        color: _dark,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildLabel(String text) {
-    return RichText(
-      text: TextSpan(
-        text: text.replaceAll(' *', ''),
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _dark),
-        children: text.contains('*')
-            ? const [TextSpan(text: ' *', style: TextStyle(color: Colors.red))]
-            : [],
+  // ── Top header with role cards ─────────────────────────────────────────────
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: _green,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(36),
+          bottomRight: Radius.circular(36),
+        ),
       ),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Back button
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Logo
+          Center(
+            child: Image.asset('assets/images/NuBurnLogoWithWord.png', height: 140),
+          ),
+          const SizedBox(height: 24),
+
+          // Label
+          const Center(
+            child: Text(
+              'Who are you?',
+              style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Role selector cards
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _roleCard(_Role.customer, 'Customer', 'assets/images/customer.png'),
+              const SizedBox(width: 14),
+              _roleCard(_Role.admin,    'Admin',    'assets/images/admin.png'),
+              const SizedBox(width: 14),
+              _roleCard(_Role.driver,   'Driver',   'assets/images/driver.png'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _roleCard(_Role role, String label, String imagePath) {
+    final isSelected = _selectedRole == role;
+    return GestureDetector(
+      onTap: () => _selectRole(role),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeInOut,
+        width: 96,
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? _orange : Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isSelected ? _orange : Colors.white.withValues(alpha: 0.25),
+            width: 2,
+          ),
+          boxShadow: isSelected
+              ? [BoxShadow(color: _orange.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 4))]
+              : [],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Character image
+            SizedBox(
+              height: 60,
+              child: Image.asset(imagePath, fit: BoxFit.contain),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.75),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _dark),
     );
   }
 
@@ -256,10 +345,10 @@ class _LoginPageState extends State<LoginPage> {
     String? Function(String?)? validator,
   }) {
     return TextFormField(
-      controller:   controller,
+      controller: controller,
       keyboardType: keyboardType,
-      validator:    validator,
-      decoration:   _inputDeco(hint: hint, icon: icon),
+      validator: validator,
+      decoration: _inputDeco(hint: hint, icon: icon),
     );
   }
 

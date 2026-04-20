@@ -57,7 +57,7 @@ class OnboardingBmiPage extends StatelessWidget {
               ),
             ),
 
-            StepIndicator(current: 2, total: 3),
+            StepIndicator(current: 2, total: 2),
             const SizedBox(height: 8),
             Expanded(
               child: SingleChildScrollView(
@@ -194,14 +194,32 @@ class OnboardingBmiPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 28),
 
-                    // ── Next button ─────────────────────────────────────────
+                    // ── Save & Start button ─────────────────────────────────
                     SizedBox(
                       width: double.infinity,
                       height: 52,
                       child: ElevatedButton(
                         onPressed: ctrl.isSaving
                             ? null
-                            : () => Navigator.pushNamed(context, '/onboarding/address'),
+                            : () async {
+                                final profileOk = await ctrl.saveProfile();
+                                final addressOk = ctrl.street.isEmpty
+                                    ? true   // no address entered — skip
+                                    : await ctrl.saveAddress();
+                                if (!context.mounted) return;
+                                if (profileOk && addressOk) {
+                                  Navigator.pushNamedAndRemoveUntil(
+                                      context, '/home', (_) => false);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Something went wrong. Please try again.'),
+                                      backgroundColor: Colors.red,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
+                              },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _orange,
                           foregroundColor: Colors.white,
@@ -210,7 +228,7 @@ class OnboardingBmiPage extends StatelessWidget {
                         ),
                         child: ctrl.isSaving
                             ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                            : const Text('Next: Set Your Address', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                            : const Text('Save & Start!', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                       ),
                     ),
                     const SizedBox(height: 16),
