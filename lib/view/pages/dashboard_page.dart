@@ -132,7 +132,7 @@ class _DashboardHeaderDelegate extends SliverPersistentHeaderDelegate {
   @override
   double get minExtent => _tabBarHeight;
   @override
-  double get maxExtent => _greetingHeight + _tabBarHeight + 20;
+  double get maxExtent => _greetingHeight + _tabBarHeight + 60;
 
   @override
   bool shouldRebuild(covariant _DashboardHeaderDelegate old) =>
@@ -192,41 +192,6 @@ class _DashboardHeaderDelegate extends SliverPersistentHeaderDelegate {
                             ),
                         ],
                       ),
-                    ),
-                    // Cart icon
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        GestureDetector(
-                          onTap: onCartTap,
-                          child: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF859A7A), // Greenish color
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 24),
-                          ),
-                        ),
-                        Positioned(
-                          top: -2,
-                          right: -4,
-                          child: Consumer<CartController>(
-                            builder: (context, cart, _) {
-                              if (cart.totalItemCount == 0) return const SizedBox.shrink();
-                              return Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: _orange.withValues(alpha: 0.85),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Text('${cart.totalItemCount}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
