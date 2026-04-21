@@ -5,6 +5,7 @@ import '../../controller/cart_controller.dart';
 import '../../controller/store_controller.dart';
 import '../../model/cart_item.dart';
 import '../../model/ingredient_model.dart';
+import '../../utils/app_snackbar.dart';
 
 class BuildYourBowlPage extends StatefulWidget {
   const BuildYourBowlPage({super.key});
@@ -65,8 +66,8 @@ class _BuildYourBowlPageState extends State<BuildYourBowlPage> {
           backgroundColor: const Color(0xFFF5F5F0),
           appBar: AppBar(
             title: const Text('Build Your Bowl', style: TextStyle(fontWeight: FontWeight.bold)),
-            backgroundColor: const Color(0xFF1E4620),
-            foregroundColor: Colors.white,
+            backgroundColor: const Color(0xFFF5F5F0),
+            foregroundColor: const Color(0xFF1E4620),
             centerTitle: true,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
@@ -686,11 +687,11 @@ class _BottomSummary extends StatelessWidget {
                         foregroundColor: const Color(0xFFBF5D32),
                         side: const BorderSide(color: Color(0xFFBF5D32), width: 1.5),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       ),
                       child: Text(
                         'Back: ${bowl.steps[bowl.currentStep - 1]}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                     )
                   else
@@ -720,7 +721,7 @@ class _BottomSummary extends StatelessWidget {
                       bowl.currentStep == bowl.steps.length - 1 ? 'Add to Cart' : 'Next: ${bowl.steps[bowl.currentStep + 1]}',
                       style: TextStyle(
                         fontWeight: FontWeight.bold, 
-                        fontSize: 16, 
+                        fontSize: 15, 
                         color: bowl.canGoNext ? const Color(0xFF1E4620) : Colors.black26,
                       ),
                     ),
@@ -846,7 +847,7 @@ class _BottomSummary extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.network(
-                  'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/custom_bowl.png',
+                  'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/customBowl.png',
                   width: double.infinity,
                   height: 180,
                   fit: BoxFit.cover,
@@ -916,15 +917,13 @@ class _BottomSummary extends StatelessWidget {
                         'carbs': totals['Carbs'],
                         'fats': totals['Fats'],
                       },
-                      imageUrl: 'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/custom_bowl.png',
+                      imageUrl: 'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/customBowl.png',
                       quantity: 1,
                     ));
                     bowl.reset();
                     Navigator.pop(context); // Close dialog
                     Navigator.pop(context); // Go back to menu
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Custom Bowl added to cart!')),
-                    );
+                    AppSnackBar.show(context, 'Custom Bowl added to cart!');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFABC270),
@@ -1029,10 +1028,11 @@ class _SummaryItem extends StatelessWidget {
 }
 
 Widget _buildPlaceholder({double? width, double? height}) {
-  return Image.asset(
-    'assets/images/no_image_placeholder.png',
+  return Image.network(
+    'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/noPhotoUploaded.png',
     width: width,
     height: height,
-    fit: BoxFit.cover,
+    fit: BoxFit.contain,
+    errorBuilder: (context, error, stackTrace) => Icon(Icons.image_not_supported, size: height != null ? height * 0.5 : 24, color: Colors.grey[400]),
   );
 }

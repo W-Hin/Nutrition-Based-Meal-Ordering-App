@@ -203,11 +203,16 @@ class IngredientDetailDialog extends StatelessWidget {
   }
 
   Widget _buildPlaceholder() {
-    return Image.asset(
-      'assets/images/no_image_placeholder.png',
-      height: 180,
+    return Image.network(
+      'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/noPhotoUploaded.png',
       width: double.infinity,
-      fit: BoxFit.cover,
+      height: 200,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) => Container(
+        height: 200,
+        color: Colors.grey[200],
+        child: Icon(Icons.image_not_supported, color: Colors.grey[400], size: 40),
+      ),
     );
   }
 }

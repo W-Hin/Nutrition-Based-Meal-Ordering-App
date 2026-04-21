@@ -286,7 +286,13 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
             children: [
               const Icon(Icons.access_time, color: _darkGreen),
               const SizedBox(width: 12),
-              const Text('Store Operating Hours', style: TextStyle(fontWeight: FontWeight.w800)),
+              const Expanded(
+                child: Text(
+                  'Store Operating Hours', 
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           content: Column(
@@ -314,30 +320,44 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                try {
-                  await StoreService.updateHours(currentStore.id, openTime, closeTime);
-                  // Refresh the global controller using the reference we captured at the start
-                  // of this method, which is safe even after the dialog pops!
-                  storeController.loadStores(); 
-                  
-                  _showSuccess('Operating hours updated successfully');
-                } catch (e) {
-                  _showError(e);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _limeGreen,
-                foregroundColor: _darkGreen,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const FittedBox(
+                      child: Text('Cancel', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      try {
+                        await StoreService.updateHours(currentStore.id, openTime, closeTime);
+                        // Refresh the global controller using the reference we captured at the start
+                        // of this method, which is safe even after the dialog pops!
+                        storeController.loadStores(); 
+                        
+                        _showSuccess('Operating hours updated successfully');
+                      } catch (e) {
+                        _showError(e);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _limeGreen,
+                      foregroundColor: _darkGreen,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      elevation: 0,
+                    ),
+                    child: const FittedBox(
+                      child: Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -480,13 +500,16 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  _selectedMode == 0 ? 'Menu: $storeName' : 'Ingredients: $storeName',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    color: _darkGreen,
-                    letterSpacing: -0.5,
+                Expanded(
+                  child: Text(
+                    _selectedMode == 0 ? 'Menu: $storeName' : 'Ingredients: $storeName',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: _darkGreen,
+                      letterSpacing: -0.5,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 IconButton(
@@ -675,7 +698,7 @@ class _ItemCard extends StatelessWidget {
                 // ── Image Section ──
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: imageUrl.isEmpty 
+                  child: (imageUrl == null || imageUrl.isEmpty) 
                     ? _buildPlaceholder()
                     : imageUrl.startsWith('http')
                       ? Image.network(
@@ -807,11 +830,16 @@ class _ItemCard extends StatelessWidget {
   }
 
   Widget _buildPlaceholder() {
-    return Image.asset(
-      'assets/images/no_image_placeholder.png',
-      height: 180,
+    return Image.network(
+      'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/noPhotoUploaded.png',
       width: double.infinity,
-      fit: BoxFit.cover,
+      height: 180,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) => Container(
+        height: 180,
+        color: Colors.grey[200],
+        child: Icon(Icons.image_not_supported, color: Colors.grey[400], size: 30),
+      ),
     );
   }
 

@@ -116,7 +116,7 @@ class MorePage extends StatelessWidget {
         {'name': 'Grilled Chicken Salad', 'price': 18.5, 'cal': 450, 'pro': 40, 'fat': 15, 'carb': 20, 'icon': 'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/chicken_salad.png'},
         {'name': 'Salmon Quinoa Bowl', 'price': 24.0, 'cal': 520, 'pro': 35, 'fat': 22, 'carb': 45, 'icon': 'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/salmon_bowl.png'},
         {'name': 'Vegan Tofu Wrap', 'price': 15.0, 'cal': 380, 'pro': 20, 'fat': 12, 'carb': 50, 'icon': 'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/tofu_wrap.png'},
-        {'name': 'Custom Bowl', 'price': 25.0, 'cal': 600, 'pro': 50, 'fat': 20, 'carb': 55, 'icon': 'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/custom_bowl.png'},
+        {'name': 'Custom Bowl', 'price': 25.0, 'cal': 600, 'pro': 50, 'fat': 20, 'carb': 55, 'icon': 'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/customBowl.png'},
       ];
 
       for (int i = 0; i < 30; i++) {

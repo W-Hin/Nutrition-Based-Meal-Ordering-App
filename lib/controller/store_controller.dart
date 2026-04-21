@@ -9,6 +9,8 @@ class StoreController extends ChangeNotifier {
   Position? _userPosition;
   List<Store> _stores = [];
   bool _isLoading = true;
+  bool _isLocating = false;
+  bool _locationInitialized = false;
 
   StoreController() {
     loadStores();
@@ -18,6 +20,8 @@ class StoreController extends ChangeNotifier {
   Store? get selectedStore => _selectedStore;
   Position? get userPosition => _userPosition;
   List<Store> get stores => _stores;
+  bool get isLocating => _isLocating;
+  bool get locationInitialized => _locationInitialized;
 
   Future<void> loadStores() async {
     _isLoading = true;
@@ -43,40 +47,52 @@ class StoreController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Initialises the store by finding the nearest one based on user location.
   Future<void> initLocationBasedStore() async {
-    // 1. Fetch current position (triggers permission popup)
-    final position = await LocationService.getCurrentLocation();
-    _userPosition = position;
+    if (_isLocating) return;
     
-    // 2. Ensure stores are loaded
-    if (_stores.isEmpty) {
-      await loadStores();
-    }
+    _isLocating = true;
+    notifyListeners();
 
-    if (position != null && _stores.isNotEmpty) {
-      Store? nearest;
-      double minDistance = double.infinity;
+    try {
+      // 1. Fetch current position (triggers permission popup)
+      final position = await LocationService.getCurrentLocation();
+      _userPosition = position;
+      
+      // 2. Ensure stores are loaded
+      if (_stores.isEmpty) {
+        await loadStores();
+      }
 
-      for (final store in _stores) {
-        final distance = LocationService.calculateDistance(
-          position.latitude,
-          position.longitude,
-          store.latitude,
-          store.longitude,
-        );
+      if (position != null && _stores.isNotEmpty) {
+        Store? nearest;
+        double minDistance = double.infinity;
 
-        if (distance < minDistance) {
-          minDistance = distance;
-          nearest = store;
+        for (final store in _stores) {
+          final distance = LocationService.calculateDistance(
+            position.latitude,
+            position.longitude,
+            store.latitude,
+            store.longitude,
+          );
+
+          if (distance < minDistance) {
+            minDistance = distance;
+            nearest = store;
+          }
+        }
+
+        if (nearest != null) {
+          print('Nearest store found: ${nearest.name} at ${minDistance.toStringAsFixed(0)}m');
+          _selectedStore = nearest;
+          _locationInitialized = true;
+          notifyListeners();
         }
       }
-
-      if (nearest != null) {
-        print('Nearest store found: ${nearest.name} at ${minDistance.toStringAsFixed(0)}m');
-        _selectedStore = nearest;
-        notifyListeners();
-      }
+    } catch (e) {
+      print('Error in initLocationBasedStore: $e');
+    } finally {
+      _isLocating = false;
+      notifyListeners();
     }
   }
 

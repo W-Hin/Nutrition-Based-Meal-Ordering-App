@@ -40,7 +40,9 @@ class StoreLocationHeader extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            selectedStore?.name ?? 'Select a Store',
+                            storeController.isLocating 
+                                ? 'Locating nearest store...' 
+                                : (selectedStore?.name ?? 'Select a Store'),
                             style: const TextStyle(
                               fontSize: 15, 
                               fontWeight: FontWeight.bold,

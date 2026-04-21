@@ -154,31 +154,37 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
         content: const Text('Are you sure you want to discard your changes?'),
         actions: [
-          SizedBox(
-            width: 130,
-            child: OutlinedButton(
-              onPressed: () => Navigator.pop(context, false),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFD25432),
-                side: const BorderSide(color: Color(0xFFD25432)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFD25432),
+                    side: const BorderSide(color: Color(0xFFD25432)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const FittedBox(
+                    child: Text('Keep Editing', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  ),
+                ),
               ),
-              child: const Text('Keep Editing', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-            ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 100,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD25432),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD25432),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const FittedBox(
+                    child: Text('Discard', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
               ),
-              child: const Text('Discard', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
+            ],
           ),
         ],
       ),

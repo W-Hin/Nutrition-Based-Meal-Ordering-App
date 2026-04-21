@@ -4,6 +4,7 @@ import '../../model/meal_model.dart';
 import '../../model/cart_item.dart';
 import '../../controller/cart_controller.dart';
 import '../../controller/store_controller.dart';
+import '../../utils/app_snackbar.dart';
 
 class NutritionDialog extends StatelessWidget {
   final Meal meal;
@@ -57,7 +58,7 @@ class NutritionDialog extends StatelessWidget {
               // Image
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: meal.imageUrl.isEmpty 
+                child: (meal.imageUrl == null || meal.imageUrl.isEmpty) 
                   ? _buildPlaceholder()
                   : (meal.imageUrl.startsWith('http')
                     ? Image.network(
@@ -248,12 +249,7 @@ class NutritionDialog extends StatelessWidget {
                           ));
 
                           Navigator.pop(context); // Close dialog
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${meal.name} added to cart!'),
-                              duration: const Duration(seconds: 1),
-                            ),
-                          );
+                          AppSnackBar.show(context, '${meal.name} added to cart!');
                         } : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: !isDisabled ? const Color(0xFFABC270) : Colors.grey[300],
@@ -281,11 +277,16 @@ class NutritionDialog extends StatelessWidget {
   }
 
   Widget _buildPlaceholder() {
-    return Image.asset(
-      'assets/images/no_image_placeholder.png',
-      height: 180,
+    return Image.network(
+      'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/noPhotoUploaded.png',
       width: double.infinity,
-      fit: BoxFit.cover,
+      height: 200,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) => Container(
+        height: 200,
+        color: Colors.grey[200],
+        child: Icon(Icons.image_not_supported, color: Colors.grey[400], size: 40),
+      ),
     );
   }
 }

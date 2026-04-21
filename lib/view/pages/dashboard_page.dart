@@ -468,7 +468,7 @@ class _MealOfTodaySection extends StatelessWidget {
           if (!hasOrders) ...[
             const SizedBox(width: 8),
             GestureDetector(
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MenuPage(onBack: () => Navigator.pop(context)))),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MenuPage())),
               child: Container(
                 width: 36, height: 36,
                 decoration: const BoxDecoration(color: Color(0xFFABC270), shape: BoxShape.circle),

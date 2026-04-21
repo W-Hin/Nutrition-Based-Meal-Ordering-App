@@ -192,9 +192,17 @@ class IngredientConfirmationDialog extends StatelessWidget {
   }
 
   Widget _buildPlaceholder() {
-    return Image.asset(
-      'assets/images/no_image_placeholder.png',
-      fit: BoxFit.cover,
+    return Image.network(
+      'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/noPhotoUploaded.png',
+      width: 80,
+      height: 80,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) => Container(
+        width: 80,
+        height: 80,
+        color: Colors.grey[200],
+        child: Icon(Icons.image_not_supported, color: Colors.grey[400], size: 30),
+      ),
     );
   }
 

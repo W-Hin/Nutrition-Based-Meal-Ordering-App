@@ -144,6 +144,11 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
            price != null && price > 0;
   }
 
+  bool get _isStep2Valid {
+    final calories = double.tryParse(_caloriesController.text);
+    return _caloriesController.text.isNotEmpty && calories != null && calories >= 0;
+  }
+
   void _nextStep() {
     if (_currentStep < 2) {
       _pageController.nextPage(
@@ -330,31 +335,37 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
         content: const Text('Are you sure you want to discard your changes?'),
         actions: [
-          SizedBox(
-            width: 130, 
-            child: OutlinedButton(
-              onPressed: () => Navigator.pop(context, false),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFD25432),
-                side: const BorderSide(color: Color(0xFFD25432)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFD25432),
+                    side: const BorderSide(color: Color(0xFFD25432)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const FittedBox(
+                    child: Text('Keep Editing', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  ),
+                ),
               ),
-              child: const Text('Keep Editing', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-            ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 100,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD25432),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD25432),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const FittedBox(
+                    child: Text('Discard', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
               ),
-              child: const Text('Discard', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
+            ],
           ),
         ],
       ),
@@ -497,7 +508,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
               Expanded(
                 flex: 2,
                 child: _buildBottomButton(
-                  onPressed: _nextStep,
+                  onPressed: _isStep2Valid ? _nextStep : null,
                   label: 'Next : Dietary Information',
                 ),
               ),
@@ -536,11 +547,12 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
                 child: SizedBox(
                   height: 54,
                   child: ElevatedButton.icon(
-                    onPressed: _saveMeal,
+                    onPressed: (_isStep1Valid && _isStep2Valid) ? _saveMeal : null,
                     icon: const Icon(Icons.save_outlined),
                     label: const Text('Save Menu Item', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _lightGreen,
+                      disabledBackgroundColor: _lightGreen.withValues(alpha: 0.5),
                       foregroundColor: _green,
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

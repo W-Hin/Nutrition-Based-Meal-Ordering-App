@@ -7,9 +7,26 @@ import '../widgets/filter_bottom_sheet.dart';
 import '../widgets/store_location_header.dart';
 import '../../controller/store_controller.dart';
 
-class MenuPage extends StatelessWidget {
-  final VoidCallback onBack;
-  const MenuPage({super.key, required this.onBack});
+class MenuPage extends StatefulWidget {
+  final VoidCallback? onBack;
+  const MenuPage({super.key, this.onBack});
+
+  @override
+  State<MenuPage> createState() => _MenuPageState();
+}
+
+class _MenuPageState extends State<MenuPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Auto-locate once per session
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final storeCtrl = context.read<StoreController>();
+      if (!storeCtrl.locationInitialized) {
+        storeCtrl.initLocationBasedStore();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,10 +40,11 @@ class MenuPage extends StatelessWidget {
         backgroundColor: const Color(0xFFF5F5F0),
         foregroundColor: const Color(0xFF1E4620),
         centerTitle: true,
-        leading: IconButton(
+        leading: widget.onBack != null ? IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: onBack,
-        ),
+          onPressed: widget.onBack,
+        ) : null,
+        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: [
@@ -126,7 +144,7 @@ final selectedStore = storeController.selectedStore;
                     child: ListView.builder(
                       controller: _scrollController, // ← same controller
                       primary: false,               // ← not primary
-                      padding: const EdgeInsets.only(bottom: 24),
+                      padding: const EdgeInsets.only(bottom: 100),
                       physics: const AlwaysScrollableScrollPhysics(),
                       itemCount: sortedMeals.length + (isClosed ? 2 : 1),
                       itemBuilder: (context, index) {

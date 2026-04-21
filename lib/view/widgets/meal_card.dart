@@ -5,6 +5,7 @@ import '../../controller/cart_controller.dart';
 import '../../controller/store_controller.dart';
 import 'package:provider/provider.dart';
 import 'nutrition_dialog.dart';
+import '../../utils/app_snackbar.dart';
 
 class MealCard extends StatelessWidget {
   final Meal meal;
@@ -148,12 +149,7 @@ class MealCard extends StatelessWidget {
                               quantity: 1,
                             ));
 
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('${meal.name} added to cart!'),
-                                duration: const Duration(seconds: 1),
-                              ),
-                            );
+                            AppSnackBar.show(context, '${meal.name} added to cart!');
                           }
                               : null,
                           style: ElevatedButton.styleFrom(
@@ -183,11 +179,16 @@ class MealCard extends StatelessWidget {
   }
 
   Widget _buildPlaceholder() {
-    return Image.asset(
-      'assets/images/no_image_placeholder.png',
-      height: 200,
+    return Image.network(
+      'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/noPhotoUploaded.png',
       width: double.infinity,
-      fit: BoxFit.cover,
+      height: 200,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) => Container(
+        height: 200,
+        color: Colors.grey[200],
+        child: Icon(Icons.image_not_supported, color: Colors.grey[400], size: 40),
+      ),
     );
   }
 }

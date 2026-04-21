@@ -31,6 +31,8 @@ import 'package:nutrition_based_meal_ordering_app/view/pages/my_orders.dart';
 import 'package:nutrition_based_meal_ordering_app/view/widgets/navigation_bar.dart';
 import 'package:nutrition_based_meal_ordering_app/view/admin/admin_shell.dart';
 
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -87,6 +89,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
   return MaterialApp(
+    scaffoldMessengerKey: scaffoldMessengerKey,
     debugShowCheckedModeBanner: false,
     title: 'NuBurn',
     scrollBehavior: AppScrollBehavior(),
@@ -201,7 +204,7 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       const HomeDashboardPage(),
-      MenuPage(onBack: () => setState(() => _selectedIndex = 0)),
+      const MenuPage(),
       MyOrdersPage(tabNotifier: _tabNotifier),
       const ProfilePage(),
     ];
