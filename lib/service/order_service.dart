@@ -38,13 +38,14 @@ class OrderService {
 
     final orderId = orderResponse['order_id'].toString();
 
-    // 2. Insert each cart item as a separate row, including image_url
+    // 2. Insert each cart item as a separate row, including quantity and image_url
     if (order.items.isNotEmpty) {
       await supabase.from('order_items').insert(
         order.items.map((item) => {
           'order_id': int.parse(orderId),
           'name':     item.name,
           'price':    item.price,
+          'quantity': item.quantity,  // FIX 1: persist quantity
           'add_ons':  item.addOns.isEmpty ? <String>[] : item.addOns,
           if (item.imageUrl != null && item.imageUrl!.isNotEmpty)
             'image_url': item.imageUrl,

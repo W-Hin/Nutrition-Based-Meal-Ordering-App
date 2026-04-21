@@ -126,12 +126,14 @@ class OrderItemModel {
   final String name;
   final List<String> addOns;
   final double price;
-  final String? imageUrl; // ← now carried through for display
+  final int quantity;       // FIX 2: carry quantity so order_details can show it
+  final String? imageUrl;
 
   OrderItemModel({
     required this.name,
     required this.addOns,
     required this.price,
+    this.quantity = 1,      // default to 1 for backward compat
     this.imageUrl,
   });
 }

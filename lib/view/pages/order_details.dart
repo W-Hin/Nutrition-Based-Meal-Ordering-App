@@ -723,13 +723,22 @@ class _StatusImage extends StatelessWidget {
   }
 }
 
-// ── Status Tracker (FIX 3: Two-row layout — icon row + label row) ──────────────
+// ── Status Tracker — FIX 3: wider label slots so text never breaks mid-word ──
 
 class _StatusTracker extends StatelessWidget {
   final OrderStatus status;
   final OrderType   orderType;
 
   static const _green = Color(0xFF1E4620);
+
+  // FIX 3: Each label is given a slot wider than the icon (36 px) so that
+  // multi-word labels like "Order Submitted", "Ready For Collection" and
+  // "Out For Delivery" fit on 1–2 lines without character-level wrapping.
+  // We use 72 px (≈2× icon diameter) as a comfortable minimum. The icon
+  // row still uses the same 36 px circles; labels are centred on those
+  // icons by giving them an equal total width and centering the text.
+  static const double _iconSize  = 36.0;
+  static const double _labelWidth = 72.0; // wider slot for labels
 
   const _StatusTracker({required this.status, required this.orderType});
 
@@ -778,8 +787,8 @@ class _StatusTracker extends StatelessWidget {
               final step        = steps[stepIndex];
 
               return Container(
-                width:  36,
-                height: 36,
+                width:  _iconSize,
+                height: _iconSize,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isCompleted ? _green : const Color(0xFFEEEBDE),
@@ -790,12 +799,17 @@ class _StatusTracker extends StatelessWidget {
               );
             }),
           ),
-          const SizedBox(height: 8),
-          // ── Row 2: Labels aligned under each icon ─────────────────────
+          const SizedBox(height: 6),
+          // ── Row 2: Labels — wider slots centred under each icon ───────
+          // FIX 3: We rebuild the row using the same interleave pattern but
+          // each "label slot" is _labelWidth wide, and the connectors are
+          // Expanded to absorb the extra space. This keeps labels centred
+          // under their icons while giving them enough room to wrap cleanly
+          // across 2 short lines instead of 3–4 character-broken lines.
           Row(
             children: List.generate(steps.length * 2 - 1, (i) {
               if (i.isOdd) {
-                // Spacer to match the connector lines
+                // Flexible spacer matches the Expanded connector above
                 return const Expanded(child: SizedBox());
               }
               final stepIndex   = i ~/ 2;
@@ -803,12 +817,12 @@ class _StatusTracker extends StatelessWidget {
               final step        = steps[stepIndex];
 
               return SizedBox(
-                width: 36,
+                width: _labelWidth,
                 child: Text(
                   step.label,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize:   8,
+                    fontSize:   9,
                     fontWeight: isCompleted ? FontWeight.w700 : FontWeight.w400,
                     color:      isCompleted ? _green : const Color(0xFFAAAAAA),
                     height:     1.3,
@@ -865,7 +879,7 @@ class _InfoSection extends StatelessWidget {
   }
 }
 
-// ── Live Item Details (FIX 1: includes qty, delivery type & fee) ───────────────
+// ── Live Item Details ──────────────────────────────────────────────────────────
 
 class _LiveItemDetailsSection extends StatelessWidget {
   final OrderController ctrl;
@@ -935,16 +949,15 @@ class _LiveItemDetailsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Items — live order uses OrderItemModel (no qty stored, qty=1 per row)
+          // FIX 2: use item.quantity from OrderItemModel
           ...order.items.map((item) => _OrderItemRow(
             name:     item.name,
             addOns:   item.addOns,
             price:    item.price,
-            quantity: 1,
+            quantity: item.quantity,
             imageUrl: null,
           )),
           const Divider(height: 20),
-          // Fee breakdown
           _FeeRow(label: 'Subtotal', value: 'RM ${_fmt(order.subtotal)}'),
           const SizedBox(height: 4),
           _FeeRow(
@@ -956,7 +969,6 @@ class _LiveItemDetailsSection extends StatelessWidget {
                 label: 'Delivery Fee',
                 value: 'RM ${_fmt(order.deliveryFee)}'),
           ],
-          // Delivery type label
           if (!isSelfCollect) ...[
             const SizedBox(height: 4),
             _FeeRow(
@@ -997,7 +1009,7 @@ class _LiveItemDetailsSection extends StatelessWidget {
   }
 }
 
-// ── History Item Details (FIX 1: includes qty, delivery type & fee) ───────────
+// ── History Item Details ───────────────────────────────────────────────────────
 
 class _HistoryItemDetailsSection extends StatelessWidget {
   final List<Map<String, dynamic>> items;
@@ -1078,6 +1090,7 @@ class _HistoryItemDetailsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+          // FIX 2: read quantity from DB row (defaults to 1 if missing)
           ...items.map((item) {
             final qty = (item['quantity'] as num?)?.toInt() ?? 1;
             return _OrderItemRow(
@@ -1089,7 +1102,6 @@ class _HistoryItemDetailsSection extends StatelessWidget {
             );
           }),
           const Divider(height: 20),
-          // Fee breakdown
           _FeeRow(label: 'Subtotal', value: 'RM ${_fmt(subtotal)}'),
           const SizedBox(height: 4),
           _FeeRow(
@@ -1101,7 +1113,6 @@ class _HistoryItemDetailsSection extends StatelessWidget {
                 label: 'Delivery Fee',
                 value: 'RM ${_fmt(deliveryFee)}'),
           ],
-          // Delivery type label
           const SizedBox(height: 4),
           _FeeRow(
             label: 'Order Type',
@@ -1159,7 +1170,7 @@ class _FeeRow extends StatelessWidget {
   );
 }
 
-// ── Shared item row (FIX 1: shows quantity) ────────────────────────────────────
+// ── Shared item row ────────────────────────────────────────────────────────────
 
 class _OrderItemRow extends StatelessWidget {
   final String       name;
