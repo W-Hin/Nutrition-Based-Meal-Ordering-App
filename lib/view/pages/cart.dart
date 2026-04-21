@@ -187,7 +187,7 @@ class _AddOnsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // FIX 1: Show "- No Add Ons" instead of hiding when list is empty
+
     if (addOns.isEmpty) {
       return const Text(
         '+ No Add Ons',

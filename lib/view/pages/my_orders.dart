@@ -76,7 +76,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
   String _searchQuery = '';
 
   List<Map<String, dynamic>> _allOrders = [];
-  // FIX 3: Cache of store_id → store row fetched from Supabase
+
   Map<String, Map<String, dynamic>> _storeCache = {};
   bool    _loading = true;
   String? _error;
@@ -104,7 +104,6 @@ class _MyOrdersPageState extends State<MyOrdersPage>
     super.dispose();
   }
 
-  // FIX 3: Fetch orders then batch-fetch all unique store IDs
   Future<void> _fetchOrders() async {
     setState(() { _loading = true; _error = null; });
     try {
@@ -168,7 +167,6 @@ class _MyOrdersPageState extends State<MyOrdersPage>
     }).toList();
   }
 
-  // FIX 3: Resolve store name from cache instead of hardcoded fallback
   String _storeName(Map<String, dynamic> o) {
     final rawId = o['store_id'];
     if (rawId != null) {
@@ -1050,7 +1048,7 @@ class _ItemRow extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 4),
-                // FIX 1: Show "- No Add Ons" when list is empty
+
                 if (addOns.isEmpty)
                   const Text(
                     '+ No Add Ons',

@@ -35,7 +35,7 @@ class _CheckoutViewState extends State<_CheckoutView> {
   @override
   void initState() {
     super.initState();
-    // FIX 4: Load the user's default address from Supabase
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CheckoutController>().loadDefaultAddress();
     });

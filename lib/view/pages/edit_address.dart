@@ -294,7 +294,7 @@ class _EditAddressPageState extends State<EditAddressPage> {
               options: MapOptions(
                 initialCenter: _markerPos,
                 initialZoom:   15.0,
-                // FIX 4: Pan the map to the tapped point AND update marker
+
                 onTap: (tapPos, latLng) {
                   setState(() => _markerPos = latLng);
                   // Move the map camera so the pin stays visible in frame

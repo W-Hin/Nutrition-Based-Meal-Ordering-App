@@ -62,7 +62,7 @@ class _PaymentViewState extends State<_PaymentView> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _prefillUserInfo());
   }
 
-  // FIX 5: Prefill Full Name, Email, and Phone from public.user table
+
   Future<void> _prefillUserInfo() async {
     if (_prefillLoaded) return;
     _prefillLoaded = true;
@@ -80,7 +80,6 @@ class _PaymentViewState extends State<_PaymentView> {
 
       if (uid.isEmpty) return;
 
-      // FIX 5: Read from public.user first — this is where onboarding saves name & phone
       final userRow = await supabase
           .from('user')
           .select('first_name, last_name, phone')

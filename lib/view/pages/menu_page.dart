@@ -72,7 +72,7 @@ class _MenuPageState extends State<MenuPage> {
                       ];
                       return SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
-                        // ↓ fix: explicitly not primary
+
                         primary: false,
                         child: Row(
                           children: categories.map((cat) {

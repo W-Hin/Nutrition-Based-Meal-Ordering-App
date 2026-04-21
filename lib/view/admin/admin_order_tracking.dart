@@ -110,7 +110,7 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
   static const _green = Color(0xFF1E4620);
 
   String _searchQuery  = '';
-  // FIX 2: Store filter — null = show all stores
+
   String? _filterStoreId;
   List<Map<String, dynamic>> _allStores = [];
 
@@ -169,7 +169,6 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
         }
       }
 
-      // Batch fetch all stores for the filter dropdown (FIX 2)
       List<Map<String, dynamic>> allStores = [];
       try {
         final storeListRows = await supabase
@@ -217,7 +216,6 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
     }
   }
 
-  // FIX 2: Filter by store + status + search
   List<Map<String, dynamic>> _filter(Set<String> statusSet) {
     return _allOrders.where((o) {
       final status = (o['status'] as String? ?? '').toLowerCase().trim();
@@ -295,7 +293,6 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
           ),
         ),
 
-        // ── Store filter + Search bar (FIX 2) ──
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
           child: Column(
@@ -940,7 +937,6 @@ class _AdminActiveOrderDetailPageState
             ),
             const SizedBox(height: 16),
 
-            // FIX 1: Item details with qty, delivery type, delivery fee
             _ItemDetailsCard(
               items:        items,
               subtotal:     subtotal,
@@ -1176,7 +1172,6 @@ class _AdminHistoryOrderDetailPageState
             ),
             const SizedBox(height: 16),
 
-            // FIX 1: Item details with qty, delivery type, delivery fee
             _ItemDetailsCard(
               items:        items,
               subtotal:     subtotal,
@@ -1237,7 +1232,7 @@ class _DetailCard extends StatelessWidget {
   );
 }
 
-// ── Item Details Card (FIX 1: qty + delivery type + delivery fee) ──────────────
+// ── Item Details Card ──────────────
 
 class _ItemDetailsCard extends StatelessWidget {
   final List<Map<String, dynamic>> items;

@@ -93,7 +93,7 @@ class StoreDetailBottomSheet extends StatelessWidget {
                                     const Icon(Icons.star,
                                         color: Colors.amber, size: 16),
                                     const SizedBox(width: 4),
-                                    // FIX 7: Compute live distance if location is known
+
                                     Consumer<StoreController>(
                                       builder: (context, storeCtrl, _) {
                                         double? distance;
@@ -363,7 +363,6 @@ class StoreDetailBottomSheet extends StatelessWidget {
             ),
           ),
 
-          // Fixed Bottom Button
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             decoration: BoxDecoration(
@@ -384,7 +383,7 @@ class StoreDetailBottomSheet extends StatelessWidget {
                   child: Consumer<StoreController>(
                     builder: (context, storeCtrl, _) {
                       return ElevatedButton.icon(
-                        // FIX 7: Always allow ordering; distance check happens inside
+
                         onPressed: () => _handleOrderFromStore(context, storeCtrl),
                         icon:  const Icon(Icons.shopping_basket),
                         label: const Text(
@@ -415,7 +414,7 @@ class StoreDetailBottomSheet extends StatelessWidget {
     );
   }
 
-  // FIX 7: Unified handler that checks distance and shows warning if needed
+
   void _handleOrderFromStore(BuildContext context, StoreController storeCtrl) {
     final userPos = storeCtrl.userPosition;
 
@@ -429,7 +428,7 @@ class StoreDetailBottomSheet extends StatelessWidget {
       final distanceKm = distanceMeters / 1000;
 
       if (distanceKm > 5.0) {
-        // FIX 7: Show the warning dialog — if user confirms, proceed
+
         _showFarStoreWarning(context, distanceKm, storeCtrl);
         return;
       }
@@ -439,7 +438,6 @@ class StoreDetailBottomSheet extends StatelessWidget {
     _completeStoreSelection(context, storeCtrl);
   }
 
-  // FIX 7: Far-store warning dialog (restored)
   void _showFarStoreWarning(
       BuildContext context, double distanceKm, StoreController storeCtrl) {
     showDialog(

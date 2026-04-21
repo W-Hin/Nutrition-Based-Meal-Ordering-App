@@ -951,7 +951,7 @@ class _LiveItemDetailsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // FIX 2: use item.quantity from OrderItemModel
+
           ...order.items.map((item) => _OrderItemRow(
             name:     item.name,
             addOns:   item.addOns,
@@ -1092,7 +1092,7 @@ class _HistoryItemDetailsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // FIX 2: read quantity from DB row (defaults to 1 if missing)
+
           ...items.map((item) {
             final qty = (item['quantity'] as num?)?.toInt() ?? 1;
             return _OrderItemRow(

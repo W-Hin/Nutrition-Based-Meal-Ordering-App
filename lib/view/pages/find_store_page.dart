@@ -17,13 +17,12 @@ class FindStorePage extends StatefulWidget {
 class _FindStorePageState extends State<FindStorePage> {
   final MapController _mapController = MapController();
 
-  // FIX 6: Track location state
   bool _locationInitialised = false;
 
   @override
   void initState() {
     super.initState();
-    // FIX 6: Trigger location detection as soon as the page loads
+
     WidgetsBinding.instance.addPostFrameCallback((_) => _initLocation());
   }
 
@@ -62,7 +61,7 @@ class _FindStorePageState extends State<FindStorePage> {
         backgroundColor: const Color(0xFFF5F5F0),
         foregroundColor: const Color(0xFF1E4620),
         centerTitle: true,
-        // FIX 6: Re-locate button in app bar
+
         actions: [
           Consumer<StoreController>(
             builder: (context, storeCtrl, _) {
@@ -107,7 +106,7 @@ class _FindStorePageState extends State<FindStorePage> {
                     subdomains:          const ['a', 'b', 'c', 'd'],
                     userAgentPackageName: 'com.nuburn.nutritionapp.mealshop.v4',
                   ),
-                  // FIX 6: Show user's current location dot on map
+
                   if (storeCtrl.userPosition != null)
                     MarkerLayer(
                       markers: [
@@ -179,7 +178,6 @@ class _FindStorePageState extends State<FindStorePage> {
                 ],
               ),
 
-              // FIX 6: Location loading overlay
               if (!_locationInitialised)
                 Positioned(
                   top: 16,

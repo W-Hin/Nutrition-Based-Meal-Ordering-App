@@ -47,7 +47,7 @@ class OrderController extends ChangeNotifier {
       toName:         toName,
       toPhone:        toPhone,
       toAddress:      toAddress,
-      // FIX 2: include quantity when building OrderItemModel from CartItem
+
       items: cartItems.map((c) => OrderItemModel(
         name:     c.name,
         addOns:   c.addOns,
