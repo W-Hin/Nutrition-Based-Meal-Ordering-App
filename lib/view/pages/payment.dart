@@ -5,6 +5,7 @@ import '../../controller/order_controller.dart';
 import '../../controller/payment_controller.dart';
 import '../../controller/cart_controller.dart';
 import '../../controller/store_controller.dart';
+import '../../controller/profile_controller.dart';
 import '../../model/order_model.dart';
 import '../../model/payment_model.dart';
 import '../../service/supabase_conn.dart';
@@ -238,7 +239,7 @@ class _PaymentViewState extends State<_PaymentView> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor:         _terracotta,
                   foregroundColor:         Colors.white,
-                  disabledBackgroundColor: _terracotta.withOpacity(0.6),
+                  disabledBackgroundColor: _terracotta.withValues(alpha: 0.6),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
@@ -342,6 +343,10 @@ class _PaymentViewState extends State<_PaymentView> {
       await cart.clearCart();
 
       if (!context.mounted) return;
+
+      // Dynamically refresh the Dashboard so Meal of Today and Calories update!
+      context.read<ProfileController>().loadDashboardData();
+
       await _showPaymentSuccessDialog(context, storeName);
     } else if (ctrl.status == PaymentStatus.failed) {
       Navigator.push(
@@ -487,7 +492,7 @@ class _OrderSummaryCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E4620).withOpacity(0.1),
+                  color: const Color(0xFF1E4620).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.receipt_long_outlined,
