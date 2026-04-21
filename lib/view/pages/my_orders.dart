@@ -289,7 +289,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
       color:     const Color(0xFF1E4620),
       onRefresh: _fetchOrders,
       child: ListView.builder(
-        padding:     const EdgeInsets.all(16),
+        padding:     const EdgeInsets.fromLTRB(16, 16, 16, 100), // Added bottom padding to avoid nav bar overlap
         itemCount:   orders.length,
         itemBuilder: (context, i) {
           final order   = orders[i];
