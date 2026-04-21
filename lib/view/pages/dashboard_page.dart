@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../controller/profile_controller.dart';
+import '../../controller/cart_controller.dart';
 import 'cart.dart';
 import 'menu_page.dart';
 
@@ -17,7 +18,9 @@ class HomeDashboardPage extends StatefulWidget {
 class _HomeDashboardPageState extends State<HomeDashboardPage>
     with SingleTickerProviderStateMixin {
   static const _cream  = Color(0xFFF5F0E8);
+  static const _green  = Color(0xFF1E4620);
   static const _orange = Color(0xFFD95B2B);
+  static const _dark   = Color(0xFF2D2D2D);
 
   late TabController _tab;
 
@@ -105,6 +108,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage>
 //  Header Delegate — bypasses SliverAppBar's ghost toolbar completely
 // ─────────────────────────────────────────────────────────────────────────────
 class _DashboardHeaderDelegate extends SliverPersistentHeaderDelegate {
+  static const _green  = Color(0xFF1E4620);
   static const _orange = Color(0xFFD95B2B);
   static const _dark   = Color(0xFF2D2D2D);
 
@@ -125,11 +129,10 @@ class _DashboardHeaderDelegate extends SliverPersistentHeaderDelegate {
   static const double _greetingHeight = 56.0;
   static const double _tabBarHeight   = 48.0;
 
-  // By setting minExtent = maxExtent, the header becomes completely fixed and non-collapsible.
   @override
-  double get minExtent => _greetingHeight + _tabBarHeight + 60;
+  double get minExtent => _tabBarHeight;
   @override
-  double get maxExtent => _greetingHeight + _tabBarHeight + 60;
+  double get maxExtent => _greetingHeight + _tabBarHeight + 20;
 
   @override
   bool shouldRebuild(covariant _DashboardHeaderDelegate old) =>
@@ -139,72 +142,106 @@ class _DashboardHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    // Determine opacity: fades out as user scrolls up
+    final double opacity = (1.0 - (shrinkOffset / (_greetingHeight / 2))).clamp(0.0, 1.0);
+
     return Container(
-      color: const Color(0xFFF5F0E8),
+      color: const Color(0xFFF0ECE4), // Cream background matching the page body
       child: SafeArea(
         bottom: false,
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // ── Greeting row ─────────────────────
+            // ── Greeting row — fades as user scrolls ─────────────────────
             Positioned(
-              top: 10,
+              top: 10, // top margin
               left: 16,
               right: 16,
               height: _greetingHeight,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Avatar
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: _orange,
-                    child: Text(
-                      initials,
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white),
+              child: Opacity(
+                opacity: opacity,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Avatar
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: _orange,
+                      child: Text(
+                        initials,
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Greeting + BMI
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          greeting,
-                          style: const TextStyle(color: _dark, fontSize: 16, fontWeight: FontWeight.w800),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (bmiLabel != null)
+                    const SizedBox(width: 12),
+                    // Greeting + BMI
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
                           Text(
-                            bmiLabel!,
-                            style: TextStyle(color: _dark.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w700),
+                            greeting,
+                            style: const TextStyle(color: _dark, fontSize: 16, fontWeight: FontWeight.w800),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
+                          if (bmiLabel != null)
+                            Text(
+                              bmiLabel!,
+                              style: TextStyle(color: _dark.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w700),
+                            ),
+                        ],
+                      ),
+                    ),
+                    // Cart icon
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        GestureDetector(
+                          onTap: onCartTap,
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF859A7A), // Greenish color
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 24),
+                          ),
+                        ),
+                        Positioned(
+                          top: -2,
+                          right: -4,
+                          child: Consumer<CartController>(
+                            builder: (context, cart, _) {
+                              if (cart.totalItemCount == 0) return const SizedBox.shrink();
+                              return Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: _orange.withValues(alpha: 0.85),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text('${cart.totalItemCount}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+                              );
+                            },
+                          ),
+                        ),
                       ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 
             // ── Tab Bar — anchored to bottom ──────────────────────────────────
             Positioned(
-              bottom: 0, // Snapped to the absolute bottom edge so scrolled items slide cleanly underneath
+              bottom: 6,
               left: 16,
               right: 16,
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4), // stronger shadow to emphasize overlap
-                    ),
-                  ],
                 ),
                 child: TabBar(
                   controller: tabController,
@@ -240,7 +277,9 @@ class _DailyTab extends StatelessWidget {
   final ProfileController ctrl;
   const _DailyTab({required this.ctrl});
 
+  static const _cream  = Color(0xFFF5F0E8);
   static const _green  = Color(0xFF1E4620);
+  static const _orange = Color(0xFFD95B2B);
   static const _dark   = Color(0xFF2D2D2D);
 
   @override
@@ -252,7 +291,7 @@ class _DailyTab extends StatelessWidget {
 
     return ListView(
       primary: false,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       children: [
         // ── Calorie Card ──────────────────────────────────────────────────
         Container(
@@ -335,112 +374,70 @@ class _DailyTab extends StatelessWidget {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _dark)),
         const SizedBox(height: 12),
 
-        _MealOfTodaySection(ctrl: ctrl),
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  MEAL OF TODAY SECTION  (real orders grouped by time-of-day)
-// ─────────────────────────────────────────────────────────────────────────────
-class _MealOfTodaySection extends StatelessWidget {
-  final ProfileController ctrl;
-  const _MealOfTodaySection({required this.ctrl});
-
-  static const _green  = Color(0xFF1E4620);
-  static const _dark   = Color(0xFF2D2D2D);
-
-  // Time boundaries for each meal slot
-  static const _breakfastEnd = 12; // before noon
-  static const _lunchEnd     = 17; // before 5pm
-  // after 5pm = Dinner
-
-  String _mealSlot(Map<String, dynamic> order) {
-    final raw = order['order_date'] as String?;
-    if (raw == null) return 'Dinner';
-    final dt    = DateTime.parse(raw).toLocal();
-    final hour  = dt.hour;
-    if (hour < _breakfastEnd) return 'Breakfast';
-    if (hour < _lunchEnd)     return 'Lunch';
-    return 'Dinner';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final orders = ctrl.todayOrders;
-
-    // Group orders by meal slot
-    final Map<String, List<Map<String, dynamic>>> bySlot = {
-      'Breakfast': [],
-      'Lunch':     [],
-      'Dinner':    [],
-    };
-    for (final order in orders) {
-      bySlot[_mealSlot(order)]!.add(order);
-    }
-
-    return Column(
-      children: [
-        _mealSlotCard(context, 'Breakfast', '🥑', bySlot['Breakfast']!),
-        const SizedBox(height: 12),
-        _mealSlotCard(context, 'Lunch',     '🍚', bySlot['Lunch']!),
-        const SizedBox(height: 12),
-        _mealSlotCard(context, 'Dinner',    '🥗', bySlot['Dinner']!),
+        _mealCard(
+          label: 'Breakfast', done: consumed > 0, icon: '🥑',
+          kcal: consumed > 0 ? (consumed * 0.3).toInt() : 0, goalKcal: (ctrl.calorieGoal * 0.3).toInt(),
+          fat: consumed > 0 ? ctrl.todayFat * 0.3 : 0,       goalFat: ctrl.fatGoal * 0.3,
+          carbs: consumed > 0 ? ctrl.todayCarbs * 0.3 : 0,   goalCarbs: ctrl.carbsGoal * 0.3,
+          protein: consumed > 0 ? ctrl.todayProtein * 0.3 : 0, goalProtein: ctrl.proteinGoal * 0.3,
+          onTapArrow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MenuPage())),
+        ),
+        _mealCard(
+          label: 'Lunch', done: consumed > 0, icon: '🍚',
+          kcal: consumed > 0 ? (consumed * 0.4).toInt() : 0, goalKcal: (ctrl.calorieGoal * 0.4).toInt(),
+          fat: consumed > 0 ? ctrl.todayFat * 0.4 : 0,       goalFat: ctrl.fatGoal * 0.4,
+          carbs: consumed > 0 ? ctrl.todayCarbs * 0.4 : 0,   goalCarbs: ctrl.carbsGoal * 0.4,
+          protein: consumed > 0 ? ctrl.todayProtein * 0.4 : 0, goalProtein: ctrl.proteinGoal * 0.4,
+          onTapArrow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MenuPage())),
+        ),
+        _mealCard(
+          label: 'Dinner', done: false, icon: '🥗',
+          kcal: 0, goalKcal: (ctrl.calorieGoal * 0.3).toInt(),
+          fat: 0,  goalFat: ctrl.fatGoal * 0.3,
+          carbs: 0, goalCarbs: ctrl.carbsGoal * 0.3,
+          protein: 0, goalProtein: ctrl.proteinGoal * 0.3,
+          onTapArrow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MenuPage())),
+        ),
       ],
     );
   }
 
-  Widget _mealSlotCard(BuildContext context, String label, String icon, List<Map<String, dynamic>> slotOrders) {
-    final hasOrders = slotOrders.isNotEmpty;
-
-    double slotCal = 0;
-    double slotPro = 0;
-    double slotCarb = 0;
-    double slotFat = 0;
-
-    for (final order in slotOrders) {
-      slotCal += (order['total_cal'] as num?)?.toDouble() ?? 0;
-      slotPro += (order['total_pro'] as num?)?.toDouble() ?? 0;
-      slotCarb += (order['total_carb'] as num?)?.toDouble() ?? 0;
-      slotFat += (order['total_fat'] as num?)?.toDouble() ?? 0;
-    }
-
-    final targetCal = ctrl.calorieGoal / 3;
-    final targetPro = ctrl.proteinGoal / 3;
-    final targetCarb = ctrl.carbsGoal / 3;
-    final targetFat = ctrl.fatGoal / 3;
-
-    final targetHit = hasOrders && (slotCal >= targetCal * 0.9); // mostly hit target
-
+  Widget _mealCard({
+    required String label,
+    required bool done,
+    required String icon,
+    required int kcal, required int goalKcal,
+    required double fat, required double goalFat,
+    required double carbs, required double goalCarbs,
+    required double protein, required double goalProtein,
+    VoidCallback? onTapArrow,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: _dark.withValues(alpha: 0.04), blurRadius: 10)],
-        border: hasOrders ? Border.all(color: _green.withValues(alpha: 0.15)) : null,
+        boxShadow: [BoxShadow(color: _dark.withValues(alpha: 0.03), blurRadius: 10)],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 56, height: 56,
-            decoration: BoxDecoration(
-              color: hasOrders ? const Color(0xFFEFF6E8) : const Color(0xFFF5F5F5),
-              shape: BoxShape.circle,
-            ),
-            child: Center(child: Text(icon, style: const TextStyle(fontSize: 28))),
+            width: 60, height: 60,
+            decoration: const BoxDecoration(color: Color(0xFFEFF6E8), shape: BoxShape.circle),
+            child: Center(child: Text(icon, style: const TextStyle(fontSize: 32))),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _dark)),
-                    if (targetHit) ...[
+                    Text(label,
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _dark)),
+                    if (done) ...[
                       const SizedBox(width: 8),
                       Container(
                         width: 18, height: 18,
@@ -450,29 +447,25 @@ class _MealOfTodaySection extends StatelessWidget {
                     ],
                   ],
                 ),
-                const SizedBox(height: 6),
-                if (hasOrders) ...[
-                  _macroBar('cal', slotCal, targetCal, const Color(0xFFABC270)),
-                  _macroBar('g carbs', slotCarb, targetCarb, const Color(0xFFE94B4B)),
-                  _macroBar('g fat', slotFat, targetFat, const Color(0xFFF39C12)),
-                  _macroBar('g protein', slotPro, targetPro, const Color(0xFF4B3C9B)),
-                ] else ...[
-                  _macroBar('cal', 0, targetCal, Colors.grey),
-                  _macroBar('g carbs', 0, targetCarb, Colors.grey),
-                  _macroBar('g fat', 0, targetFat, Colors.grey),
-                  _macroBar('g protein', 0, targetPro, Colors.grey),
-                ],
+                const SizedBox(height: 8),
+                _macroLine(const Color(0xFF8BC34A), '$kcal / $goalKcal cal', width: 44, isDone: done),
+                _macroLine(Colors.red.shade600,    '${fat.toStringAsFixed(0)} / ${goalFat.toStringAsFixed(0)} g fat', width: 34, isDone: done),
+                _macroLine(Colors.orange.shade500, '${carbs.toStringAsFixed(0)} / ${goalCarbs.toStringAsFixed(0)} g carbs', width: 28, isDone: done),
+                _macroLine(Colors.indigo.shade600, '${protein.toStringAsFixed(0)} / ${goalProtein.toStringAsFixed(0)} g protein', width: 32, isDone: done),
               ],
             ),
           ),
-          if (!hasOrders) ...[
+          if (!done) ...[
             const SizedBox(width: 8),
             GestureDetector(
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MenuPage())),
+              onTap: onTapArrow,
               child: Container(
-                width: 36, height: 36,
-                decoration: const BoxDecoration(color: Color(0xFFABC270), shape: BoxShape.circle),
-                child: const Icon(Icons.add, size: 20, color: Colors.white),
+                width: 40, height: 40,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFABC270),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.arrow_forward, size: 22, color: _dark),
               ),
             ),
           ],
@@ -481,33 +474,22 @@ class _MealOfTodaySection extends StatelessWidget {
     );
   }
 
-  Widget _macroBar(String label, double current, double max, Color color) {
-    final ratio = max > 0 ? (current / max).clamp(0.0, 1.0) : 0.0;
+  Widget _macroLine(Color color, String text, {double width = 24, bool isDone = true}) {
+    final effectiveColor = isDone ? color : Colors.grey.withValues(alpha: 0.8);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 5),
+      padding: const EdgeInsets.only(top: 4),
       child: Row(
         children: [
           Container(
-            width: 50,
-            height: 7,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            alignment: Alignment.centerLeft,
-            child: Container(
-              width: 50 * ratio,
-              height: 7,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
+            width: width, height: 6,
+            decoration: BoxDecoration(color: effectiveColor, borderRadius: BorderRadius.circular(5)),
           ),
           const SizedBox(width: 8),
-          Text(
-            '${current.toStringAsFixed(0)} / ${max.toStringAsFixed(0)} $label',
-            style: TextStyle(fontSize: 11, color: _dark.withValues(alpha: 0.45)),
+          Flexible(
+            child: Text(text,
+              style: TextStyle(fontSize: 11, color: _dark.withValues(alpha: 0.45), fontWeight: FontWeight.w500),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
@@ -574,6 +556,7 @@ class _WeeklyTab extends StatelessWidget {
     final today     = DateTime.now();
     final monday    = today.subtract(Duration(days: today.weekday - 1));
     final days      = List.generate(7, (i) => monday.add(Duration(days: i)));
+    final maxY      = (goal * 1.4).ceilToDouble();
     final dayLabels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
     double totalCarbs = 0;
@@ -592,9 +575,6 @@ class _WeeklyTab extends StatelessWidget {
       return cal;
     }).toList();
 
-    final maxCalInHistory = cals.fold<double>(0.0, (m, c) => c > m ? c : m);
-    final maxY = ((goal * 1.4) > maxCalInHistory ? (goal * 1.4) : (maxCalInHistory * 1.1)).ceilToDouble();
-
     final daysLogged = cals.where((c) => c > 0).length;
     final totalCal   = cals.fold<double>(0, (a, b) => a + b);
     final avgCal     = daysLogged > 0 ? totalCal / daysLogged : 0.0;
@@ -602,7 +582,7 @@ class _WeeklyTab extends StatelessWidget {
 
     return ListView(
       primary: false,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       children: [
         Row(children: [
           _statBox('Days Logged', '$daysLogged / 7', Colors.blue.shade400),
@@ -750,61 +730,7 @@ class _WeeklyTab extends StatelessWidget {
             ]),
           );
         }),
-
-        // ── Weekly Order Stats ────────────────────────────────────────────
-        const SizedBox(height: 20),
-        const Text('This Week\'s Orders',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _dark)),
-        const SizedBox(height: 10),
-        Row(children: [
-          _statBox('Orders', '${ctrl.weeklyOrderCount}', Colors.blue.shade400),
-          const SizedBox(width: 10),
-          _statBox('Total Spend', 'RM ${ctrl.weeklySpend.toStringAsFixed(2)}', _orange),
-        ]),
-
-        // ── Top Items This Week ───────────────────────────────────────────
-        if (ctrl.topWeeklyItems.isNotEmpty) ...[
-          const SizedBox(height: 20),
-          const Text('Top Items This Week',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _dark)),
-          const SizedBox(height: 10),
-          ...ctrl.topWeeklyItems.map((item) => _topItemRow(item)),
-        ],
       ],
-    );
-  }
-
-  Widget _topItemRow(Map<String, dynamic> item) {
-    final name  = item['name'] as String? ?? '—';
-    final count = item['count'] as int? ?? 1;
-    final imgUrl = item['image_url'] as String?;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: _dark.withValues(alpha: 0.04), blurRadius: 6)],
-      ),
-      child: Row(children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: imgUrl != null && imgUrl.isNotEmpty
-              ? Image.network(imgUrl, width: 40, height: 40, fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(width: 40, height: 40, color: const Color(0xFFEFF6E8),
-                      child: const Icon(Icons.restaurant, color: Color(0xFF1E4620), size: 20)))
-              : Container(width: 40, height: 40, color: const Color(0xFFEFF6E8),
-                  child: const Icon(Icons.restaurant, color: Color(0xFF1E4620), size: 20)),
-        ),
-        const SizedBox(width: 12),
-        Expanded(child: Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _dark),
-            overflow: TextOverflow.ellipsis)),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(color: _green.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
-          child: Text('×$count', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _green)),
-        ),
-      ]),
     );
   }
 
@@ -850,7 +776,9 @@ class _MonthlyTab extends StatelessWidget {
     final history     = ctrl.monthlyHistory;
     final goal        = ctrl.calorieGoal;
     final now         = ctrl.selectedMonth;
+    final realNow     = DateTime.now();
     final daysInMonth = DateUtils.getDaysInMonth(now.year, now.month);
+
     double totalCarbs = 0;
     double totalFat = 0;
     double totalProtein = 0;
@@ -878,7 +806,7 @@ class _MonthlyTab extends StatelessWidget {
 
     return ListView(
       primary: false,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -914,17 +842,6 @@ class _MonthlyTab extends StatelessWidget {
         ]),
         const SizedBox(height: 16),
 
-        // ── Monthly Order Stats ───────────────────────────────────────────
-        const Text('This Month\'s Orders',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _dark)),
-        const SizedBox(height: 10),
-        Row(children: [
-          _statBox('Orders', '${ctrl.monthlyOrderCount}', Colors.blue.shade400),
-          const SizedBox(width: 10),
-          _statBox('Total Spend', 'RM ${ctrl.monthlySpend.toStringAsFixed(2)}', _orange),
-        ]),
-        const SizedBox(height: 16),
-
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
@@ -942,14 +859,10 @@ class _MonthlyTab extends StatelessWidget {
               const SizedBox(height: 16),
               SizedBox(
                 height: 180,
-                child: Builder(builder: (context) {
-                  final maxCalInHistory = dayMap.values.fold<double>(0.0, (m, c) => c > m ? c : m);
-                  final maxY = ((goal * 1.5) > maxCalInHistory ? (goal * 1.5) : (maxCalInHistory * 1.1)).ceilToDouble();
-                  
-                  return LineChart(LineChartData(
-                    minX: 1, maxX: daysInMonth.toDouble(),
-                    minY: 0, maxY: maxY,
-                    lineBarsData: [
+                child: LineChart(LineChartData(
+                  minX: 1, maxX: daysInMonth.toDouble(),
+                  minY: 0, maxY: (goal * 1.5).ceilToDouble(),
+                  lineBarsData: [
                     LineChartBarData(
                       spots: spots.where((s) => s.y > 0).toList(),
                       isCurved: true, color: _orange, barWidth: 2.5,
@@ -991,8 +904,7 @@ class _MonthlyTab extends StatelessWidget {
                       ),
                     )),
                   ),
-                ));
-                }),
+                )),
               ),
             ],
           ),
@@ -1045,50 +957,7 @@ class _MonthlyTab extends StatelessWidget {
           goalFat: ctrl.fatGoal * daysInMonth,
           goalProtein: ctrl.proteinGoal * daysInMonth,
         ),
-
-        // ── Top Items This Month ──────────────────────────────────────────
-        if (ctrl.topMonthlyItems.isNotEmpty) ...[
-          const SizedBox(height: 20),
-          const Text('Your Favourites',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _dark)),
-          const SizedBox(height: 10),
-          ...ctrl.topMonthlyItems.map((item) => _topItemRow(item)),
-        ],
       ],
-    );
-  }
-
-  Widget _topItemRow(Map<String, dynamic> item) {
-    final name  = item['name'] as String? ?? '—';
-    final count = item['count'] as int? ?? 1;
-    final imgUrl = item['image_url'] as String?;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: _dark.withValues(alpha: 0.04), blurRadius: 6)],
-      ),
-      child: Row(children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: imgUrl != null && imgUrl.isNotEmpty
-              ? Image.network(imgUrl, width: 40, height: 40, fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(width: 40, height: 40, color: const Color(0xFFEFF6E8),
-                      child: const Icon(Icons.restaurant, color: Color(0xFF1E4620), size: 20)))
-              : Container(width: 40, height: 40, color: const Color(0xFFEFF6E8),
-                  child: const Icon(Icons.restaurant, color: Color(0xFF1E4620), size: 20)),
-        ),
-        const SizedBox(width: 12),
-        Expanded(child: Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _dark),
-            overflow: TextOverflow.ellipsis)),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(color: _green.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
-          child: Text('×$count', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _green)),
-        ),
-      ]),
     );
   }
 

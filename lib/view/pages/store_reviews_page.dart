@@ -633,36 +633,46 @@ class _ReviewCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         if (isOwner)
-                          PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert,
-                                size: 20, color: Color(0xFF8A8A8A)),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14)),
-                            elevation: 4,
-                            itemBuilder: (_) => [
-                              PopupMenuItem(
-                                value: 'edit',
-                                child: Row(children: [
-                                  Icon(Icons.edit_outlined,
-                                      size: 17, color: _forest),
-                                  const SizedBox(width: 8),
-                                  const Text('Edit'),
-                                ]),
+                          // Lock edit/delete once admin has replied
+                          (review.adminReply != null && review.adminReply!.isNotEmpty)
+                          ? Padding(
+                              padding: const EdgeInsets.only(right: 4),
+                              child: Tooltip(
+                                message: 'Locked after admin reply',
+                                child: Icon(Icons.lock_outline_rounded,
+                                    size: 16, color: Colors.grey.shade400),
                               ),
-                              const PopupMenuItem(
-                                value: 'delete',
-                                child: Row(children: [
-                                  Icon(Icons.delete_outline,
-                                      size: 17, color: Colors.red),
-                                  SizedBox(width: 8),
-                                  Text('Delete',
-                                      style: TextStyle(color: Colors.red)),
-                                ]),
-                              ),
-                            ],
-                            onSelected: (v) =>
-                                v == 'edit' ? onEdit() : onDelete(),
-                          ),
+                            )
+                          : PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert,
+                                  size: 20, color: Color(0xFF8A8A8A)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
+                              elevation: 4,
+                              itemBuilder: (_) => [
+                                PopupMenuItem(
+                                  value: 'edit',
+                                  child: Row(children: [
+                                    Icon(Icons.edit_outlined,
+                                        size: 17, color: _forest),
+                                    const SizedBox(width: 8),
+                                    const Text('Edit'),
+                                  ]),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(children: [
+                                    Icon(Icons.delete_outline,
+                                        size: 17, color: Colors.red),
+                                    SizedBox(width: 8),
+                                    Text('Delete',
+                                        style: TextStyle(color: Colors.red)),
+                                  ]),
+                                ),
+                              ],
+                              onSelected: (v) =>
+                                  v == 'edit' ? onEdit() : onDelete(),
+                            ),
                         Text(
                           _timeAgo(review.createdAt?.toLocal()),
                           style: const TextStyle(
@@ -711,11 +721,16 @@ class _ReviewCard extends StatelessWidget {
                     width:  30,
                     height: 30,
                     decoration: BoxDecoration(
-                      color:        _forest.withValues(alpha: 0.12),
+                      color:        _forest.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.shield_outlined,
-                        color: _forest, size: 16),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        'assets/images/nuburn_logo.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(

@@ -112,7 +112,7 @@ class ProfileService {
     return List<Map<String, dynamic>>.from(rows);
   }
 
-  // ── Fetch today's non-cancelled orders (for Meal of Today) ───────────────
+  // ── Fetch today's completed orders (for Meal of Today) ───────────────────
   Future<List<Map<String, dynamic>>> fetchTodayOrders() async {
     final now        = DateTime.now().toLocal();
     final startOfDay = DateTime(now.year, now.month, now.day).toUtc().toIso8601String();

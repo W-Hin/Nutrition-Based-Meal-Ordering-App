@@ -336,11 +336,11 @@ class _MyOrdersPageState extends State<MyOrdersPage>
 
   /// Shows the quick-rate dialog. Checks if order is already reviewed.
   Future<void> _showRateDialog(
-    BuildContext context, {
-    required int    orderId,
-    required String storeId,
-    required String storeName,
-  }) async {
+      BuildContext context, {
+        required int    orderId,
+        required String storeId,
+        required String storeName,
+      }) async {
     final ctrl      = context.read<ReviewController>();
     final navigator = Navigator.of(context);
 
@@ -429,35 +429,63 @@ class _MyOrdersPageState extends State<MyOrdersPage>
                               style: TextStyle(fontWeight: FontWeight.w700)),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            Navigator.pop(ctx);
-                            final edited = await navigator.push<bool>(
-                              MaterialPageRoute(
-                                builder: (_) => ReviewWritePage(
-                                  orderId:   orderId,
-                                  storeId:   storeId,
-                                  storeName: storeName,
-                                  existing:  existing,
+                      // Hide Edit if admin has already replied
+                      if (existing.adminReply == null || existing.adminReply!.isEmpty) ...[
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(ctx);
+                              final edited = await navigator.push<bool>(
+                                MaterialPageRoute(
+                                  builder: (_) => ReviewWritePage(
+                                    orderId:   orderId,
+                                    storeId:   storeId,
+                                    storeName: storeName,
+                                    existing:  existing,
+                                  ),
                                 ),
-                              ),
-                            );
-                            if (edited == true) _fetchOrders();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1E4620),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(vertical: 13),
+                              );
+                              if (edited == true) _fetchOrders();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1E4620),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                            ),
+                            child: const Text('Edit Review',
+                                style: TextStyle(fontWeight: FontWeight.w700)),
                           ),
-                          child: const Text('Edit Review',
-                              style: TextStyle(fontWeight: FontWeight.w700)),
                         ),
-                      ),
+                      ] else ...[
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF3F2EC),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.lock_outline_rounded,
+                                    size: 14, color: Color(0xFF8A8A8A)),
+                                SizedBox(width: 6),
+                                Text('Replied by Admin',
+                                    style: TextStyle(
+                                      fontSize:   12,
+                                      fontWeight: FontWeight.w600,
+                                      color:      Color(0xFF8A8A8A),
+                                    )),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ]),
                   ],
                 ),
@@ -671,14 +699,14 @@ class _MyOrdersPageState extends State<MyOrdersPage>
                           ),
                           child: submitting
                               ? const SizedBox(
-                                  width: 18, height: 18,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: Colors.white))
+                              width: 18, height: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white))
                               : const Text('Post Review',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                      fontSize:   14,
-                                      letterSpacing: 0.3)),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize:   14,
+                                  letterSpacing: 0.3)),
                         ),
                       ),
                     ),

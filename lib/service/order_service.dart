@@ -29,7 +29,7 @@ class OrderService {
       'payment_method':   order.paymentMethod,
       'remark':           order.remark.isEmpty ? null : order.remark,
       'is_cancellable':   true,
-      'order_date':       DateTime.now().toIso8601String(),
+      'order_date':       DateTime.now().toUtc().toIso8601String(),
       // Always store collection_code for all order types (delivery + self-collect)
       'collection_code': await _ensureUniqueCode(order.collectionCode),
     })

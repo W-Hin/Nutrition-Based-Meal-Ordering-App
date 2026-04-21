@@ -19,6 +19,8 @@ class _AdminReviewsPageState extends State<AdminReviewsPage> {
 
   // null = show all stores
   String? _filterStoreId;
+  // 0 = All, 1 = Not Replied, 2 = Replied
+  int _replyFilter = 0;
 
   @override
   void initState() {
@@ -30,8 +32,15 @@ class _AdminReviewsPageState extends State<AdminReviewsPage> {
 
   // ── Filtered list ──────────────────────────────────────────────────────────
   List<ReviewModel> _filtered(List<ReviewModel> all) {
-    if (_filterStoreId == null) return all;
-    return all.where((r) => r.storeId == _filterStoreId).toList();
+    var list = _filterStoreId == null
+        ? all
+        : all.where((r) => r.storeId == _filterStoreId).toList();
+    if (_replyFilter == 1) {
+      list = list.where((r) => r.adminReply == null || r.adminReply!.isEmpty).toList();
+    } else if (_replyFilter == 2) {
+      list = list.where((r) => r.adminReply != null && r.adminReply!.isNotEmpty).toList();
+    }
+    return list;
   }
 
   // ── Reply dialog ───────────────────────────────────────────────────────────
@@ -307,7 +316,64 @@ class _AdminReviewsPageState extends State<AdminReviewsPage> {
           ),
         ),
 
-        // ── Review list ────────────────────────────────────────────────────
+        // ── Reply filter bar ───────────────────────────────────────────────
+        Container(
+          color:   Colors.white,
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+          child: Row(
+            children: [
+              const Icon(Icons.mark_chat_read_outlined,
+                  color: _green, size: 16),
+              const SizedBox(width: 8),
+              const Text('Reply:',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _dark)),
+              const SizedBox(width: 10),
+              ...[
+                (0, 'All'),
+                (1, 'Not Replied'),
+                (2, 'Replied'),
+              ].map((entry) {
+                final (val, label) = entry;
+                final selected = _replyFilter == val;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _replyFilter = val),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? _green
+                            : _bg,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: selected
+                              ? _green
+                              : const Color(0xFFDDDACA),
+                        ),
+                      ),
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontSize:   12,
+                          fontWeight: FontWeight.w600,
+                          color: selected ? Colors.white : _dark,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+
         Expanded(
           child: ctrl.isLoading
               ? const Center(
@@ -322,9 +388,13 @@ class _AdminReviewsPageState extends State<AdminReviewsPage> {
                               color: _dark.withValues(alpha: 0.2)),
                           const SizedBox(height: 12),
                           Text(
-                            _filterStoreId == null
-                                ? 'No reviews yet'
-                                : 'No reviews for this store',
+                            _replyFilter == 1
+                                ? 'No pending replies'
+                                : _replyFilter == 2
+                                    ? 'No replied reviews yet'
+                                    : _filterStoreId == null
+                                        ? 'No reviews yet'
+                                        : 'No reviews for this store',
                             style: TextStyle(
                                 color:    _dark.withValues(alpha: 0.4),
                                 fontSize: 15),

@@ -33,6 +33,7 @@ import 'package:nutrition_based_meal_ordering_app/view/admin/admin_shell.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -89,7 +90,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
   return MaterialApp(
-    scaffoldMessengerKey: scaffoldMessengerKey,
     debugShowCheckedModeBanner: false,
     title: 'NuBurn',
     scrollBehavior: AppScrollBehavior(),
@@ -97,7 +97,7 @@ class MyApp extends StatelessWidget {
       colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E4620)),
       fontFamily: 'Roboto',
     ),
-    home: const AuthWrapper(),
+    home: const MainShell(),
     routes: {
       '/auth':              (_) => const AuthWrapper(),
       '/login':             (_) => const LoginPage(),
@@ -204,7 +204,7 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       const HomeDashboardPage(),
-      const MenuPage(),
+      MenuPage(onBack: () => setState(() => _selectedIndex = 0)),
       MyOrdersPage(tabNotifier: _tabNotifier),
       const ProfilePage(),
     ];
@@ -217,6 +217,11 @@ class _MainShellState extends State<MainShell> {
         onItemTapped: (index) {
           setState(() => _selectedIndex = index);
           _tabNotifier.value = index;
+// Refresh dashboard data every time user navigates back to Home tab
+          // (IndexedStack keeps the widget alive so initState never fires again)
+          if (index == 0) {
+            context.read<ProfileController>().loadDashboardData();
+          }
         },
         onCartTapped: () => Navigator.push(
           context,

@@ -65,8 +65,16 @@ class ReviewController extends ChangeNotifier {
     errorMessage = '';
     notifyListeners();
     try {
-      await _svc.submitReview(review);
-      myReviews.insert(0, review);
+      // Get back the saved row with real id, created_at etc.
+      final saved = await _svc.submitReview(review);
+      // Insert into customer list (my reviews)
+      myReviews.insert(0, saved);
+      // Insert into admin list so admin sees it immediately without reload
+      allReviews.insert(0, saved);
+      // Also insert into storeReviews if it belongs to the currently-loaded store
+      if (storeReviews.isNotEmpty && storeReviews.first.storeId == saved.storeId) {
+        storeReviews.insert(0, saved);
+      }
       return true;
     } catch (e) {
       errorMessage = 'Failed to submit review. Please try again.';

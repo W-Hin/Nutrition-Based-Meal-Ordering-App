@@ -5,8 +5,13 @@ class ReviewService {
   String get _uid => supabase.auth.currentUser?.id ?? '';
 
   // ── Submit a new review (customer) ───────────────────────────────────────
-  Future<void> submitReview(ReviewModel review) async {
-    await supabase.from('reviews').insert(review.toMap());
+  Future<ReviewModel> submitReview(ReviewModel review) async {
+    final row = await supabase
+        .from('reviews')
+        .insert(review.toMap())
+        .select('*')
+        .single();
+    return ReviewModel.fromMap(Map<String, dynamic>.from(row));
   }
 
   // ── Update an existing review (customer) ─────────────────────────────────
@@ -57,23 +62,50 @@ class ReviewService {
   Future<List<ReviewModel>> fetchStoreReviews(String storeId) async {
     final rows = await supabase
         .from('reviews')
-        .select('*, user:user_id(first_name, last_name)')
+        .select('*')
         .eq('store_id', storeId)
         .order('created_at', ascending: false);
-    return (rows as List)
-        .map((r) => ReviewModel.fromMap(Map<String, dynamic>.from(r)))
-        .toList();
+    return _attachUserNames(rows as List);
   }
 
-  // ── Fetch ALL reviews with user name — for admin ──────────────────────────
+  // ── Fetch ALL reviews with user name — for admin ────────────────────────
   Future<List<ReviewModel>> fetchAllReviews() async {
     final rows = await supabase
         .from('reviews')
-        .select('*, user:user_id(first_name, last_name), stores(name)')
+        .select('*, stores(name)')
         .order('created_at', ascending: false);
-    return (rows as List)
-        .map((r) => ReviewModel.fromMap(Map<String, dynamic>.from(r)))
+    return _attachUserNames(rows as List);
+  }
+
+  // ── Helper: attach first_name+last_name from public.user ──────────────────
+  Future<List<ReviewModel>> _attachUserNames(List rows) async {
+    if (rows.isEmpty) return [];
+    // Collect unique user_ids
+    final uids = rows
+        .map((r) => r['user_id'] as String?)
+        .whereType<String>()
+        .toSet()
         .toList();
+    // Fetch names from public.user table
+    final Map<String, String> nameMap = {};
+    if (uids.isNotEmpty) {
+      final userRows = await supabase
+          .from('user')
+          .select('user_id, first_name, last_name')
+          .inFilter('user_id', uids);
+      for (final u in (userRows as List)) {
+        final uid   = u['user_id'] as String? ?? '';
+        final first = (u['first_name'] as String? ?? '').trim();
+        final last  = (u['last_name']  as String? ?? '').trim();
+        nameMap[uid] = [first, last].where((s) => s.isNotEmpty).join(' ');
+      }
+    }
+    return rows.map((r) {
+      final map  = Map<String, dynamic>.from(r);
+      final uid  = map['user_id'] as String? ?? '';
+      map['user'] = {'first_name': nameMap[uid] ?? '', 'last_name': ''};
+      return ReviewModel.fromMap(map);
+    }).toList();
   }
 
   // ── Admin reply ───────────────────────────────────────────────────────────

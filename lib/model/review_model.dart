@@ -67,7 +67,7 @@ class ReviewModel {
   Map<String, dynamic> toMap() => {
         'user_id':  userId,
         'store_id': storeId,
-        'order_id': orderId,
+        'order_id': orderId.toString(),  // DB column is text type
         'rating':   rating,
         'comment':  comment,
       };
