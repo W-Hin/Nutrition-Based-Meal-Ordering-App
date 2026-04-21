@@ -13,16 +13,15 @@ class StoreLocationHeader extends StatelessWidget {
         final selectedStore = storeController.selectedStore;
         
         return Container(
+          margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 4,
-                offset: Offset(0, 2),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: const Color(0xFFABC270).withOpacity(0.3),
+              width: 1.5,
+            ),
           ),
           child: Row(
             children: [

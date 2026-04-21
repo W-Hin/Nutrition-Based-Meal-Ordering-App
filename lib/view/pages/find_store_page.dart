@@ -32,8 +32,8 @@ class _FindStorePageState extends State<FindStorePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Find Store', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF1E4620),
-        foregroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF5F5F0),
+        foregroundColor: const Color(0xFF1E4620),
         centerTitle: true,
       ),
       body: Consumer<StoreController>(

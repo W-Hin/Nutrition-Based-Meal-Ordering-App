@@ -20,8 +20,8 @@ class MenuPage extends StatelessWidget {
       backgroundColor: const Color(0xFFF5F5F0),
       appBar: AppBar(
         title: const Text('Menu', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF1E4620),
-        foregroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF5F5F0),
+        foregroundColor: const Color(0xFF1E4620),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),

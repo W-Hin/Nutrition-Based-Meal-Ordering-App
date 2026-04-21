@@ -72,85 +72,84 @@ class StoreDetailBottomSheet extends StatelessWidget {
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: GestureDetector(
-                              onTap: () => _showRatingConfirmation(context),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    store.name,
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF1E4620),
-                                      height: 1.1,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  store.name,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1E4620),
+                                    height: 1.1,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.location_on,
+                                        color: Color(0xFFABC270), size: 14),
+                                    const SizedBox(width: 4),
+                                    Consumer<StoreController>(
+                                      builder: (context, storeCtrl, _) {
+                                        double? distance;
+                                        if (storeCtrl.userPosition != null) {
+                                          distance = LocationService.calculateDistance(
+                                            storeCtrl.userPosition!.latitude,
+                                            storeCtrl.userPosition!.longitude,
+                                            store.latitude,
+                                            store.longitude,
+                                          ) / 1000;
+                                        }
+                                        return Text(
+                                          '${distance?.toStringAsFixed(1) ?? store.distanceKm.toStringAsFixed(1)} km away',
+                                          style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 13),
+                                        );
+                                      },
                                     ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.star,
-                                          color: Colors.amber, size: 16),
-                                      const SizedBox(width: 4),
-                                      Consumer<StoreController>(
-                                        builder: (context, storeCtrl, _) {
-                                          double? distance;
-                                          if (storeCtrl.userPosition != null) {
-                                            distance = LocationService.calculateDistance(
-                                              storeCtrl.userPosition!.latitude,
-                                              storeCtrl.userPosition!.longitude,
-                                              store.latitude,
-                                              store.longitude,
-                                            ) / 1000;
-                                          }
-                                          return Text(
-                                            '${store.rating} • ${distance?.toStringAsFixed(1) ?? store.distanceKm.toStringAsFixed(1)} km',
-                                            style: TextStyle(
-                                                color: Colors.grey[700],
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 13),
-                                          );
-                                        },
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Icon(Icons.circle,
+                                        color: store.isOpen
+                                            ? Colors.green
+                                            : Colors.red,
+                                        size: 10),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      store.isOpen ? 'Open' : 'Closed',
+                                      style: TextStyle(
+                                        color: store.isOpen
+                                            ? Colors.green
+                                            : Colors.red,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
                                       ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      Icon(Icons.circle,
-                                          color: store.isOpen
-                                              ? Colors.green
-                                              : Colors.red,
-                                          size: 10),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        store.isOpen ? 'Open' : 'Closed',
-                                        style: TextStyle(
-                                          color: store.isOpen
-                                              ? Colors.green
-                                              : Colors.red,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        '${store.openTime} - ${store.closeTime}',
-                                        style: TextStyle(
-                                            color: Colors.grey[600],
-                                            fontSize: 13),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '${store.openTime} - ${store.closeTime}',
+                                      style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 13),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ),
+                    const SizedBox(height: 20),
+                    _buildRatingRow(context),
                     const SizedBox(height: 24),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 20),
@@ -310,7 +309,6 @@ class StoreDetailBottomSheet extends StatelessWidget {
             ),
           ),
           
-          // Fixed Bottom Button Section
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             decoration: BoxDecoration(
@@ -372,7 +370,6 @@ class StoreDetailBottomSheet extends StatelessWidget {
     );
   }
 
-  // ── Complete store selection: update both StoreController & CartController ─
   void _completeStoreSelection(BuildContext context) {
     final storeCtrl = Provider.of<StoreController>(context, listen: false);
     final cartCtrl  = Provider.of<CartController>(context,  listen: false);
@@ -387,43 +384,87 @@ class StoreDetailBottomSheet extends StatelessWidget {
     Navigator.pop(context, true);  // Close FindStorePage
   }
 
-  void _showRatingConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Rate this Restaurant?',
-          style: TextStyle(
-              color:      Color(0xFF1E4620),
-              fontWeight: FontWeight.bold),
+  Widget _buildRatingRow(BuildContext context) {
+    // Generate a fixed-looking review count based on store name (for design preview)
+    final reviewCount = (store.name.length * 7) % 100 + 42;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: InkWell(
+        onTap: () {
+          // TODO: Link to your rating page here
+          // Example: Navigator.push(context, MaterialPageRoute(builder: (_) => RatingPage(storeId: store.id)));
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey[50], // Very subtle background
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey[200]!),
+          ),
+          child: Row(
+            children: [
+              // Blue Star Icon Container
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE3F2FD), // Light blue background
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.star_rounded,
+                    color: Colors.blue, size: 24),
+              ),
+              const SizedBox(width: 16),
+              
+              // Rating Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          store.rating.toStringAsFixed(1),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2D2D2D),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Visual Stars
+                        Row(
+                          children: List.generate(5, (index) {
+                            return Icon(
+                              index < store.rating.floor() 
+                                  ? Icons.star_rounded 
+                                  : Icons.star_outline_rounded,
+                              color: Colors.amber,
+                              size: 18,
+                            );
+                          }),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$reviewCount Reviews',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Chevron Arrow
+              Icon(Icons.chevron_right_rounded, color: Colors.grey[400]),
+            ],
+          ),
         ),
-        content:
-        Text('Would you like to provide a rating for ${store.name}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close',
-                style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Rating page coming soon!')),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1E4620),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('Yes'),
-          ),
-        ],
       ),
     );
   }
