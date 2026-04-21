@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../model/profile_model.dart';
 import '../service/profile_service.dart';
 import '../service/supabase_conn.dart';
@@ -22,7 +22,7 @@ class ProfileController extends ChangeNotifier {
   List<Map<String, dynamic>> topWeeklyItems  = [];
   List<Map<String, dynamic>> topMonthlyItems = [];
 
-  // ── Load Profile ──────────────────────────────────────────────────────────
+  // Load Profile
   Future<void> loadProfile() async {
     isLoading = true;
     notifyListeners();
@@ -35,7 +35,7 @@ class ProfileController extends ChangeNotifier {
     }
   }
 
-  // ── Update Profile ────────────────────────────────────────────────────────
+  // Update Profile
   Future<bool> updateProfile(ProfileModel updated) async {
     isLoading = true;
     notifyListeners();
@@ -52,7 +52,7 @@ class ProfileController extends ChangeNotifier {
     }
   }
 
-  // ── Load Dashboard Data ───────────────────────────────────────────────────
+  // Load Dashboard Data
   Future<void> loadDashboardData() async {
     isLoading = true;
     notifyListeners();
@@ -97,7 +97,7 @@ class ProfileController extends ChangeNotifier {
     topMonthlyItems = await _profileService.fetchTopOrderedItems(startDate: start, endDate: end, limit: 5);
   }
 
-  // ── Month Selection ───────────────────────────────────────────────────────
+  // Month Selection
   Future<void> changeMonth(DateTime newMonth) async {
     selectedMonth = newMonth;
     isLoading = true;
@@ -110,7 +110,7 @@ class ProfileController extends ChangeNotifier {
     }
   }
 
-  // ── Computed dashboard helpers ────────────────────────────────────────────
+  // Computed dashboard helpers
   double get todayCalories  => (todayLog?['total_calories']  as num?)?.toDouble() ?? 0;
   double get todayProtein   => (todayLog?['total_protein_g'] as num?)?.toDouble() ?? 0;
   double get todayCarbs     => (todayLog?['total_carbs_g']   as num?)?.toDouble() ?? 0;
@@ -133,7 +133,7 @@ class ProfileController extends ChangeNotifier {
   double get monthlySpend      => (monthlyOrderStats['spend'] as num?)?.toDouble() ?? 0;
 
 
-  // ── User display name (from public.user, not profiles) ───────────────────
+  // User display name (from public.user, not profiles)
   // Name lives in public.user, not profiles — loaded separately.
   String? _firstName;
   String? _lastName;

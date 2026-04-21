@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../controller/profile_controller.dart';
@@ -21,18 +21,18 @@ class _MyAccountPageState extends State<MyAccountPage> {
   bool _editing = false;
   bool _saving  = false;
 
-  // ── Text controllers ──────────────────────────────────────────────────────
+  // Text controllers
   late TextEditingController _fullNameCtrl;
   late TextEditingController _emailCtrl;
   late TextEditingController _phoneCtrl;
   late TextEditingController _heightCtrl;
   late TextEditingController _weightCtrl;
 
-  // ── Pickers ───────────────────────────────────────────────────────────────
+  // Pickers
   DateTime? _dob;
   String?   _gender;
 
-  // ── Default address label ─────────────────────────────────────────────────
+  // Default address label
   String _addressLabel = '';
 
   @override
@@ -84,7 +84,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
     super.dispose();
   }
 
-  // ── DOB picker ────────────────────────────────────────────────────────────
+  // DOB picker
   Future<void> _pickDob() async {
     if (!_editing) return;
     final picked = await showDatePicker(
@@ -102,7 +102,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
     if (picked != null) setState(() => _dob = picked);
   }
 
-  // ── Save ──────────────────────────────────────────────────────────────────
+  // Save
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
@@ -252,7 +252,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Avatar ──────────────────────────────────────────────────────
+            // Avatar
             Center(
               child: CircleAvatar(
                 radius: 40,
@@ -262,13 +262,13 @@ class _MyAccountPageState extends State<MyAccountPage> {
             ),
             const SizedBox(height: 24),
 
-            // ── Full Name ────────────────────────────────────────────────────
+            // Full Name
             _field('Full Name', _fullNameCtrl, required: _editing, enabled: _editing),
 
-            // ── Email ────────────────────────────────────────────────────────
+            // Email
             _field('Email', _emailCtrl, enabled: false),
 
-            // ── Phone ────────────────────────────────────────────────────────
+            // Phone
             _label('Phone', required: _editing),
             const SizedBox(height: 6),
             Row(
@@ -306,7 +306,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
             ),
             const SizedBox(height: 14),
 
-            // ── Address (tap to manage) ───────────────────────────────────────
+            // Address (tap to manage)
             _label('Address'),
             const SizedBox(height: 6),
             GestureDetector(
@@ -345,7 +345,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
             ),
             const SizedBox(height: 14),
 
-            // ── DOB + Gender (side by side) ──────────────────────────────────
+            // DOB + Gender (side by side)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -463,7 +463,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
             ),
             const SizedBox(height: 14),
 
-            // ── Height + Weight (side by side) ───────────────────────────────
+            // Height + Weight (side by side)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -491,7 +491,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
               ],
             ),
 
-            // ── BMI (read-only) ───────────────────────────────────────────────
+            // BMI (read-only)
             if (profile?.bmi != null) ...[
               _label('BMI'),
               const SizedBox(height: 6),
@@ -515,7 +515,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
     );
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // Helpers
 
   Widget _label(String text, {bool required = false}) {
     return RichText(

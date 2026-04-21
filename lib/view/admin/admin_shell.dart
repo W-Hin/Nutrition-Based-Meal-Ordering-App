@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controller/auth_controller.dart';
 import '../../controller/store_controller.dart';
@@ -81,7 +81,7 @@ class _AdminShellState extends State<AdminShell> {
   }
 }
 
-// ── Drawer ─────────────────────────────────────────────────────────────────────
+// Drawer
 
 class _AdminDrawer extends StatelessWidget {
   final List<_DrawerItem> items;
@@ -106,7 +106,7 @@ class _AdminDrawer extends StatelessWidget {
       backgroundColor: _bg,
       child: Column(
         children: [
-          // ── Header ──
+          // Header
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 56, 20, 24),
@@ -146,7 +146,7 @@ class _AdminDrawer extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // ── Nav items ──
+          // Nav items
           ...List.generate(items.length, (index) {
             final item       = items[index];
             final isSelected = index == selectedIndex;
@@ -228,7 +228,7 @@ class _AdminDrawer extends StatelessWidget {
 
           const Spacer(),
 
-          // ── Footer ──
+          // Footer
           Padding(
             padding: const EdgeInsets.all(16),
             child: ListTile(

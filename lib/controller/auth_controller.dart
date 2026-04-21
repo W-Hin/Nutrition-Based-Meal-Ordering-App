@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../service/auth_service.dart';
 
@@ -17,7 +17,7 @@ class AuthController extends ChangeNotifier {
     });
   }
 
-  // ── Login ──────────────────────────────────────────────────────────────────
+  // Login
   Future<bool> login(String email, String password, {String? expectedRole}) async {
     isLoading     = true;
     errorMessage  = '';
@@ -59,7 +59,7 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  // ── Register ───────────────────────────────────────────────────────────────
+  // Register
   Future<bool> register({
     required String email,
     required String password,
@@ -93,7 +93,7 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  // ── Logout ─────────────────────────────────────────────────────────────────
+  // Logout
   Future<void> logout() async {
     await _authService.logout();
     currentUser  = null;
@@ -101,7 +101,7 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  // Helpers
   Future<String?> getUserRole()  => _authService.getUserRole();
   Future<bool>    hasProfile()   => _authService.hasProfile();
   bool get        isLoggedIn     => currentUser != null;

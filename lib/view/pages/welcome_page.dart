@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
@@ -37,7 +37,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
       body: SafeArea(
         child: Stack(
           children: [
-            // ── Decorative corners ──────────────────────────────
+            // Decorative corners
             Positioned(
               top: -20, left: -20,
               child: Transform.rotate(
@@ -79,7 +79,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
               ),
             ),
 
-            // ── Main content ────────────────────────────────────
+            // Main content
             Center(
               child: FadeTransition(
                 opacity: _fadeAnim,

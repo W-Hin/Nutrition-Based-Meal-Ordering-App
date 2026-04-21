@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../model/ingredient_model.dart';
 
@@ -19,7 +19,7 @@ class IngredientConfirmationDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Image Section ──
+            // Image Section
             SizedBox(
               width: double.infinity,
               height: 200,
@@ -45,7 +45,7 @@ class IngredientConfirmationDialog extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Title and Price ──
+                  // Title and Price
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -71,7 +71,7 @@ class IngredientConfirmationDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
 
-                  // ── Category ──
+                  // Category
                   Text(
                     _capitalize(ingredient.type.name),
                     style: const TextStyle(
@@ -82,7 +82,7 @@ class IngredientConfirmationDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  // ── Description ──
+                  // Description
                   if (ingredient.description.isNotEmpty)
                     Text(
                       ingredient.description,
@@ -94,7 +94,7 @@ class IngredientConfirmationDialog extends StatelessWidget {
                     ),
                   const SizedBox(height: 16),
 
-                  // ── Nutrition Facts ──
+                  // Nutrition Facts
                   if (ingredient.nutritionData.isNotEmpty) ...[
                     const Text(
                       'Nutritional Info',
@@ -112,7 +112,7 @@ class IngredientConfirmationDialog extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  // ── Buttons ──
+                  // Buttons
                   Row(
                     children: [
                       Expanded(

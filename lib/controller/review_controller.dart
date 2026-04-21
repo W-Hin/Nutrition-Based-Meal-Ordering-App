@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../model/review_model.dart';
 import '../service/review_service.dart';
 
 class ReviewController extends ChangeNotifier {
   final ReviewService _svc = ReviewService();
 
-  // ── State ──────────────────────────────────────────────────────────────────
+  // State
   List<ReviewModel> myReviews    = [];
   List<ReviewModel> allReviews   = [];
   List<ReviewModel> storeReviews = [];
@@ -14,7 +14,7 @@ class ReviewController extends ChangeNotifier {
   bool   isSubmitting = false;
   String errorMessage = '';
 
-  // ── Load my reviews ────────────────────────────────────────────────────────
+  // Load my reviews
   Future<void> loadMyReviews() async {
     isLoading    = true;
     errorMessage = '';
@@ -29,7 +29,7 @@ class ReviewController extends ChangeNotifier {
     }
   }
 
-  // ── Load all reviews (admin) ───────────────────────────────────────────────
+  // Load all reviews (admin)
   Future<void> loadAllReviews() async {
     isLoading    = true;
     errorMessage = '';
@@ -44,7 +44,7 @@ class ReviewController extends ChangeNotifier {
     }
   }
 
-  // ── Load reviews for a specific store ─────────────────────────────────────
+  // Load reviews for a specific store
   Future<void> loadStoreReviews(String storeId) async {
     isLoading    = true;
     errorMessage = '';
@@ -59,7 +59,7 @@ class ReviewController extends ChangeNotifier {
     }
   }
 
-  // ── Submit review (customer) ───────────────────────────────────────────────
+  // Submit review (customer)
   Future<bool> submitReview(ReviewModel review) async {
     isSubmitting = true;
     errorMessage = '';
@@ -85,7 +85,7 @@ class ReviewController extends ChangeNotifier {
     }
   }
 
-  // ── Update review (customer edit) ─────────────────────────────────────────
+  // Update review (customer edit)
   Future<bool> updateReview(String reviewId, int rating, String comment) async {
     isSubmitting = true;
     notifyListeners();
@@ -115,7 +115,7 @@ class ReviewController extends ChangeNotifier {
     }
   }
 
-  // ── Admin reply ────────────────────────────────────────────────────────────
+  // Admin reply
   Future<bool> replyReview(String reviewId, String reply) async {
     try {
       await _svc.replyReview(reviewId, reply);
@@ -133,15 +133,15 @@ class ReviewController extends ChangeNotifier {
     }
   }
 
-  // ── Check already reviewed (orderId is int) ────────────────────────────────
+  // Check already reviewed (orderId is int)
   Future<bool> hasReviewedOrder(int orderId) =>
       _svc.hasReviewedOrder(orderId);
 
-  // ── Get existing review for an order ──────────────────────────────────────
+  // Get existing review for an order
   Future<ReviewModel?> getOrderReview(int orderId) =>
       _svc.getOrderReview(orderId);
 
-  // ── Delete review ──────────────────────────────────────────────────────────
+  // Delete review
   Future<bool> deleteReview(String reviewId) async {
     try {
       await _svc.deleteReview(reviewId);
@@ -155,7 +155,7 @@ class ReviewController extends ChangeNotifier {
     }
   }
 
-  // ── Fetch rating stats for a store ────────────────────────────────────────
+  // Fetch rating stats for a store
   Future<Map<String, dynamic>> fetchStoreRatingStats(String storeId) =>
       _svc.fetchStoreRatingStats(storeId);
 }

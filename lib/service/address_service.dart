@@ -1,9 +1,9 @@
-import 'supabase_conn.dart';
+﻿import 'supabase_conn.dart';
 
 class AddressService {
   String get _uid => supabase.auth.currentUser?.id ?? '';
 
-  // ── Fetch all addresses for current user ─────────────────────────────────
+  // Fetch all addresses for current user
   Future<List<Map<String, dynamic>>> fetchAddresses() async {
     return await supabase
         .from('addresses')
@@ -13,12 +13,12 @@ class AddressService {
         .order('created_at', ascending: false);
   }
 
-  // ── Delete address ────────────────────────────────────────────────────────
+  // Delete address
   Future<void> deleteAddress(String addressId) async {
     await supabase.from('addresses').delete().eq('address_id', addressId);
   }
 
-  // ── Set default address ───────────────────────────────────────────────────
+  // Set default address
   Future<void> setDefault(String addressId) async {
     // Remove default from all user addresses first
     await supabase.from('addresses').update({'is_default': false}).eq('user_id', _uid);

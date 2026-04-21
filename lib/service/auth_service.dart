@@ -1,14 +1,14 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+﻿import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_conn.dart';
 
 // SIGN UP + LOG IN — SUPABASE CONNECTION
 
 class AuthService {
-  // ── Current session ──────────────────────────────────────────────────────
+  // Current session
   User? get currentUser => supabase.auth.currentUser;
   bool  get isLoggedIn  => currentUser != null;
 
-  // ── Register ─────────────────────────────────────────────────────────────
+  // Register
   /// Creates auth user + inserts row in public.users (name, phone, role='user').
   /// Does NOT create a profiles row — that happens during onboarding.
   Future<AuthResponse> register({
@@ -34,7 +34,7 @@ class AuthService {
     return response;
   }
 
-  // ── Login ─────────────────────────────────────────────────────────────────
+  // Login
   Future<AuthResponse> login({
     required String email,
     required String password,
@@ -45,12 +45,12 @@ class AuthService {
     );
   }
 
-  // ── Logout ────────────────────────────────────────────────────────────────
+  // Logout
   Future<void> logout() async {
     await supabase.auth.signOut();
   }
 
-  // ── Fetch role from public.user ──────────────────────────────────────────
+  // Fetch role from public.user
   Future<String?> getUserRole() async {
     final uid = currentUser?.id;
     if (uid == null) return null;
@@ -62,7 +62,7 @@ class AuthService {
     return row?['role'] as String?;
   }
 
-  // ── Check if onboarding profile exists ───────────────────────────────────
+  // Check if onboarding profile exists
   Future<bool> hasProfile() async {
     final uid = currentUser?.id;
     if (uid == null) return false;
@@ -74,6 +74,6 @@ class AuthService {
     return row != null;
   }
 
-  // ── Listen to auth state changes ─────────────────────────────────────────
+  // Listen to auth state changes
   Stream<AuthState> get authStateChanges => supabase.auth.onAuthStateChange;
 }

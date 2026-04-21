@@ -1,6 +1,6 @@
-/// Shared password validation utilities used across the app.
+﻿/// Shared password validation utilities used across the app.
 
-// ── Requirements ──────────────────────────────────────────────────────────────
+// Requirements
 
 class PasswordRequirement {
   final String label;
@@ -32,7 +32,7 @@ final passwordRequirements = <PasswordRequirement>[
   ),
 ];
 
-// ── Strength score (0-5) ──────────────────────────────────────────────────────
+// Strength score (0-5)
 
 int passwordStrength(String password) {
   if (password.isEmpty) return 0;
@@ -55,7 +55,7 @@ String strengthLabel(int score) {
   }
 }
 
-// ── Validator function (for Form) ─────────────────────────────────────────────
+// Validator function (for Form)
 
 String? validatePassword(String? v) {
   if (v == null || v.isEmpty) return 'Password is required';

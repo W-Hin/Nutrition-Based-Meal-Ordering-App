@@ -1,11 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import '../../controller/auth_controller.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
 //  Login Page  — role-selector redesign
-// ─────────────────────────────────────────────────────────────────────────────
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -73,7 +71,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     }
   }
 
-  // ── Role metadata ──────────────────────────────────────────────────────────
+  // Role metadata
   String get _roleLabel {
     switch (_selectedRole) {
       case _Role.customer: return 'Customer';
@@ -100,10 +98,10 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // ── Top green header ─────────────────────────────────────────
+              // Top green header
               _buildHeader(),
 
-              // ── Form section ────────────────────────────────────────────
+              // Form section
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
                 child: FadeTransition(
@@ -225,7 +223,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     );
   }
 
-  // ── Top header with role cards ─────────────────────────────────────────────
+  // Top header with role cards
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
@@ -329,7 +327,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     );
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  // Helpers
   Widget _buildLabel(String text) {
     return Text(
       text,

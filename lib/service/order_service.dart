@@ -1,11 +1,11 @@
-import 'dart:math';
+﻿import 'dart:math';
 import '../model/order_model.dart';
 import 'supabase_conn.dart';
 
 class OrderService {
   String get _uid => supabase.auth.currentUser?.id ?? '';
 
-  // ── Place order → returns the real DB order_id ──────────────
+  // Place order → returns the real DB order_id
   Future<String> placeOrder(OrderModel order) async {
     // 1. Insert the order row (includes collection_code for self-collect)
     final orderResponse = await supabase
@@ -57,7 +57,7 @@ class OrderService {
     return orderId;
   }
 
-  // ── Fetch a single order by ID ───────────────────────────────
+  // Fetch a single order by ID
   Future<Map<String, dynamic>> fetchOrder(String orderId) async {
     return await supabase
         .from('orders')
@@ -66,7 +66,7 @@ class OrderService {
         .single();
   }
 
-  // ── Fetch all orders for current user ────────────────────────
+  // Fetch all orders for current user
   Future<List<Map<String, dynamic>>> fetchUserOrders() async {
     return await supabase
         .from('orders')
@@ -75,7 +75,7 @@ class OrderService {
         .order('created_at', ascending: false);
   }
 
-  // ── Real-time status stream ───────────────────────────────────
+  // Real-time status stream
   Stream<Map<String, dynamic>> watchOrderStatus(String orderId) {
     return supabase
         .from('orders')
@@ -84,7 +84,7 @@ class OrderService {
         .map((rows) => rows.first);
   }
 
-  // ── Cancel order ─────────────────────────────────────────────
+  // Cancel order
   Future<void> cancelOrder(String orderId) async {
     await supabase
         .from('orders')
@@ -92,7 +92,7 @@ class OrderService {
         .eq('order_id', orderId);
   }
 
-  // ── Ensure collection_code is unique in the orders table ─────
+  // Ensure collection_code is unique in the orders table
   Future<String> _ensureUniqueCode(String? suggested) async {
     final rng = Random();
     String generate() => (100 + rng.nextInt(900)).toString();

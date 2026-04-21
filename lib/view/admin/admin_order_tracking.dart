@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../service/supabase_conn.dart';
 import '../../service/profile_service.dart';
 
-// ── Status helpers ─────────────────────────────────────────────────────────────
+// Status helpers
 
 const _activeStatuses = {
   'submitted',
@@ -93,7 +93,7 @@ String _formatDate(String? raw) {
   }
 }
 
-// ── Page ───────────────────────────────────────────────────────────────────────
+// Page
 
 class AdminOrderTrackingPage extends StatefulWidget {
   const AdminOrderTrackingPage({super.key});
@@ -276,7 +276,7 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
 
     return Column(
       children: [
-        // ── Tab bar ──
+        // Tab bar
         Container(
           color: Colors.white,
           child: TabBar(
@@ -375,7 +375,7 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
           ),
         ),
 
-        // ── Tab content ──
+        // Tab content
         Expanded(
           child: _loading
               ? const Center(
@@ -427,7 +427,7 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
   }
 }
 
-// ── Order List ─────────────────────────────────────────────────────────────────
+// Order List
 
 class _OrderList extends StatelessWidget {
   final List<Map<String, dynamic>> orders;
@@ -559,7 +559,7 @@ class _OrderList extends StatelessWidget {
   }
 }
 
-// ── Status Image widget ────────────────────────────────────────────────────────
+// Status Image widget
 
 class _StatusImage extends StatelessWidget {
   final String status;
@@ -589,9 +589,7 @@ class _StatusImage extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // ACTIVE ORDER DETAIL PAGE
-// ─────────────────────────────────────────────────────────────────────────────
 
 class AdminActiveOrderDetailPage extends StatefulWidget {
   final String orderId;
@@ -962,9 +960,7 @@ class _AdminActiveOrderDetailPageState
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // HISTORY ORDER DETAIL PAGE
-// ─────────────────────────────────────────────────────────────────────────────
 
 class AdminHistoryOrderDetailPage extends StatefulWidget {
   final String orderId;
@@ -1198,7 +1194,7 @@ class _AdminHistoryOrderDetailPageState
   }
 }
 
-// ── Shared AppBar ──────────────────────────────────────────────────────────────
+// Shared AppBar
 
 AppBar _appBar(BuildContext context, String title) => AppBar(
   backgroundColor: const Color(0xFFF5F5F0),
@@ -1213,7 +1209,7 @@ AppBar _appBar(BuildContext context, String title) => AppBar(
           color: Color(0xFF1E4620), fontWeight: FontWeight.w800, fontSize: 18)),
 );
 
-// ── Shared detail card ─────────────────────────────────────────────────────────
+// Shared detail card
 
 class _DetailCard extends StatelessWidget {
   final Widget child;
@@ -1232,7 +1228,7 @@ class _DetailCard extends StatelessWidget {
   );
 }
 
-// ── Item Details Card ──────────────
+// Item Details Card
 
 class _ItemDetailsCard extends StatelessWidget {
   final List<Map<String, dynamic>> items;
@@ -1385,7 +1381,7 @@ class _FeeRow extends StatelessWidget {
   );
 }
 
-// ── Order Info Card ────────────────────────────────────────────────────────────
+// Order Info Card
 
 class _OrderInfoCard extends StatelessWidget {
   final String  orderId;
@@ -1426,7 +1422,7 @@ class _OrderInfoCard extends StatelessWidget {
   }
 }
 
-// ── Info Row ───────────────────────────────────────────────────────────────────
+// Info Row
 
 class _InfoRow extends StatelessWidget {
   final String label;
@@ -1451,7 +1447,7 @@ class _InfoRow extends StatelessWidget {
   );
 }
 
-// ── Admin Food Thumbnail ───────────────────────────────────────────────────────
+// Admin Food Thumbnail
 
 class _AdminFoodThumb extends StatelessWidget {
   final String? imageUrl;
@@ -1493,7 +1489,7 @@ class _AdminFoodThumb extends StatelessWidget {
   }
 }
 
-// ── Error State ────────────────────────────────────────────────────────────────
+// Error State
 
 class _ErrorState extends StatelessWidget {
   final String       message;

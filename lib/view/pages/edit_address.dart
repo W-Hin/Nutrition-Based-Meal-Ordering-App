@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -54,7 +54,7 @@ class _EditAddressPageState extends State<EditAddressPage> {
     super.dispose();
   }
 
-  // ── Reverse geocode: LatLng → address string via Nominatim ───────────────
+  // Reverse geocode: LatLng → address string via Nominatim
   Future<void> _reverseGeocode(LatLng pos) async {
     if (_isGeocoding) return;
     setState(() => _isGeocoding = true);
@@ -281,7 +281,7 @@ class _EditAddressPageState extends State<EditAddressPage> {
     );
   }
 
-  // ── Interactive flutter_map ───────────────────────────────────────────────
+  // Interactive flutter_map
   Widget _buildInteractiveMap() {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
@@ -326,7 +326,7 @@ class _EditAddressPageState extends State<EditAddressPage> {
               ],
             ),
 
-            // ── "Tap to pin" hint badge ────────────────────────────────────
+            // "Tap to pin" hint badge
             Positioned(
               top:   10,
               right: 10,
@@ -356,7 +356,7 @@ class _EditAddressPageState extends State<EditAddressPage> {
               ),
             ),
 
-            // ── Geocoding overlay ─────────────────────────────────────────
+            // Geocoding overlay
             if (_isGeocoding)
               Positioned(
                 bottom: 10,
@@ -397,7 +397,7 @@ class _EditAddressPageState extends State<EditAddressPage> {
   }
 }
 
-// ── Label Chip ─────────────────────────────────────────────────────────────────
+// Label Chip
 
 class _LabelChip extends StatelessWidget {
   final IconData              icon;
@@ -451,7 +451,7 @@ class _LabelChip extends StatelessWidget {
   }
 }
 
-// ── Reusable small widgets ─────────────────────────────────────────────────────
+// Reusable small widgets
 
 class _FieldLabel extends StatelessWidget {
   final String text;

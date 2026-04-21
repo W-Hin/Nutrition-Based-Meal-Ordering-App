@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controller/order_controller.dart';
 import '../../model/order_model.dart';
@@ -20,7 +20,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   static const _green = Color(0xFF1E4620);
   static const _bg    = Color(0xFFF5F5F0);
 
-  // ── History-mode state ────────────────────────────────────────────────────
+  // History-mode state
   Map<String, dynamic>? _historyRow;
   Map<String, dynamic>? _storeRow;
   bool    _historyLoading    = false;
@@ -28,7 +28,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   bool    _historyCancelled  = false;
   String? _historyError;
 
-  // ── Live-mode store state ──────────────────────────────────────────────────
+  // Live-mode store state
   Map<String, dynamic>? _liveStoreRow;
 
   bool get _isHistoryMode => widget.historyOrderId != null;
@@ -180,7 +180,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     return _isHistoryMode ? _buildHistoryView() : _buildLiveView();
   }
 
-  // ── LIVE ORDER VIEW ───────────────────────────────────────────────────────
+  // LIVE ORDER VIEW
   Widget _buildLiveView() {
     final ctrl  = context.watch<OrderController>();
     final order = ctrl.currentOrder;
@@ -252,7 +252,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     );
   }
 
-  // ── HISTORY ORDER VIEW ────────────────────────────────────────────────────
+  // HISTORY ORDER VIEW
   Widget _buildHistoryView() {
     if (_historyLoading) {
       return Scaffold(
@@ -421,7 +421,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     ),
   );
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // Helpers
   OrderStatus _mapStatus(String s) {
     switch (s) {
       case 'preparing':            return OrderStatus.preparing;
@@ -500,9 +500,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Self-Collect specific widgets
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _SelfCollectCodeCard extends StatelessWidget {
   final String? collectionCode;
@@ -638,9 +636,7 @@ class _CollectAtCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Shared widgets
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _SubmittedBanner extends StatelessWidget {
   final String statusLabel;
@@ -727,7 +723,7 @@ class _StatusImage extends StatelessWidget {
   }
 }
 
-// ── Status Tracker ──────────────────────────────────────────────────────────
+// Status Tracker
 
 class _StatusTracker extends StatelessWidget {
   final OrderStatus status;
@@ -845,7 +841,7 @@ class _Step {
   const _Step({required this.icon, required this.label});
 }
 
-// ── Info Section ───────────────────────────────────────────────────────────────
+// Info Section
 
 class _InfoSection extends StatelessWidget {
   final String       title;
@@ -881,7 +877,7 @@ class _InfoSection extends StatelessWidget {
   }
 }
 
-// ── Live Item Details ──────────────────────────────────────────────────────────
+// Live Item Details
 
 class _LiveItemDetailsSection extends StatelessWidget {
   final OrderController ctrl;
@@ -1011,7 +1007,7 @@ class _LiveItemDetailsSection extends StatelessWidget {
   }
 }
 
-// ── History Item Details ───────────────────────────────────────────────────────
+// History Item Details
 
 class _HistoryItemDetailsSection extends StatelessWidget {
   final List<Map<String, dynamic>> items;
@@ -1172,7 +1168,7 @@ class _FeeRow extends StatelessWidget {
   );
 }
 
-// ── Shared item row ────────────────────────────────────────────────────────────
+// Shared item row
 
 class _OrderItemRow extends StatelessWidget {
   final String       name;
@@ -1319,7 +1315,7 @@ class _FoodThumb extends StatelessWidget {
   }
 }
 
-// ── Order Info sections ────────────────────────────────────────────────────────
+// Order Info sections
 
 class _LiveOrderInfoSection extends StatelessWidget {
   final OrderModel order;

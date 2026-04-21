@@ -1,4 +1,4 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'package:flutter/material.dart';
 import '../model/order_model.dart';
 import '../model/cart_item.dart';
@@ -16,7 +16,7 @@ class OrderController extends ChangeNotifier {
   bool isCancelling = false;
   bool isCancelled  = false;
 
-  // ── Place order + record payment ─────────────────────────────────────────
+  // Place order + record payment
   Future<void> placeOrder({
     required List<CartItem> cartItems,
     required double subtotal,
@@ -111,7 +111,7 @@ class OrderController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Calculate and return macros for all cart items ────────────────────────
+  // Calculate and return macros for all cart items
   Future<Map<String, double>> _calculateOrderMacros(List<CartItem> cartItems) async {
     try {
       // Collect unique food_ids (preset menu items only)
@@ -176,18 +176,18 @@ class OrderController extends ChangeNotifier {
     }
   }
 
-  // ── Update local status (called from real-time stream) ───────────────────
+  // Update local status (called from real-time stream)
   void updateStatus(OrderStatus newStatus) {
     if (currentOrder == null) return;
     currentOrder!.status = newStatus;
     notifyListeners();
   }
 
-  // ── Real-time status stream (delegates to OrderService) ──────────────────
+  // Real-time status stream (delegates to OrderService)
   Stream<Map<String, dynamic>> watchOrderStatus(String orderId) =>
       _orderService.watchOrderStatus(orderId);
 
-  // ── Cancel order ─────────────────────────────────────────────────────────
+  // Cancel order
   Future<void> cancelOrder() async {
     if (currentOrder == null || !currentOrder!.isCancellable) return;
     isCancelling = true;
@@ -203,14 +203,14 @@ class OrderController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Generate a random 3-digit collection code (100–999) ──────────────────
+  // Generate a random 3-digit collection code (100–999)
   String _generateCollectionCode() {
     final rng = Random();
     final code = 100 + rng.nextInt(900); // 100..999
     return code.toString().padLeft(3, '0');
   }
 
-  // ── Generate a short local order ID (used before DB returns real ID) ─────
+  // Generate a short local order ID (used before DB returns real ID)
   String _generateLocalId() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final rand  = DateTime.now().millisecondsSinceEpoch.toString();

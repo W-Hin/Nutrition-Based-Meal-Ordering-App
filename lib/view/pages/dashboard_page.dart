@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../controller/profile_controller.dart';
@@ -6,9 +6,7 @@ import '../../controller/cart_controller.dart';
 import 'cart.dart';
 import 'menu_page.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
 //  Dashboard Page  (Daily | Weekly | Monthly tabs)
-// ─────────────────────────────────────────────────────────────────────────────
 class HomeDashboardPage extends StatefulWidget {
   const HomeDashboardPage({super.key});
   @override
@@ -65,7 +63,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage>
         onRefresh: () => ctrl.loadDashboardData(),
         child: CustomScrollView(
           slivers: [
-            // ── Custom Pinned Header (replaces SliverAppBar entirely) ──────
+            // Custom Pinned Header (replaces SliverAppBar entirely)
             SliverPersistentHeader(
               pinned: true,
               delegate: _DashboardHeaderDelegate(
@@ -84,7 +82,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage>
               ),
             ),
 
-            // ── Tab views ──────────────────────────────────────────────────
+            // Tab views
             SliverFillRemaining(
               child: ctrl.isLoading
                   ? const Center(child: CircularProgressIndicator(color: _orange))
@@ -104,9 +102,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 //  Header Delegate — bypasses SliverAppBar's ghost toolbar completely
-// ─────────────────────────────────────────────────────────────────────────────
 class _DashboardHeaderDelegate extends SliverPersistentHeaderDelegate {
   static const _green  = Color(0xFF1E4620);
   static const _orange = Color(0xFFD95B2B);
@@ -152,7 +148,7 @@ class _DashboardHeaderDelegate extends SliverPersistentHeaderDelegate {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // ── Greeting row — fades as user scrolls ─────────────────────
+            // Greeting row — fades as user scrolls
             Positioned(
               top: 10, // top margin
               left: 16,
@@ -198,7 +194,7 @@ class _DashboardHeaderDelegate extends SliverPersistentHeaderDelegate {
               ),
             ),
 
-            // ── Tab Bar — anchored to bottom ──────────────────────────────────
+            // Tab Bar — anchored to bottom
             Positioned(
               bottom: 6,
               left: 16,
@@ -235,9 +231,7 @@ class _DashboardHeaderDelegate extends SliverPersistentHeaderDelegate {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 //  DAILY TAB
-// ─────────────────────────────────────────────────────────────────────────────
 class _DailyTab extends StatelessWidget {
   final ProfileController ctrl;
   const _DailyTab({required this.ctrl});
@@ -258,7 +252,7 @@ class _DailyTab extends StatelessWidget {
       primary: false,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       children: [
-        // ── Calorie Card ──────────────────────────────────────────────────
+        // Calorie Card
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -323,7 +317,7 @@ class _DailyTab extends StatelessWidget {
         ),
         const SizedBox(height: 14),
 
-        // ── Nutritions Card ───────────────────────────────────────────────
+        // Nutritions Card
         _SharedNutritionCard(
           currentCarbs: ctrl.todayCarbs,
           currentFat: ctrl.todayFat,
@@ -334,7 +328,7 @@ class _DailyTab extends StatelessWidget {
         ),
         const SizedBox(height: 20),
 
-        // ── Meal of Today ─────────────────────────────────────────────────
+        // Meal of Today
         const Text('Meal Of Today',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _dark)),
         const SizedBox(height: 12),
@@ -462,9 +456,7 @@ class _DailyTab extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 //  CUSTOM ARC GAUGE
-// ─────────────────────────────────────────────────────────────────────────────
 class _ArcGaugePainter extends CustomPainter {
   final double progress;
   final Color activeColor;
@@ -503,9 +495,7 @@ class _ArcGaugePainter extends CustomPainter {
   bool shouldRepaint(covariant _ArcGaugePainter old) => old.progress != progress;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 //  WEEKLY TAB
-// ─────────────────────────────────────────────────────────────────────────────
 class _WeeklyTab extends StatelessWidget {
   final ProfileController ctrl;
   const _WeeklyTab({required this.ctrl});
@@ -720,9 +710,7 @@ class _WeeklyTab extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 //  MONTHLY TAB
-// ─────────────────────────────────────────────────────────────────────────────
 class _MonthlyTab extends StatelessWidget {
   final ProfileController ctrl;
   const _MonthlyTab({required this.ctrl});
@@ -1013,9 +1001,7 @@ class _MonthlyTab extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 //  Shared Nutritions Card
-// ─────────────────────────────────────────────────────────────────────────────
 class _SharedNutritionCard extends StatelessWidget {
   final double currentCarbs;
   final double currentFat;

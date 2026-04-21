@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:nutrition_based_meal_ordering_app/view/pages/payment.dart';
@@ -103,7 +103,7 @@ class _CheckoutViewState extends State<_CheckoutView> {
   }
 }
 
-// ── Tab Bar ────────────────────────────────────────────────────────────────────
+// Tab Bar
 
 class _TabBar extends StatelessWidget {
   final CheckoutTab active;
@@ -173,7 +173,7 @@ class _Tab extends StatelessWidget {
   }
 }
 
-// ── Delivery Content ───────────────────────────────────────────────────────────
+// Delivery Content
 
 class _DeliveryContent extends StatelessWidget {
   final CheckoutController ctrl;
@@ -260,7 +260,7 @@ class _DeliveryContent extends StatelessWidget {
   }
 }
 
-// ── Self Collect Content ───────────────────────────────────────────────────────
+// Self Collect Content
 
 class _SelfCollectContent extends StatelessWidget {
   final CheckoutController ctrl;
@@ -337,7 +337,7 @@ class _SelfCollectContent extends StatelessWidget {
   }
 }
 
-// ── Delivery Option Tile ───────────────────────────────────────────────────────
+// Delivery Option Tile
 
 class _DeliveryOptionTile extends StatelessWidget {
   final String label;
@@ -441,7 +441,7 @@ class _DeliveryOptionTile extends StatelessWidget {
   }
 }
 
-// ── Time Dropdown ──────────────────────────────────────────────────────────────
+// Time Dropdown
 
 class _TimeDropdown extends StatelessWidget {
   final List<String> slots;
@@ -495,7 +495,7 @@ class _TimeDropdown extends StatelessWidget {
   }
 }
 
-// ── Section Header ─────────────────────────────────────────────────────────────
+// Section Header
 
 class _SectionHeader extends StatelessWidget {
   final IconData icon;
@@ -518,7 +518,7 @@ class _SectionHeader extends StatelessWidget {
   );
 }
 
-// ── Address Card with embedded flutter_map ─────────────────────────────────────
+// Address Card with embedded flutter_map
 
 class _AddressCard extends StatelessWidget {
   final AddressModel address;
@@ -643,7 +643,7 @@ class _AddressCard extends StatelessWidget {
   }
 }
 
-// ── Remarks Field ──────────────────────────────────────────────────────────────
+// Remarks Field
 
 class _RemarksField extends StatelessWidget {
   final ValueChanged<String> onChanged;
@@ -668,7 +668,7 @@ class _RemarksField extends StatelessWidget {
   );
 }
 
-// ── Bottom Bar ─────────────────────────────────────────────────────────────────
+// Bottom Bar
 
 class _BottomBar extends StatelessWidget {
   final double subtotal;

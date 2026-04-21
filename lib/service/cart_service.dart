@@ -1,11 +1,11 @@
-import '../model/cart_item.dart';
+﻿import '../model/cart_item.dart';
 import 'supabase_conn.dart';
 
 class CartService {
   /// Returns null when no user is signed in.
   String? get _uid => supabase.auth.currentUser?.id;
 
-  // ── Check if same food from same store already in cart ────────────────────
+  // Check if same food from same store already in cart
   Future<CartItem?> findExistingItem({
     required String? foodId,
     required String? storeId,
@@ -30,7 +30,7 @@ class CartService {
     return CartItem.fromMap(rows.first);
   }
 
-  // ── Fetch all cart items for the current user, filtered by store ──────────
+  // Fetch all cart items for the current user, filtered by store
   Future<List<CartItem>> fetchCart({String? storeId}) async {
     final uid = _uid;
     // Not signed in — return empty list instead of crashing with bad UUID
@@ -49,7 +49,7 @@ class CartService {
     return (rows as List).map((r) => CartItem.fromMap(r)).toList();
   }
 
-  // ── Insert a new item, return the saved row (with cart_item_id) ───────────
+  // Insert a new item, return the saved row (with cart_item_id)
   Future<CartItem> insertItem(CartItem item) async {
     final uid = _uid;
     if (uid == null || uid.isEmpty) throw Exception('Not authenticated');
@@ -62,7 +62,7 @@ class CartService {
     return CartItem.fromMap(row);
   }
 
-  // ── Update quantity for an existing item ──────────────────────────────────
+  // Update quantity for an existing item
   Future<void> updateQuantity(String cartItemId, int quantity) async {
     final uid = _uid;
     if (uid == null || uid.isEmpty) return;
@@ -73,7 +73,7 @@ class CartService {
         .eq('user_id', uid);
   }
 
-  // ── Delete a single item ──────────────────────────────────────────────────
+  // Delete a single item
   Future<void> deleteItem(String cartItemId) async {
     final uid = _uid;
     if (uid == null || uid.isEmpty) return;
@@ -84,7 +84,7 @@ class CartService {
         .eq('user_id', uid);
   }
 
-  // ── Clear cart for this user (optionally scoped to a store) ──────────────
+  // Clear cart for this user (optionally scoped to a store)
   Future<void> clearCart({String? storeId}) async {
     final uid = _uid;
     if (uid == null || uid.isEmpty) return;

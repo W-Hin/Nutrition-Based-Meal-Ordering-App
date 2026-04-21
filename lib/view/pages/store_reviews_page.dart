@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controller/review_controller.dart';
 import '../../model/review_model.dart';
@@ -20,7 +20,7 @@ class StoreReviewsPage extends StatefulWidget {
 }
 
 class _StoreReviewsPageState extends State<StoreReviewsPage> {
-  // ── Palette ──────────────────────────────────────────────────────────────
+  // Palette
   static const _forest = Color(0xFF1E4620);
   static const _lime   = Color(0xFFB5CC30);
   static const _bg     = Color(0xFFF3F2EC);
@@ -176,7 +176,7 @@ class _StoreReviewsPageState extends State<StoreReviewsPage> {
       backgroundColor: _bg,
       body: NestedScrollView(
         headerSliverBuilder: (context, _) => [
-          // ── Gradient SliverAppBar ─────────────────────────────────────
+          // Gradient SliverAppBar
           SliverAppBar(
             pinned:          true,
             expandedHeight:  130,
@@ -253,7 +253,7 @@ class _StoreReviewsPageState extends State<StoreReviewsPage> {
                   child: CircularProgressIndicator(color: _forest))
               : CustomScrollView(
                   slivers: [
-                    // ── Rating Summary ──────────────────────────────────
+                    // Rating Summary
                     SliverToBoxAdapter(
                       child: _RatingSummaryCard(
                         stats:   _stats,
@@ -324,7 +324,7 @@ class _StoreReviewsPageState extends State<StoreReviewsPage> {
   }
 }
 
-// ── Rating Summary Card ───────────────────────────────────────────────────────
+// Rating Summary Card
 
 class _RatingSummaryCard extends StatelessWidget {
   final Map<String, dynamic> stats;
@@ -489,7 +489,7 @@ class _RatingSummaryCard extends StatelessWidget {
   }
 }
 
-// ── Review Card ───────────────────────────────────────────────────────────────
+// Review Card
 
 class _ReviewCard extends StatelessWidget {
   final ReviewModel  review;
@@ -552,7 +552,7 @@ class _ReviewCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Header ─────────────────────────────────────────────
+                // Header
                 Row(
                   children: [
                     // Avatar
@@ -684,7 +684,7 @@ class _ReviewCard extends StatelessWidget {
                   ],
                 ),
 
-                // ── Comment ────────────────────────────────────────────
+                // Comment
                 if (review.comment.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text(
@@ -700,7 +700,7 @@ class _ReviewCard extends StatelessWidget {
             ),
           ),
 
-          // ── Admin Reply Strip ──────────────────────────────────────────
+          // Admin Reply Strip
           if (review.adminReply != null && review.adminReply!.isNotEmpty)
             Container(
               decoration: BoxDecoration(

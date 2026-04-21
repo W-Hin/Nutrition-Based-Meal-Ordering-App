@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controller/review_controller.dart';
 import '../../controller/store_controller.dart';
@@ -30,7 +30,7 @@ class _AdminReviewsPageState extends State<AdminReviewsPage> {
     });
   }
 
-  // ── Filtered list ──────────────────────────────────────────────────────────
+  // Filtered list
   List<ReviewModel> _filtered(List<ReviewModel> all) {
     var list = _filterStoreId == null
         ? all
@@ -43,7 +43,7 @@ class _AdminReviewsPageState extends State<AdminReviewsPage> {
     return list;
   }
 
-  // ── Reply dialog ───────────────────────────────────────────────────────────
+  // Reply dialog
   void _showReplyDialog(BuildContext context, ReviewModel review, ReviewController ctrl) {
     final replyCtrl = TextEditingController(text: review.adminReply ?? '');
 
@@ -167,7 +167,7 @@ class _AdminReviewsPageState extends State<AdminReviewsPage> {
     );
   }
 
-  // ── Delete confirmation dialog ─────────────────────────────────────────────
+  // Delete confirmation dialog
   Future<void> _confirmDelete(
       BuildContext context, ReviewModel review, ReviewController ctrl) async {
     final confirmed = await showDialog<bool>(
@@ -244,7 +244,7 @@ class _AdminReviewsPageState extends State<AdminReviewsPage> {
 
     return Column(
       children: [
-        // ── Store filter bar ───────────────────────────────────────────────
+        // Store filter bar
         Container(
           color:   Colors.white,
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
@@ -316,7 +316,7 @@ class _AdminReviewsPageState extends State<AdminReviewsPage> {
           ),
         ),
 
-        // ── Reply filter bar ───────────────────────────────────────────────
+        // Reply filter bar
         Container(
           color:   Colors.white,
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
@@ -427,7 +427,7 @@ class _AdminReviewsPageState extends State<AdminReviewsPage> {
   }
 }
 
-// ── Admin Review Card ─────────────────────────────────────────────────────────
+// Admin Review Card
 
 class _ReviewAdminCard extends StatelessWidget {
   final ReviewModel  review;
@@ -458,7 +458,7 @@ class _ReviewAdminCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header row ──────────────────────────────────────────────────
+            // Header row
             Row(
               children: [
                 CircleAvatar(
@@ -516,7 +516,7 @@ class _ReviewAdminCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
 
-            // ── Comment ──────────────────────────────────────────────────────
+            // Comment
             if (review.comment.isNotEmpty)
               Text(review.comment,
                   style: TextStyle(
@@ -524,7 +524,7 @@ class _ReviewAdminCard extends StatelessWidget {
                       color:    _dark.withValues(alpha: 0.8),
                       height:   1.4)),
 
-            // ── Admin reply bubble ────────────────────────────────────────────
+            // Admin reply bubble
             if (review.adminReply != null && review.adminReply!.isNotEmpty) ...[
               const SizedBox(height: 10),
               Container(
@@ -550,7 +550,7 @@ class _ReviewAdminCard extends StatelessWidget {
               ),
             ],
 
-            // ── Action buttons ────────────────────────────────────────────────
+            // Action buttons
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,

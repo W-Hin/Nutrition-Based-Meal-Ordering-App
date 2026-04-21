@@ -1,10 +1,10 @@
-import '../model/review_model.dart';
+﻿import '../model/review_model.dart';
 import 'supabase_conn.dart';
 
 class ReviewService {
   String get _uid => supabase.auth.currentUser?.id ?? '';
 
-  // ── Submit a new review (customer) ───────────────────────────────────────
+  // Submit a new review (customer)
   Future<ReviewModel> submitReview(ReviewModel review) async {
     final row = await supabase
         .from('reviews')
@@ -14,7 +14,7 @@ class ReviewService {
     return ReviewModel.fromMap(Map<String, dynamic>.from(row));
   }
 
-  // ── Update an existing review (customer) ─────────────────────────────────
+  // Update an existing review (customer)
   Future<void> updateReview(String reviewId, int rating, String comment) async {
     await supabase.from('reviews').update({
       'rating':     rating,
@@ -23,7 +23,7 @@ class ReviewService {
     }).eq('id', reviewId);
   }
 
-  // ── Check if current user already reviewed a specific order ──────────────
+  // Check if current user already reviewed a specific order
   Future<bool> hasReviewedOrder(int orderId) async {
     final row = await supabase
         .from('reviews')
@@ -34,7 +34,7 @@ class ReviewService {
     return row != null;
   }
 
-  // ── Get existing review for an order (null if none) ───────────────────────
+  // Get existing review for an order (null if none)
   Future<ReviewModel?> getOrderReview(int orderId) async {
     final row = await supabase
         .from('reviews')
@@ -46,7 +46,7 @@ class ReviewService {
     return ReviewModel.fromMap(Map<String, dynamic>.from(row));
   }
 
-  // ── Fetch current user's own reviews ─────────────────────────────────────
+  // Fetch current user's own reviews
   Future<List<ReviewModel>> fetchMyReviews() async {
     final rows = await supabase
         .from('reviews')
@@ -58,7 +58,7 @@ class ReviewService {
         .toList();
   }
 
-  // ── Fetch all reviews for a specific store (for store page) ──────────────
+  // Fetch all reviews for a specific store (for store page)
   Future<List<ReviewModel>> fetchStoreReviews(String storeId) async {
     final rows = await supabase
         .from('reviews')
@@ -68,7 +68,7 @@ class ReviewService {
     return _attachUserNames(rows as List);
   }
 
-  // ── Fetch ALL reviews with user name — for admin ────────────────────────
+  // Fetch ALL reviews with user name — for admin
   Future<List<ReviewModel>> fetchAllReviews() async {
     final rows = await supabase
         .from('reviews')
@@ -77,7 +77,7 @@ class ReviewService {
     return _attachUserNames(rows as List);
   }
 
-  // ── Helper: attach first_name+last_name from public.user ──────────────────
+  // Helper: attach first_name+last_name from public.user
   Future<List<ReviewModel>> _attachUserNames(List rows) async {
     if (rows.isEmpty) return [];
     // Collect unique user_ids
@@ -108,7 +108,7 @@ class ReviewService {
     }).toList();
   }
 
-  // ── Admin reply ───────────────────────────────────────────────────────────
+  // Admin reply
   Future<void> replyReview(String reviewId, String reply) async {
     await supabase.from('reviews').update({
       'admin_reply': reply,
@@ -116,12 +116,12 @@ class ReviewService {
     }).eq('id', reviewId);
   }
 
-  // ── Delete a review (customer can delete own) ─────────────────────────────
+  // Delete a review (customer can delete own)
   Future<void> deleteReview(String reviewId) async {
     await supabase.from('reviews').delete().eq('id', reviewId);
   }
 
-  // ── Fetch rating stats for a store ───────────────────────────────────────
+  // Fetch rating stats for a store
   Future<Map<String, dynamic>> fetchStoreRatingStats(String storeId) async {
     final rows = await supabase
         .from('reviews')

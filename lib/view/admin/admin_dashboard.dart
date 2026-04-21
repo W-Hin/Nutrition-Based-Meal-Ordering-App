@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../service/supabase_conn.dart';
 
@@ -10,13 +10,13 @@ class AdminDashboardPage extends StatefulWidget {
 }
 
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
-  // ── Stats ──
+  // Stats
   int _totalOrders   = 0;
   double _totalEarning = 0;
   int _menuItems     = 0;
   int _inProgress    = 0;
 
-  // ── Recent orders ──
+  // Recent orders
   List<Map<String, dynamic>> _recentOrders = [];
 
   bool _isLoading = true;
@@ -37,7 +37,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     super.dispose();
   }
 
-  // ── Fetch all dashboard data ──────────────────────────────────────────────
+  // Fetch all dashboard data
   Future<void> _fetchDashboardData() async {
     try {
       await Future.wait([
@@ -93,7 +93,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     _recentOrders = List<Map<String, dynamic>>.from(resp);
   }
 
-  // ── Real-time subscription ────────────────────────────────────────────────
+  // Real-time subscription
   void _subscribeToOrders() {
     _ordersChannel = supabase
         .channel('admin_dashboard_orders')
@@ -113,7 +113,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         .subscribe();
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // Helpers
   String _formattedDate() {
     final now = DateTime.now();
     const months = [
@@ -164,7 +164,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     }
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
+  // Build
   @override
   Widget build(BuildContext context) {
     return _isLoading
@@ -177,7 +177,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Greeting ──
+            // Greeting
             const Text(
               'Good morning, Admin 👋',
               style: TextStyle(
@@ -194,7 +194,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             ),
             const SizedBox(height: 20),
 
-            // ── Stat cards ──
+            // Stat cards
             GridView.count(
               crossAxisCount: 2,
               crossAxisSpacing: 12,
@@ -232,7 +232,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             ),
             const SizedBox(height: 20),
 
-            // ── Recent orders ──
+            // Recent orders
             const Text(
               'Recent Orders',
               style: TextStyle(
@@ -277,7 +277,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 }
 
-// ── Stat Card ──────────────────────────────────────────────────────────────────
+// Stat Card
 
 class _StatCard extends StatelessWidget {
   final IconData icon;
@@ -339,7 +339,7 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// ── Recent Order Tile ──────────────────────────────────────────────────────────
+// Recent Order Tile
 
 class _RecentOrderTile extends StatelessWidget {
   final String orderId;

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import '../../controller/auth_controller.dart';
@@ -83,7 +83,7 @@ class _RegisterPageState extends State<RegisterPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Back (Green circle) ───────────────────────────────────
+                // Back (Green circle)
                 Container(
                   decoration: const BoxDecoration(color: _green, shape: BoxShape.circle),
                   child: IconButton(
@@ -93,7 +93,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 12),
 
-                // ── Title ─────────────────────────────────────────────────
+                // Title
                 const Text(
                   'Sign Up',
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: _dark),
@@ -105,7 +105,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 24),
 
-                // ── Email ─────────────────────────────────────────────────
+                // Email
                 _label('Email *'),
                 const SizedBox(height: 6),
                 _field(
@@ -121,7 +121,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 14),
 
-                // ── Password ──────────────────────────────────────────────
+                // Password
                 _label('Password *'),
                 const SizedBox(height: 6),
                 _passwordField(
@@ -136,7 +136,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 PasswordStrengthIndicator(password: _passwordValue),
                 const SizedBox(height: 14),
 
-                // ── Confirm Password ──────────────────────────────────────
+                // Confirm Password
                 _label('Confirm Password *'),
                 const SizedBox(height: 6),
                 _passwordField(
@@ -152,7 +152,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 18),
 
-                // ── T&C Checkbox ──────────────────────────────────────────
+                // T&C Checkbox
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -190,7 +190,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 28),
 
-                // ── Register button ───────────────────────────────────────
+                // Register button
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -215,7 +215,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // ── Login link ────────────────────────────────────────────
+                // Login link
                 Center(
                   child: RichText(
                     text: TextSpan(

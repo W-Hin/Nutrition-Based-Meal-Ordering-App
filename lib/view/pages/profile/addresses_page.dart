@@ -1,11 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../service/address_service.dart';
 import '../../../service/supabase_conn.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
 //  Addresses Page  (profile → My Addresses)
-// ─────────────────────────────────────────────────────────────────────────────
 class AddressesPage extends StatefulWidget {
   const AddressesPage({super.key});
   @override
@@ -169,9 +167,7 @@ class _AddressesPageState extends State<AddressesPage> {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 //  Address Card Widget
-// ─────────────────────────────────────────────────────────────────────────────
 class _AddressCard extends StatelessWidget {
   final Map<String, dynamic> address;
   final VoidCallback onSetDefault, onEdit, onDelete;
@@ -264,9 +260,7 @@ class _AddressCard extends StatelessWidget {
     );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 //  Add / Edit Address Bottom Sheet
-// ─────────────────────────────────────────────────────────────────────────────
 class _AddressSheet extends StatefulWidget {
   final Map<String, dynamic>? existing;
   final VoidCallback onSaved;
@@ -392,7 +386,7 @@ class _AddressSheetState extends State<_AddressSheet> {
           Expanded(child: ListView(controller: scrollCtrl, padding: const EdgeInsets.all(20), children: [
             Form(key: _formKey, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-              // ── Default toggle ───────────────────────────────
+              // Default toggle
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
@@ -410,7 +404,7 @@ class _AddressSheetState extends State<_AddressSheet> {
               ),
               const SizedBox(height: 20),
 
-              // ── Label ────────────────────────────────────────
+              // Label
               _sectionLabel('Address Label'),
               const SizedBox(height: 8),
               Wrap(spacing: 8, children: ['Home', 'Work', 'Others'].map((l) {
@@ -446,7 +440,7 @@ class _AddressSheetState extends State<_AddressSheet> {
               ],
               const SizedBox(height: 20),
 
-              // ── Address fields ───────────────────────────────
+              // Address fields
               _sectionLabel('Street Address'),
               const SizedBox(height: 6),
               TextFormField(controller: _streetCtrl, decoration: _inputDeco(hint: 'No. 12, Jalan Sutera 7/5', icon: Icons.location_on_outlined),

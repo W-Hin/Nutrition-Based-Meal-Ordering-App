@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controller/review_controller.dart';
 import '../../model/review_model.dart';
@@ -105,7 +105,7 @@ class _ReviewPageState extends State<ReviewPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Store card ──────────────────────────────────────────────────
+            // Store card
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -132,7 +132,7 @@ class _ReviewPageState extends State<ReviewPage> {
             ),
             const SizedBox(height: 24),
 
-            // ── Star rating ─────────────────────────────────────────────────
+            // Star rating
             const Text('Your Rating', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _dark)),
             const SizedBox(height: 10),
             Row(
@@ -170,7 +170,7 @@ class _ReviewPageState extends State<ReviewPage> {
             ),
             const SizedBox(height: 24),
 
-            // ── Comment ─────────────────────────────────────────────────────
+            // Comment
             const Text('Your Comment', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _dark)),
             const SizedBox(height: 8),
             TextFormField(
@@ -189,7 +189,7 @@ class _ReviewPageState extends State<ReviewPage> {
             ),
             const SizedBox(height: 8),
 
-            // ── Tips ────────────────────────────────────────────────────────
+            // Tips
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -220,7 +220,7 @@ class _ReviewPageState extends State<ReviewPage> {
             ),
             const SizedBox(height: 28),
 
-            // ── Submit button ───────────────────────────────────────────────
+            // Submit button
             SizedBox(
               width: double.infinity,
               height: 52,

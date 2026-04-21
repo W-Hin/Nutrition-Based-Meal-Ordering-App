@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controller/cart_controller.dart';
 import '../../model/cart_item.dart';
@@ -64,7 +64,7 @@ class CartPage extends StatelessWidget {
   }
 }
 
-// ── Cart Item Card ─────────────────────────────────────────────────────────────
+// Cart Item Card
 
 class _CartItemCard extends StatelessWidget {
   final CartItem item;
@@ -124,7 +124,7 @@ class _CartItemCard extends StatelessWidget {
   }
 }
 
-// ── Image widget with proper fallback ──────────────────────────────────────────
+// Image widget with proper fallback
 
 class _CartItemImage extends StatelessWidget {
   final String? imageUrl;
@@ -179,7 +179,7 @@ class _CartItemImage extends StatelessWidget {
   }
 }
 
-// ── Add-ons list — shows "- No Add Ons" when empty ────────────────────────────
+// Add-ons list — shows "- No Add Ons" when empty
 
 class _AddOnsList extends StatelessWidget {
   final List<String> addOns;
@@ -218,7 +218,7 @@ class _AddOnsList extends StatelessWidget {
   );
 }
 
-// ── [ + qty - ] control ────────────────────────────────────────────────────────
+// [ + qty - ] control
 
 class _QuantityControl extends StatelessWidget {
   final int quantity;
@@ -280,7 +280,7 @@ class _Btn extends StatelessWidget {
   }
 }
 
-// ── Summary + Checkout ─────────────────────────────────────────────────────────
+// Summary + Checkout
 
 class _CartSummary extends StatelessWidget {
   final CartController cart;

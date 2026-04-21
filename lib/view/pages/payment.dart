@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controller/checkout_controller.dart';
 import '../../controller/order_controller.dart';
@@ -34,7 +34,6 @@ class PaymentPage extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _PaymentView extends StatefulWidget {
   final CheckoutController checkoutCtrl;
@@ -283,7 +282,7 @@ class _PaymentViewState extends State<_PaymentView> {
     );
   }
 
-  // ── Payment handler ────────────────────────────────────────────────────────
+  // Payment handler
   Future<void> _handlePay(
       BuildContext context,
       PaymentController ctrl,
@@ -356,7 +355,7 @@ class _PaymentViewState extends State<_PaymentView> {
     }
   }
 
-  // ── Success dialog ─────────────────────────────────────────────────────────
+  // Success dialog
   Future<void> _showPaymentSuccessDialog(
       BuildContext context,
       String storeName,
@@ -453,9 +452,7 @@ class _PaymentViewState extends State<_PaymentView> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Sub-widgets
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _OrderSummaryCard extends StatelessWidget {
   final double subtotal;

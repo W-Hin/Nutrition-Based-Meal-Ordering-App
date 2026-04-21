@@ -1,9 +1,9 @@
-import '../model/profile_model.dart';
+﻿import '../model/profile_model.dart';
 import 'supabase_conn.dart';
 
 class ProfileService {
   String get _uid => supabase.auth.currentUser?.id ?? '';
-  // ── Profile CRUD ─────────────────────────────────────────────────────────
+  // Profile CRUD
 
   Future<void> createProfile(ProfileModel profile) async {
     await supabase.from('profiles').insert(profile.toMap());
@@ -25,7 +25,7 @@ class ProfileService {
         .eq('user_id', _uid);
   }
 
-  // ── Calorie log: upsert today's totals ───────────────────────────────────
+  // Calorie log: upsert today's totals
   /// Called after an order is placed. Adds calories to today's log.
   Future<void> upsertCalorieLog({
     required double calories,
@@ -64,7 +64,7 @@ class ProfileService {
     }
   }
 
-  // ── Fetch today's calorie log ─────────────────────────────────────────────
+  // Fetch today's calorie log
   Future<Map<String, dynamic>?> fetchTodayLog() async {
     final today = DateTime.now().toIso8601String().substring(0, 10);
     return await supabase
@@ -75,7 +75,7 @@ class ProfileService {
         .maybeSingle();
   }
 
-  // ── Fetch last 7 days for the weekly chart ────────────────────────────────
+  // Fetch last 7 days for the weekly chart
   Future<List<Map<String, dynamic>>> fetchWeeklyHistory() async {
     final now = DateTime.now();
     // Monday is weekday=1, so subtract (weekday - 1)
@@ -92,7 +92,7 @@ class ProfileService {
     return List<Map<String, dynamic>>.from(rows);
   }
 
-  // ── Fetch specific month for the monthly chart ─────────────────────────────
+  // Fetch specific month for the monthly chart
   Future<List<Map<String, dynamic>>> fetchMonthlyHistory({DateTime? targetMonth}) async {
     final monthObj = targetMonth ?? DateTime.now();
     final firstDay = '${monthObj.year}-${monthObj.month.toString().padLeft(2, '0')}-01';
@@ -112,7 +112,7 @@ class ProfileService {
     return List<Map<String, dynamic>>.from(rows);
   }
 
-  // ── Fetch today's completed orders (for Meal of Today) ───────────────────
+  // Fetch today's completed orders (for Meal of Today)
   Future<List<Map<String, dynamic>>> fetchTodayOrders() async {
     final now        = DateTime.now().toLocal();
     final startOfDay = DateTime(now.year, now.month, now.day).toUtc().toIso8601String();
@@ -130,7 +130,7 @@ class ProfileService {
     return List<Map<String, dynamic>>.from(rows);
   }
 
-  // ── Fetch weekly order stats (count + spend) ──────────────────────────────
+  // Fetch weekly order stats (count + spend)
   Future<Map<String, dynamic>> fetchWeeklyOrderStats() async {
     final now    = DateTime.now();
     final monday = now.subtract(Duration(days: now.weekday - 1));
@@ -148,7 +148,7 @@ class ProfileService {
     return {'count': list.length, 'spend': totalSpend};
   }
 
-  // ── Fetch monthly order stats (count + spend) ─────────────────────────────
+  // Fetch monthly order stats (count + spend)
   Future<Map<String, dynamic>> fetchMonthlyOrderStats({DateTime? targetMonth}) async {
     final m     = targetMonth ?? DateTime.now();
     final start = DateTime(m.year, m.month, 1).toUtc().toIso8601String();
@@ -167,7 +167,7 @@ class ProfileService {
     return {'count': list.length, 'spend': totalSpend};
   }
 
-  // ── Fetch top ordered items for a given date range ────────────────────────
+  // Fetch top ordered items for a given date range
   Future<List<Map<String, dynamic>>> fetchTopOrderedItems({
     required String startDate,
     required String endDate,
@@ -205,7 +205,7 @@ class ProfileService {
     return sorted.take(limit).toList();
   }
 
-  // ── UPSERT Calorie Log For Admin Use ─────────────────────────────────────
+  // UPSERT Calorie Log For Admin Use
   static Future<void> upsertCalorieLogForUser({
     required String userId,
     required double calories,

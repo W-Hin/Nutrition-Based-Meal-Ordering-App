@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../controller/onboarding_controller.dart';
@@ -92,7 +92,7 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── AppBar ────────────────────────────────────────────────
+            // AppBar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
@@ -129,7 +129,7 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
                         style: TextStyle(fontSize: 13, color: _dark.withValues(alpha: 0.55))),
                       const SizedBox(height: 20),
 
-                      // ── Default toggle ──────────────────────────────
+                      // Default toggle
                       _card(Row(children: [
                         Container(
                           width: 36, height: 36,
@@ -145,7 +145,7 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
                       ])),
                       const SizedBox(height: 14),
 
-                      // ── Label ───────────────────────────────────────
+                      // Label
                       _sectionTitle('Address Label'),
                       const SizedBox(height: 8),
                       _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -189,7 +189,7 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
                       ])),
                       const SizedBox(height: 14),
 
-                      // ── Address Details ─────────────────────────────
+                      // Address Details
                       _sectionTitle('Address Details'),
                       const SizedBox(height: 8),
                       _card(Column(children: [
@@ -239,7 +239,7 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
                       ])),
                       const SizedBox(height: 14),
 
-                      // ── Delivery Instruction ────────────────────────
+                      // Delivery Instruction
                       _sectionTitle('Delivery Instruction (Optional)'),
                       const SizedBox(height: 8),
                       _card(TextFormField(
@@ -252,7 +252,7 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
                       )),
                       const SizedBox(height: 28),
 
-                      // ── Save button ─────────────────────────────────
+                      // Save button
                       SizedBox(
                         width: double.infinity, height: 52,
                         child: ElevatedButton(
@@ -281,7 +281,7 @@ class _OnboardingAddressPageState extends State<OnboardingAddressPage> {
     );
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+  // Helpers
 
   Widget _card(Widget child) => Container(
     width: double.infinity,

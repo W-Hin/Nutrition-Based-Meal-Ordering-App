@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../utils/password_validator.dart';
 
 /// A live password strength bar + checklist.
@@ -39,7 +39,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Strength bar ─────────────────────────────────────
+            // Strength bar
             Row(
               children: List.generate(total, (i) {
                 final filled = i < score;
@@ -57,7 +57,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
               }),
             ),
             const SizedBox(height: 6),
-            // ── Label ─────────────────────────────────────────────
+            // Label
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -84,7 +84,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
             ),
             const SizedBox(height: 10),
 
-            // ── Requirements checklist ────────────────────────────
+            // Requirements checklist
             ...passwordRequirements.map((req) {
               final met = req.test(password);
               return Padding(

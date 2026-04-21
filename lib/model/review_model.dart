@@ -1,4 +1,4 @@
-class ReviewModel {
+﻿class ReviewModel {
   final String?   id;
   final String    userId;
   final String    storeId;
@@ -29,7 +29,7 @@ class ReviewModel {
     this.storeName,
   });
 
-  // ── fromMap ───────────────────────────────────────────────────────────────
+  // fromMap
   factory ReviewModel.fromMap(Map<String, dynamic> map) {
     // User name: join may arrive as `user` (our alias) or as `users`
     final userMap = map['user'] ?? map['users'];
@@ -63,7 +63,7 @@ class ReviewModel {
     );
   }
 
-  // ── toMap (for INSERT) ────────────────────────────────────────────────────
+  // toMap (for INSERT)
   Map<String, dynamic> toMap() => {
         'user_id':  userId,
         'store_id': storeId,
@@ -72,7 +72,7 @@ class ReviewModel {
         'comment':  comment,
       };
 
-  // ── copyWith ──────────────────────────────────────────────────────────────
+  // copyWith
   ReviewModel copyWith({
     String?   id,
     String?   userId,

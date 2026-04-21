@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../controller/onboarding_controller.dart';
 import 'onboarding_personal_page.dart' show StepIndicator;
@@ -33,7 +33,7 @@ class OnboardingBmiPage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // ── App Bar Area ───────────────────────────────────────────────
+            // App Bar Area
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               child: Row(
@@ -75,7 +75,7 @@ class OnboardingBmiPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
 
-                    // ── BMI Circle ──────────────────────────────────────────
+                    // BMI Circle
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
@@ -147,7 +147,7 @@ class OnboardingBmiPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
 
-                    // ── Stats Grid ──────────────────────────────────────────
+                    // Stats Grid
                     Row(
                       children: [
                         _statCard('Height', '${ctrl.heightCm.toInt()} cm', Icons.height),
@@ -164,7 +164,7 @@ class OnboardingBmiPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
 
-                    // ── Daily Calorie Goal ──────────────────────────────────
+                    // Daily Calorie Goal
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
@@ -194,7 +194,7 @@ class OnboardingBmiPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 28),
 
-                    // ── Save & Start button ─────────────────────────────────
+                    // Save & Start button
                     SizedBox(
                       width: double.infinity,
                       height: 52,

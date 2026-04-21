@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controller/auth_controller.dart';
 import '../../controller/profile_controller.dart';
@@ -111,7 +111,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       backgroundColor: _cream,
-      // ── App Bar ─────────────────────────────────────────────────────────
+      // App Bar
       appBar: AppBar(
         backgroundColor: _cream,
         elevation: 0,
@@ -136,7 +136,7 @@ class _ProfilePageState extends State<ProfilePage> {
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
               children: [
-                // ── Profile Card ──────────────────────────────────────────
+                // Profile Card
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   decoration: BoxDecoration(
@@ -183,7 +183,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const SizedBox(height: 12),
 
-                // ── Main Menu Group ───────────────────────────────────────
+                // Main Menu Group
                 _menuCard([
                   _menuItem(
                     icon: Icons.person_outline,
@@ -225,7 +225,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ]),
                 const SizedBox(height: 12),
 
-                // ── Log Out ───────────────────────────────────────────────
+                // Log Out
                 _menuCard([
                   _menuItem(
                     icon: Icons.logout_rounded,
@@ -250,7 +250,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ── Card wrapper ─────────────────────────────────────────────────────────
+  // Card wrapper
   Widget _menuCard(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(

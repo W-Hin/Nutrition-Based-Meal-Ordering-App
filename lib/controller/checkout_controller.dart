@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../model/address_model.dart';
 import '../service/supabase_conn.dart';
 
@@ -15,7 +15,7 @@ class CheckoutController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Address ───────────────────────────────────────────────────
+  // Address
   AddressModel deliveryAddress = AddressModel(
     name:    '',
     phone:   '',
@@ -86,7 +86,7 @@ class CheckoutController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Delivery option ───────────────────────────────────────────
+  // Delivery option
   DeliveryOption deliveryOption    = DeliveryOption.standard;
   DeliveryOption selfCollectOption = DeliveryOption.pickUpNow;
 
@@ -102,7 +102,7 @@ class CheckoutController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Order For Later time ──────────────────────────────────────
+  // Order For Later time
   String? selectedLaterTime;
   String? selectedSelfLaterTime;
 
@@ -116,7 +116,7 @@ class CheckoutController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Delivery fee based on option ─────────────────────────────
+  // Delivery fee based on option
   double get deliveryFee {
     if (activeTab == CheckoutTab.selfCollect) return 0;
     switch (deliveryOption) {
@@ -128,7 +128,7 @@ class CheckoutController extends ChangeNotifier {
     }
   }
 
-  // ── Delivery type label for DB storage ───────────────────────
+  // Delivery type label for DB storage
   String? get deliveryTypeLabel {
     if (activeTab == CheckoutTab.selfCollect) return null;
     switch (deliveryOption) {
@@ -140,7 +140,7 @@ class CheckoutController extends ChangeNotifier {
     }
   }
 
-  // ── Scheduled time ────────────────────────────────────────────
+  // Scheduled time
   String? get scheduledTime {
     if (activeTab == CheckoutTab.delivery &&
         deliveryOption == DeliveryOption.orderLater) {
@@ -153,13 +153,13 @@ class CheckoutController extends ChangeNotifier {
     return null;
   }
 
-  // ── Remarks ───────────────────────────────────────────────────
+  // Remarks
   String remarks = '';
   void setRemarks(String value) {
     remarks = value;
   }
 
-  // ── Generate 30-min time slots from now until 9pm ────────────
+  // Generate 30-min time slots from now until 9pm
   List<String> generateTimeSlots() {
     final now    = DateTime.now();
     final cutoff = DateTime(now.year, now.month, now.day, 21, 0);

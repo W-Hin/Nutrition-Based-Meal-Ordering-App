@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../model/cart_item.dart';
 import '../service/cart_service.dart';
 
@@ -9,7 +9,7 @@ class CartController extends ChangeNotifier {
   bool isLoading = false;
   String? error;
 
-  // ── Active store scope ────────────────────────────────────────────────────
+  // Active store scope
   String? _activeStoreId;
   String? _activeStoreName;
 
@@ -22,7 +22,7 @@ class CartController extends ChangeNotifier {
   double get serviceFee            => subtotal * 0.05;
   double get total                 => subtotal + serviceFee;
 
-  // ── Load cart (scoped to store) ───────────────────────────────────────────
+  // Load cart (scoped to store)
   Future<void> loadCart({String? storeId}) async {
     isLoading = true;
     error     = null;
@@ -40,7 +40,7 @@ class CartController extends ChangeNotifier {
     }
   }
 
-  // ── Switch active store ───────────────────────────────────────────────────
+  // Switch active store
   /// Call this when the user selects / enters a store.
   /// Reloads cart scoped to the new store.
   Future<void> setStore(String storeId, String storeName) async {
@@ -52,7 +52,7 @@ class CartController extends ChangeNotifier {
     await loadCart(storeId: storeId);
   }
 
-  // ── Add item ──────────────────────────────────────────────────────────────
+  // Add item
   Future<void> addItem(CartItem item) async {
     // Guard: item must belong to the active store
     if (_activeStoreId != null &&
@@ -65,7 +65,7 @@ class CartController extends ChangeNotifier {
     }
 
     try {
-      // ── Step 1: Check for duplicate (same food + store) ──
+      // Step 1: Check for duplicate (same food + store)
       final existing = await _service.findExistingItem(
         foodId:  item.foodId,
         storeId: item.storeId,
@@ -91,7 +91,7 @@ class CartController extends ChangeNotifier {
         return;
       }
 
-      // ── Step 2: No duplicate — insert then add to local list ──
+      // Step 2: No duplicate — insert then add to local list
       debugPrint('[CartController] addItem: inserting "${item.name}"...');
       final saved = await _service.insertItem(item);
       debugPrint('[CartController] addItem: success, id=${saved.cartItemId}');
@@ -106,7 +106,7 @@ class CartController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Increment ─────────────────────────────────────────────────────────────
+  // Increment
   Future<void> increment(int index) async {
     final item = _items[index];
     item.quantity++;
@@ -123,7 +123,7 @@ class CartController extends ChangeNotifier {
     }
   }
 
-  // ── Decrement ─────────────────────────────────────────────────────────────
+  // Decrement
   Future<void> decrement(int index) async {
     final item = _items[index];
 
@@ -156,7 +156,7 @@ class CartController extends ChangeNotifier {
     }
   }
 
-  // ── Clear cart (scoped to active store) ───────────────────────────────────
+  // Clear cart (scoped to active store)
   Future<void> clearCart() async {
     final backup = List<CartItem>.from(_items);
     _items.clear();
@@ -171,7 +171,7 @@ class CartController extends ChangeNotifier {
     }
   }
 
-  // ── Clear error ───────────────────────────────────────────────────────────
+  // Clear error
   void clearError() {
     error = null;
     notifyListeners();

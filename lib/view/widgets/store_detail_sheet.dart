@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../model/store_model.dart';
 import '../../controller/store_controller.dart';
@@ -484,7 +484,7 @@ class StoreDetailBottomSheet extends StatelessWidget {
     );
   }
 
-  // ── Complete store selection ───────────────────────────────────────────────
+  // Complete store selection
   void _completeStoreSelection(BuildContext context, StoreController storeCtrl) {
     final cartCtrl = Provider.of<CartController>(context, listen: false);
 

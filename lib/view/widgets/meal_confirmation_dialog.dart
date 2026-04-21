@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../model/meal_model.dart';
 
@@ -19,7 +19,7 @@ class MealConfirmationDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Image Section ──
+            // Image Section
             SizedBox(
               width: double.infinity,
               height: 220,
@@ -45,7 +45,7 @@ class MealConfirmationDialog extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Title and Price ──
+                  // Title and Price
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -71,7 +71,7 @@ class MealConfirmationDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
 
-                  // ── Category ──
+                  // Category
                   Text(
                     meal.categories.isNotEmpty ? meal.categories.first : '',
                     style: const TextStyle(
@@ -82,7 +82,7 @@ class MealConfirmationDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  // ── Description ──
+                  // Description
                   Text(
                     meal.description,
                     style: const TextStyle(
@@ -93,7 +93,7 @@ class MealConfirmationDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  // ── Serving Size ──
+                  // Serving Size
                   Text(
                     meal.servingSize,
                     style: const TextStyle(
@@ -103,15 +103,15 @@ class MealConfirmationDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // ── Nutrition Facts ──
-                  // ── Nutrition Facts ──
+                  // Nutrition Facts
+                  // Nutrition Facts
                   ...meal.nutritionData.entries.map((entry) {
                     return _buildNutritionRow(entry.key, entry.value);
                   }),
 
                   const SizedBox(height: 16),
 
-                  // ── Dietary Tags ──
+                  // Dietary Tags
                   if (meal.dietaryPreferences.isNotEmpty)
                     Wrap(
                       spacing: 16,
@@ -129,7 +129,7 @@ class MealConfirmationDialog extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  // ── Buttons ──
+                  // Buttons
                   Row(
                     children: [
                       Expanded(

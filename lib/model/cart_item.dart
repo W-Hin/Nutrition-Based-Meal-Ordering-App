@@ -1,4 +1,4 @@
-class CartItem {
+﻿class CartItem {
   final String? cartItemId;   // uuid from DB (null for local-only items before sync)
   final String? foodId;       // uuid — null for custom bowls
   final String? storeId;
@@ -25,7 +25,7 @@ class CartItem {
 
   double get lineTotal => price * quantity;
 
-  // ── From Supabase row ──────────────────────────────────────────────────────
+  // From Supabase row
   factory CartItem.fromMap(Map<String, dynamic> map) {
     return CartItem(
       cartItemId:    map['cart_item_id'] as String?,
@@ -43,7 +43,7 @@ class CartItem {
     );
   }
 
-  // ── To Supabase insert payload ─────────────────────────────────────────────
+  // To Supabase insert payload
   Map<String, dynamic> toInsertMap(String userId) {
     return {
       'user_id':        userId,

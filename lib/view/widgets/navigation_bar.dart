@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controller/cart_controller.dart';
 
@@ -24,7 +24,7 @@ class CustomBottomNavBar extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.bottomCenter,
         children: [
-          // ── Bottom bar background ──────────────────────────────────────
+          // Bottom bar background
           Positioned(
             bottom: 0,
             left: 0,
@@ -84,7 +84,7 @@ class CustomBottomNavBar extends StatelessWidget {
             ),
           ),
 
-          // ── Floating Cart Button ───────────────────────────────────────
+          // Floating Cart Button
           Positioned(
             bottom: 50,
             child: Consumer<CartController>(

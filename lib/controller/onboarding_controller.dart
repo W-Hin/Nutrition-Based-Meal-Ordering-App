@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../model/profile_model.dart';
 import '../service/profile_service.dart';
 import '../service/supabase_conn.dart';
@@ -6,7 +6,7 @@ import '../service/supabase_conn.dart';
 class OnboardingController extends ChangeNotifier {
   final ProfileService _profileService = ProfileService();
 
-  // ── Step 1: Personal Details ───────────────────────────────────────────────
+  // Step 1: Personal Details
   String    fullName   = '';
   String    phone      = '';
   DateTime? dob;
@@ -14,7 +14,7 @@ class OnboardingController extends ChangeNotifier {
   double    heightCm   = 165;
   double    weightKg   = 60;
 
-  // ── Calculated values (populated after calculateBmiAndCalories()) ──────────
+  // Calculated values (populated after calculateBmiAndCalories())
   double? bmi;
   String  bmiCategory     = '';
   double? dailyCalorieGoal;
@@ -28,7 +28,7 @@ class OnboardingController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Step 3: Address ────────────────────────────────────────────────────────
+  // Step 3: Address
   bool   isDefaultAddress      = true;
   String deliveryLabel         = 'Home';
   String deliveryInstruction   = '';
@@ -39,7 +39,7 @@ class OnboardingController extends ChangeNotifier {
 
   bool isSaving = false;
 
-  // ── BMI & Calorie Calculation ─────────────────────────────────────────────
+  // BMI & Calorie Calculation
   /// Uses Harris-Benedict equation + activity multiplier.
   void calculateBmiAndCalories() {
     if (heightCm <= 0 || weightKg <= 0) return;
@@ -93,7 +93,7 @@ class OnboardingController extends ChangeNotifier {
     }
   }
 
-  // ── Healthy weight range ──────────────────────────────────────────────────
+  // Healthy weight range
   String get healthyWeightRange {
     final h = heightCm / 100;
     final low  = (18.5 * h * h).toStringAsFixed(1);
@@ -101,7 +101,7 @@ class OnboardingController extends ChangeNotifier {
     return '$low kg – $high kg';
   }
 
-  // ── Save profile to Supabase ──────────────────────────────────────────────
+  // Save profile to Supabase
   Future<bool> saveProfile() async {
     isSaving = true;
     notifyListeners();
@@ -141,7 +141,7 @@ class OnboardingController extends ChangeNotifier {
     }
   }
 
-  // ── Save address to Supabase ───────────────────────────────────────────────
+  // Save address to Supabase
   Future<bool> saveAddress() async {
     try {
       final uid = supabase.auth.currentUser!.id;

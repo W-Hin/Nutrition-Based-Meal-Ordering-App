@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../model/meal_model.dart';
 import '../../model/ingredient_model.dart';
 import '../../model/store_model.dart';
@@ -452,7 +452,7 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
           color: const Color(0xFFF5F5F0), // Standardized background
           child: Column(
             children: [
-              // ── STICKY HEADER: Pill Widget ──
+              // STICKY HEADER: Pill Widget
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                 color: const Color(0xFFF5F5F0), // Matches background
@@ -469,7 +469,7 @@ class _AdminMenuManagementPageState extends State<AdminMenuManagementPage> {
                 ),
               ),
 
-              // ── SCROLLABLE CONTENT ──
+              // SCROLLABLE CONTENT
               Expanded(
                 child: _buildItemListContent(currentStore),
               ),
@@ -688,14 +688,14 @@ class _ItemCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Clickable Area ──
+          // Clickable Area
           InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── Image Section ──
+                // Image Section
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                   child: (imageUrl == null || imageUrl.isEmpty) 

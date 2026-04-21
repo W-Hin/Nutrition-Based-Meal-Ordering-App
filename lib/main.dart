@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 
-// ── Controllers ────────────────────────────────────────────────────────────────
+// controllers
 import 'package:nutrition_based_meal_ordering_app/controller/cart_controller.dart';
 import 'package:nutrition_based_meal_ordering_app/controller/order_controller.dart';
 import 'package:nutrition_based_meal_ordering_app/controller/menu_controller.dart';
@@ -15,7 +15,7 @@ import 'package:nutrition_based_meal_ordering_app/controller/onboarding_controll
 import 'package:nutrition_based_meal_ordering_app/controller/profile_controller.dart';
 import 'package:nutrition_based_meal_ordering_app/controller/review_controller.dart';
 
-// ── Pages ──────────────────────────────────────────────────────────────────────
+// pages
 import 'package:nutrition_based_meal_ordering_app/view/pages/welcome_page.dart';
 import 'package:nutrition_based_meal_ordering_app/view/pages/login_page.dart';
 import 'package:nutrition_based_meal_ordering_app/view/pages/register_page.dart';
@@ -73,7 +73,7 @@ void main() async {
   );
 }
 
-// ── Scroll behaviour: supports mouse/trackpad drag ────────────────────────────
+// allow mouse and trackpad scrolling
 class AppScrollBehavior extends MaterialScrollBehavior {
   @override
   Set<PointerDeviceKind> get dragDevices => {
@@ -83,7 +83,7 @@ class AppScrollBehavior extends MaterialScrollBehavior {
   };
 }
 
-// ── Root App ──────────────────────────────────────────────────────────────────
+// root app
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -112,8 +112,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// ── Auth Wrapper ──────────────────────────────────────────────────────────────
-/// Checks session → role → profile and routes accordingly.
+// auth wrapper - check session and route user accordingly
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
@@ -171,7 +170,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
   }
 }
 
-// ── Loading screen ─────────────────────────────────────────────────────────────
+// loading screen
 class _LoadingScreen extends StatelessWidget {
   static const _cream  = Color(0xFFF5F0E8);
   static const _orange = Color(0xFFD95B2B);
@@ -188,7 +187,7 @@ class _LoadingScreen extends StatelessWidget {
   }
 }
 
-// ── Main Shell (customer app with bottom nav) ─────────────────────────────────
+// main shell - bottom nav for customer
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -217,8 +216,7 @@ class _MainShellState extends State<MainShell> {
         onItemTapped: (index) {
           setState(() => _selectedIndex = index);
           _tabNotifier.value = index;
-// Refresh dashboard data every time user navigates back to Home tab
-          // (IndexedStack keeps the widget alive so initState never fires again)
+          // Reload dashboard when returning to Home tab
           if (index == 0) {
             context.read<ProfileController>().loadDashboardData();
           }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class PaymentFailedPage extends StatelessWidget {
   const PaymentFailedPage({super.key});
@@ -34,7 +34,7 @@ class PaymentFailedPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // ── Failure icon ──
+            // Failure icon
             Container(
               width: 100,
               height: 100,
@@ -68,7 +68,7 @@ class PaymentFailedPage extends StatelessWidget {
             ),
             const SizedBox(height: 40),
 
-            // ── Try again ──
+            // Try again
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -92,7 +92,7 @@ class PaymentFailedPage extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // ── Go home ──
+            // Go home
             SizedBox(
               width: double.infinity,
               height: 50,

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../controller/onboarding_controller.dart';
@@ -182,7 +182,7 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── App Bar ──────────────────────────────────────────────────
+            // App Bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               child: Row(
@@ -214,11 +214,11 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
               ),
             ),
 
-            // ── Step Indicator ───────────────────────────────────────────
+            // Step Indicator
             StepIndicator(current: 1, total: 2),
             const SizedBox(height: 8),
 
-            // ── Scrollable Form ──────────────────────────────────────────
+            // Scrollable Form
             Expanded(
               child: SingleChildScrollView(
                 padding:
@@ -238,7 +238,7 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                       ),
                       const SizedBox(height: 20),
 
-                      // ── Full Name ────────────────────────────────────
+                      // Full Name
                       _label('Full Name *'),
                       const SizedBox(height: 6),
                       _textField(
@@ -249,7 +249,7 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                       ),
                       const SizedBox(height: 14),
 
-                      // ── Phone ────────────────────────────────────────
+                      // Phone
                       _label('Phone *'),
                       const SizedBox(height: 6),
                       Row(
@@ -283,7 +283,7 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                       const SizedBox(height: 14),
 
 
-                      // ── Address ──────────────────────────────────────
+                      // Address
                       _label('Address *'),
                       const SizedBox(height: 6),
                       GestureDetector(
@@ -317,7 +317,7 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                       ),
                       const SizedBox(height: 14),
 
-                      // ── DOB & Gender ─────────────────────────────────
+                      // DOB & Gender
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -419,7 +419,7 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                       ),
                       const SizedBox(height: 14),
 
-                      // ── Height & Weight ──────────────────────────────
+                      // Height & Weight
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -480,7 +480,7 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                       ),
                       const SizedBox(height: 28),
 
-                      // ── Calculate BMI button ─────────────────────────
+                      // Calculate BMI button
                       SizedBox(
                         width: double.infinity,
                         height: 52,
@@ -505,7 +505,7 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
                       ),
                       const SizedBox(height: 12),
 
-                      // ── Skip button ──────────────────────────────────
+                      // Skip button
                       SizedBox(
                         width: double.infinity,
                         height: 48,
@@ -538,7 +538,7 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
     );
   }
 
-  // ── Helper Widgets ─────────────────────────────────────────────────────────
+  // Helper Widgets
 
   Widget _label(String text) {
     return RichText(
@@ -605,7 +605,7 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
 
 }
 
-// ── Step Indicator ─────────────────────────────────────────────────────────
+// Step Indicator
 class StepIndicator extends StatelessWidget {
   final int current;
   final int total;

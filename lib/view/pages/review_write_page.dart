@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controller/review_controller.dart';
 import '../../model/review_model.dart';
@@ -24,7 +24,7 @@ class ReviewWritePage extends StatefulWidget {
 
 class _ReviewWritePageState extends State<ReviewWritePage>
     with SingleTickerProviderStateMixin {
-  // ── Palette ──────────────────────────────────────────────────────────────
+  // Palette
   static const _forest  = Color(0xFF1E4620);
   static const _lime    = Color(0xFFB5CC30);
   static const _orange  = Color(0xFFD95B2B);
@@ -153,7 +153,7 @@ class _ReviewWritePageState extends State<ReviewWritePage>
       backgroundColor: _bg,
       body: CustomScrollView(
         slivers: [
-          // ── Gradient AppBar ────────────────────────────────────────────
+          // Gradient AppBar
           SliverAppBar(
             expandedHeight: 160,
             floating:   false,
@@ -218,22 +218,22 @@ class _ReviewWritePageState extends State<ReviewWritePage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Store Info Card ──────────────────────────────────
+                  // Store Info Card
                   _StoreCard(
                     storeName: widget.storeName,
                     orderId:   widget.orderId,
                   ),
                   const SizedBox(height: 24),
 
-                  // ── Star Rating Card ─────────────────────────────────
+                  // Star Rating Card
                   _buildRatingCard(),
                   const SizedBox(height: 20),
 
-                  // ── Comment Card ──────────────────────────────────────
+                  // Comment Card
                   _buildCommentCard(),
                   const SizedBox(height: 28),
 
-                  // ── Submit Button ─────────────────────────────────────
+                  // Submit Button
                   _buildSubmitButton(),
                   const SizedBox(height: 32),
                 ],
@@ -488,7 +488,7 @@ class _ReviewWritePageState extends State<ReviewWritePage>
   }
 }
 
-// ── Store Card ─────────────────────────────────────────────────────────────────
+// Store Card
 
 class _StoreCard extends StatelessWidget {
   final String storeName;

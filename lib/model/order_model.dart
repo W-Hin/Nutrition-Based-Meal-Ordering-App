@@ -1,4 +1,4 @@
-enum OrderType { delivery, selfCollect }
+﻿enum OrderType { delivery, selfCollect }
 
 enum OrderStatus {
   submitted,
@@ -59,7 +59,7 @@ class OrderModel {
 
   bool get isCancellable => status == OrderStatus.submitted;
 
-  // ── Status label depending on order type ──
+  // Status label depending on order type
   String get statusLabel {
     switch (status) {
       case OrderStatus.submitted:
@@ -77,7 +77,7 @@ class OrderModel {
     }
   }
 
-  // ── Banner description depending on type + status ──
+  // Banner description depending on type + status
   String get statusDescription {
     if (orderType == OrderType.delivery) {
       switch (status) {
@@ -108,7 +108,7 @@ class OrderModel {
     }
   }
 
-  // ── Image asset path per status ──
+  // Image asset path per status
   String get statusImagePath {
     switch (status) {
       case OrderStatus.submitted:

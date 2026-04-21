@@ -1,7 +1,7 @@
-class ProfileModel {
+﻿class ProfileModel {
   final String? id;
   final String userId;
-  final DateTime? dateOfBirth;   // replaces age
+  final DateTime? dateOfBirth;
   final String? gender;
   final double? heightCm;
   final double? weightKg;
@@ -63,7 +63,7 @@ class ProfileModel {
         'updated_at': DateTime.now().toIso8601String(),
       };
 
-  // ── Calculated age from DOB ──────────────────────────────────────────────
+  // Calculated age from DOB
   int? get age {
     if (dateOfBirth == null) return null;
     final now = DateTime.now();
@@ -75,7 +75,7 @@ class ProfileModel {
     return age;
   }
 
-  // ── BMI label ────────────────────────────────────────────────────────────
+  // BMI label
   String get bmiCategory {
     if (bmi == null) return '';
     if (bmi! < 18.5) return 'Underweight';
@@ -84,7 +84,7 @@ class ProfileModel {
     return 'Obese';
   }
 
-  // ── Healthy weight range string ──────────────────────────────────────────
+  // Healthy weight range string
   String get healthyWeightRange {
     if (heightCm == null) return '';
     final h = heightCm! / 100;

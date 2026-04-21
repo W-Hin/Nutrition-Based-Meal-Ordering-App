@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controller/review_controller.dart';
 import '../../model/review_model.dart';
@@ -6,7 +6,7 @@ import '../../service/supabase_conn.dart';
 import 'order_details.dart';
 import 'review_write_page.dart';
 
-// ── Status helpers ─────────────────────────────────────────────────────────────
+// Status helpers
 
 const _activeStatuses  = {'submitted', 'preparing', 'out_for_delivery', 'ready_for_collection'};
 const _historyStatuses = {'completed', 'delivered', 'retrieved', 'cancelled'};
@@ -54,7 +54,7 @@ String _formatDate(String? raw) {
   }
 }
 
-// ── Page ───────────────────────────────────────────────────────────────────────
+// Page
 
 class MyOrdersPage extends StatefulWidget {
   final ValueNotifier<int>? tabNotifier;
@@ -510,7 +510,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // ── Gradient header ────────────────────────────────────────
+              // Gradient header
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
@@ -589,7 +589,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
                 ),
               ),
 
-              // ── Body ────────────────────────────────────────────────────
+              // Body
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -759,9 +759,9 @@ class _MyOrdersPageState extends State<MyOrdersPage>
     );
     commentCtrl.dispose();
   }
-} // end _MyOrdersPageState
+}
 
-// ── Order Card ─────────────────────────────────────────────────────────────────
+// Order Card
 
 class _OrderCard extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -812,7 +812,7 @@ class _OrderCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header ─────────────────────────────────────────────────────
+            // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
               child: Row(
@@ -994,7 +994,7 @@ class _OrderCard extends StatelessWidget {
       v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(2);
 }
 
-// ── Item Row ───────────────────────────────────────────────────────────────────
+// Item Row
 
 class _ItemRow extends StatelessWidget {
   final Map<String, dynamic> item;
@@ -1083,7 +1083,7 @@ class _ItemRow extends StatelessWidget {
   );
 }
 
-// ── Food Image widget ──────────────────────────────────────────────────────────
+// Food Image widget
 
 class _FoodImage extends StatelessWidget {
   final String? imageUrl;
@@ -1132,7 +1132,7 @@ class _FoodImage extends StatelessWidget {
   }
 }
 
-// ── Empty State ────────────────────────────────────────────────────────────────
+// Empty State
 
 class _EmptyState extends StatelessWidget {
   final IconData icon;
@@ -1155,7 +1155,7 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-// ── Error State ────────────────────────────────────────────────────────────────
+// Error State
 
 class _ErrorState extends StatelessWidget {
   final String       message;
