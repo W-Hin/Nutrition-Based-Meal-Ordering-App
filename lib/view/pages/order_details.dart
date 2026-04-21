@@ -169,6 +169,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         case 'out_for_delivery':
         case 'ready_for_collection': s = OrderStatus.readyOrOutForDelivery; break;
         case 'completed':            s = OrderStatus.completed;             break;
+        case 'cancelled':            s = OrderStatus.cancelled;             break;
       }
       if (s != null) ctrl.updateStatus(s);
     });
@@ -429,6 +430,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       case 'completed':
       case 'delivered':
       case 'retrieved':            return OrderStatus.completed;
+      case 'cancelled':            return OrderStatus.cancelled;
       default:                     return OrderStatus.submitted;
     }
   }
@@ -523,6 +525,8 @@ class _SelfCollectCodeCard extends StatelessWidget {
         return 'Order Ready! Waiting to be Collected.';
       case OrderStatus.completed:
         return 'Order Collected!';
+      case OrderStatus.cancelled:
+        return 'Order Cancelled';
     }
   }
 
@@ -723,13 +727,14 @@ class _StatusImage extends StatelessWidget {
   }
 }
 
-// ── Status Tracker (FIX 3: Two-row layout — icon row + label row) ──────────────
+// ── Status Tracker ──────────────────────────────────────────────────────────
 
 class _StatusTracker extends StatelessWidget {
   final OrderStatus status;
   final OrderType   orderType;
 
   static const _green = Color(0xFF1E4620);
+  static const double _iconSize  = 36.0;
 
   const _StatusTracker({required this.status, required this.orderType});
 
@@ -738,8 +743,8 @@ class _StatusTracker extends StatelessWidget {
     final isSC = orderType == OrderType.selfCollect;
 
     final steps = [
-      _Step(icon: Icons.receipt_outlined,     label: 'Order\nSubmitted'),
-      _Step(icon: Icons.soup_kitchen_outlined, label: 'Preparing'),
+      _Step(icon: Icons.receipt_outlined,      label: 'Order\nSubmitted'),
+      _Step(icon: Icons.soup_kitchen_outlined,  label: 'Preparing'),
       _Step(
         icon:  isSC ? Icons.storefront_outlined : Icons.directions_bike_outlined,
         label: isSC ? 'Ready For\nCollection' : 'Out For\nDelivery',
@@ -753,71 +758,82 @@ class _StatusTracker extends StatelessWidget {
     final activeIndex = status.index;
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
       decoration: BoxDecoration(
         color:        Colors.white,
         borderRadius: BorderRadius.circular(12),
         border:       Border.all(color: const Color(0xFFDDDDD0)),
       ),
-      child: Column(
-        children: [
-          // ── Row 1: Icons connected by lines ──────────────────────────
-          Row(
-            children: List.generate(steps.length * 2 - 1, (i) {
-              if (i.isOdd) {
-                final isCompleted = (i ~/ 2) < activeIndex;
-                return Expanded(
-                  child: Container(
-                    height: 2,
-                    color: isCompleted ? _green : const Color(0xFFDDDDD0),
-                  ),
-                );
-              }
-              final stepIndex   = i ~/ 2;
-              final isCompleted = stepIndex <= activeIndex;
-              final step        = steps[stepIndex];
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: List.generate(steps.length, (i) {
+          final isLast      = i == steps.length - 1;
+          final isCompleted = i <= activeIndex;
+          final isProcessing = i == activeIndex;
+          final step        = steps[i];
 
-              return Container(
-                width:  36,
-                height: 36,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isCompleted ? _green : const Color(0xFFEEEBDE),
+          return Expanded(
+            child: Column(
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Line connectors
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            height: 2,
+                            color: i > 0 && i <= activeIndex
+                                ? _green
+                                : Colors.transparent,
+                          ),
+                        ),
+                        Expanded(
+                          child: Container(
+                            height: 2,
+                            color: !isLast && i < activeIndex
+                                ? _green
+                                : (isLast ? Colors.transparent : const Color(0xFFDDDDD0)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Icon Circle
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width:  _iconSize,
+                      height: _iconSize,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isCompleted ? _green : const Color(0xFFEEEBDE),
+                        boxShadow: isProcessing
+                            ? [BoxShadow(color: _green.withOpacity(0.3), blurRadius: 8, spreadRadius: 2)]
+                            : null,
+                      ),
+                      child: Icon(
+                        step.icon,
+                        size:  18,
+                        color: isCompleted ? Colors.white : const Color(0xFFAAAAAA),
+                      ),
+                    ),
+                  ],
                 ),
-                child: Icon(step.icon,
-                    size:  18,
-                    color: isCompleted ? Colors.white : const Color(0xFFAAAAAA)),
-              );
-            }),
-          ),
-          const SizedBox(height: 8),
-          // ── Row 2: Labels aligned under each icon ─────────────────────
-          Row(
-            children: List.generate(steps.length * 2 - 1, (i) {
-              if (i.isOdd) {
-                // Spacer to match the connector lines
-                return const Expanded(child: SizedBox());
-              }
-              final stepIndex   = i ~/ 2;
-              final isCompleted = stepIndex <= activeIndex;
-              final step        = steps[stepIndex];
-
-              return SizedBox(
-                width: 36,
-                child: Text(
+                const SizedBox(height: 10),
+                Text(
                   step.label,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize:   8,
-                    fontWeight: isCompleted ? FontWeight.w700 : FontWeight.w400,
-                    color:      isCompleted ? _green : const Color(0xFFAAAAAA),
-                    height:     1.3,
+                    fontSize:   10,
+                    height:     1.2,
+                    fontWeight: isCompleted ? FontWeight.w700 : FontWeight.w500,
+                    color:      isCompleted ? _green : const Color(0xFF8A8A8A),
                   ),
                 ),
-              );
-            }),
-          ),
-        ],
+              ],
+            ),
+          );
+        }),
       ),
     );
   }
@@ -865,7 +881,7 @@ class _InfoSection extends StatelessWidget {
   }
 }
 
-// ── Live Item Details (FIX 1: includes qty, delivery type & fee) ───────────────
+// ── Live Item Details ──────────────────────────────────────────────────────────
 
 class _LiveItemDetailsSection extends StatelessWidget {
   final OrderController ctrl;
@@ -935,16 +951,15 @@ class _LiveItemDetailsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Items — live order uses OrderItemModel (no qty stored, qty=1 per row)
+          // FIX 2: use item.quantity from OrderItemModel
           ...order.items.map((item) => _OrderItemRow(
             name:     item.name,
             addOns:   item.addOns,
             price:    item.price,
-            quantity: 1,
+            quantity: item.quantity,
             imageUrl: null,
           )),
           const Divider(height: 20),
-          // Fee breakdown
           _FeeRow(label: 'Subtotal', value: 'RM ${_fmt(order.subtotal)}'),
           const SizedBox(height: 4),
           _FeeRow(
@@ -956,7 +971,6 @@ class _LiveItemDetailsSection extends StatelessWidget {
                 label: 'Delivery Fee',
                 value: 'RM ${_fmt(order.deliveryFee)}'),
           ],
-          // Delivery type label
           if (!isSelfCollect) ...[
             const SizedBox(height: 4),
             _FeeRow(
@@ -997,7 +1011,7 @@ class _LiveItemDetailsSection extends StatelessWidget {
   }
 }
 
-// ── History Item Details (FIX 1: includes qty, delivery type & fee) ───────────
+// ── History Item Details ───────────────────────────────────────────────────────
 
 class _HistoryItemDetailsSection extends StatelessWidget {
   final List<Map<String, dynamic>> items;
@@ -1078,6 +1092,7 @@ class _HistoryItemDetailsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+          // FIX 2: read quantity from DB row (defaults to 1 if missing)
           ...items.map((item) {
             final qty = (item['quantity'] as num?)?.toInt() ?? 1;
             return _OrderItemRow(
@@ -1089,7 +1104,6 @@ class _HistoryItemDetailsSection extends StatelessWidget {
             );
           }),
           const Divider(height: 20),
-          // Fee breakdown
           _FeeRow(label: 'Subtotal', value: 'RM ${_fmt(subtotal)}'),
           const SizedBox(height: 4),
           _FeeRow(
@@ -1101,7 +1115,6 @@ class _HistoryItemDetailsSection extends StatelessWidget {
                 label: 'Delivery Fee',
                 value: 'RM ${_fmt(deliveryFee)}'),
           ],
-          // Delivery type label
           const SizedBox(height: 4),
           _FeeRow(
             label: 'Order Type',
@@ -1159,7 +1172,7 @@ class _FeeRow extends StatelessWidget {
   );
 }
 
-// ── Shared item row (FIX 1: shows quantity) ────────────────────────────────────
+// ── Shared item row ────────────────────────────────────────────────────────────
 
 class _OrderItemRow extends StatelessWidget {
   final String       name;
@@ -1205,23 +1218,22 @@ class _OrderItemRow extends StatelessWidget {
                           style: const TextStyle(
                               fontWeight: FontWeight.w600, fontSize: 13)),
                     ),
-                    if (quantity > 1)
-                      Container(
-                        margin: const EdgeInsets.only(left: 6),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E4620).withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          'x$quantity',
-                          style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1E4620)),
-                        ),
+                    Container(
+                      margin: const EdgeInsets.only(left: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E4620).withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      child: Text(
+                        'x$quantity',
+                        style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E4620)),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),

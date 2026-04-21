@@ -5,6 +5,7 @@ enum OrderStatus {
   preparing,
   readyOrOutForDelivery, // "Out for Delivery" OR "Ready for Collection"
   completed,
+  cancelled,
 }
 
 class OrderModel {
@@ -71,6 +72,8 @@ class OrderModel {
             : 'Ready For Collection';
       case OrderStatus.completed:
         return 'Completed';
+      case OrderStatus.cancelled:
+        return 'Cancelled';
     }
   }
 
@@ -86,6 +89,8 @@ class OrderModel {
           return 'Your order is on the way! Please be ready to retrieve your meal.';
         case OrderStatus.completed:
           return 'This order has been delivered. Please order from us again!';
+        case OrderStatus.cancelled:
+          return 'This order has been cancelled.';
       }
     } else {
       switch (status) {
@@ -97,6 +102,8 @@ class OrderModel {
           return 'Your order is ready! Please collect your order within 2 hours of ordering.';
         case OrderStatus.completed:
           return 'This order has been picked up. Please Order from Us Again!';
+        case OrderStatus.cancelled:
+          return 'This order has been cancelled.';
       }
     }
   }
@@ -118,6 +125,9 @@ class OrderModel {
           return 'assets/images/collect_food_success_icon.png';
         }
         return 'assets/images/carry_food_icon.jpg';
+      case OrderStatus.cancelled:
+        // Use a default error or cancel icon if available, fallback to tick
+        return 'assets/images/order_submitted_tick_icon.png';
     }
   }
 }
@@ -126,12 +136,16 @@ class OrderItemModel {
   final String name;
   final List<String> addOns;
   final double price;
-  final String? imageUrl; // ← now carried through for display
+  final int quantity;
+  final String? foodId;
+  final String? imageUrl;
 
   OrderItemModel({
     required this.name,
     required this.addOns,
     required this.price,
+    this.quantity = 1,      // default to 1 for backward compat
+    this.foodId,
     this.imageUrl,
   });
 }

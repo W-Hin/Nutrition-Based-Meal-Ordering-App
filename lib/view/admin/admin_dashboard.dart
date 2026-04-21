@@ -224,7 +224,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 ),
                 _StatCard(
                   icon:  Icons.pending_outlined,
-                  label: 'In Progress',
+                  label: 'Order In Progress',
                   value: '$_inProgress',
                   color: const Color(0xFFD95F2B),
                 ),

@@ -47,10 +47,13 @@ class OrderController extends ChangeNotifier {
       toName:         toName,
       toPhone:        toPhone,
       toAddress:      toAddress,
+      // FIX 2: include quantity when building OrderItemModel from CartItem
       items: cartItems.map((c) => OrderItemModel(
         name:     c.name,
         addOns:   c.addOns,
         price:    c.price,
+        quantity: c.quantity,
+        foodId:   c.foodId,
         imageUrl: c.imageUrl,
       )).toList(),
       subtotal:       subtotal,
@@ -101,7 +104,7 @@ class OrderController extends ChangeNotifier {
       payerPhone: payerPhone,
     );
 
-    // 3. (REMOVED) Calories are no longer logged immediately. 
+    // 3. (REMOVED) Calories are no longer logged immediately.
     // They will only be tracked upon the order being marked 'completed' by Admin.
 
     isCancelled = false;
@@ -155,7 +158,7 @@ class OrderController extends ChangeNotifier {
         // 2. Otherwise fall back to the preset menu_items network fetch map
         final n = nutritionMap[item.foodId ?? ''];
         if (n == null) continue;
-        
+
         totalCalories += ((n['calories'] as num?)?.toDouble() ?? 0) * qty;
         totalProtein  += ((n['protein']  as num?)?.toDouble() ?? 0) * qty;
         totalCarbs    += ((n['carbs']    as num?)?.toDouble() ?? 0) * qty;
@@ -196,7 +199,7 @@ class OrderController extends ChangeNotifier {
     isCancelled  = true;
     isCancelling = false;
 
-    currentOrder!.status = OrderStatus.submitted;
+    currentOrder!.status = OrderStatus.cancelled;
     notifyListeners();
   }
 

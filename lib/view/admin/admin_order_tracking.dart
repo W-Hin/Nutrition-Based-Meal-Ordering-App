@@ -713,10 +713,9 @@ class _AdminActiveOrderDetailPageState
     if (_selectedStatus == null) return;
     setState(() => _updating = true);
     try {
-      final isCancellable = _selectedStatus != 'completed';
       await supabase.from('orders').update({
         'status':        _selectedStatus,
-        'is_cancellable': isCancellable,
+        'is_cancellable': false, // Once admin moves status, no more user cancellation
       }).eq('order_id', int.parse(widget.orderId));
 
       if (_selectedStatus == 'completed' && _order != null) {
@@ -1298,23 +1297,22 @@ class _ItemDetailsCard extends StatelessWidget {
                                   style: const TextStyle(
                                       fontWeight: FontWeight.w600, fontSize: 13)),
                             ),
-                            if (qty > 1)
-                              Container(
-                                margin: const EdgeInsets.only(left: 6),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 7, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1E4620).withOpacity(0.08),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  'x$qty',
-                                  style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF1E4620)),
-                                ),
+                            Container(
+                              margin: const EdgeInsets.only(left: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 7, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1E4620).withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(10),
                               ),
+                              child: Text(
+                                'x$qty',
+                                style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF1E4620)),
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 4),
