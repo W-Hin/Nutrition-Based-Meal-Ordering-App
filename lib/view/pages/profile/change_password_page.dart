@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../service/supabase_conn.dart';
+import '../../../utils/password_validator.dart';
+import '../../widgets/password_strength_indicator.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -21,6 +23,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   bool _obscureNew     = true;
   bool _obscureConfirm = true;
   bool _saving         = false;
+  String _newPassValue = '';  // live value for strength indicator
 
   @override
   void dispose() {
@@ -39,8 +42,14 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       _showSnack('Please fill in all fields.', isError: true);
       return;
     }
-    if (newPass.length < 6) {
-      _showSnack('New password must be at least 6 characters.', isError: true);
+    // Use shared validator for full rule check
+    final passError = validatePassword(newPass);
+    if (passError != null) {
+      _showSnack(passError, isError: true);
+      return;
+    }
+    if (newPass == currentPass) {
+      _showSnack('New password must be different from current password.', isError: true);
       return;
     }
     if (newPass != confirmPass) {
@@ -151,9 +160,15 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               setState(() => _obscureCurrent = !_obscureCurrent);
             }),
             const SizedBox(height: 16),
-            _passField('New Password *', _newPassCtrl, _obscureNew, () {
-              setState(() => _obscureNew = !_obscureNew);
-            }),
+            _passField(
+              'New Password *',
+              _newPassCtrl,
+              _obscureNew,
+              () => setState(() => _obscureNew = !_obscureNew),
+              onChanged: (v) => setState(() => _newPassValue = v),
+            ),
+            // Live strength indicator
+            PasswordStrengthIndicator(password: _newPassValue),
             const SizedBox(height: 16),
             _passField('Confirm Password *', _confirmPassCtrl, _obscureConfirm, () {
               setState(() => _obscureConfirm = !_obscureConfirm);
@@ -181,28 +196,50 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     );
   }
 
-  Widget _passField(String label, TextEditingController ctrl, bool obscure, VoidCallback toggle) {
+  Widget _passField(
+    String label,
+    TextEditingController ctrl,
+    bool obscure,
+    VoidCallback toggle, {
+    ValueChanged<String>? onChanged,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 12, color: _dark.withValues(alpha: 0.55), fontWeight: FontWeight.w500)),
+        Text(label,
+            style: TextStyle(
+                fontSize: 12,
+                color:    _dark.withValues(alpha: 0.55),
+                fontWeight: FontWeight.w500)),
         const SizedBox(height: 6),
         TextField(
-          controller: ctrl,
+          controller:  ctrl,
           obscureText: obscure,
+          onChanged:   onChanged,
           style: const TextStyle(fontSize: 14, color: _dark),
           decoration: InputDecoration(
-            filled: true,
+            filled:    true,
             fillColor: Colors.white,
             suffixIcon: IconButton(
-              icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  size: 20, color: _dark.withValues(alpha: 0.4)),
+              icon: Icon(
+                  obscure
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  size:  20,
+                  color: _dark.withValues(alpha: 0.4)),
               onPressed: toggle,
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            border:        OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: _dark.withValues(alpha: 0.12))),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: _dark.withValues(alpha: 0.12))),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _orange, width: 1.5)),
+            contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14, vertical: 14),
+            border:        OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: _dark.withValues(alpha: 0.12))),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: _dark.withValues(alpha: 0.12))),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: _orange, width: 1.5)),
           ),
         ),
       ],

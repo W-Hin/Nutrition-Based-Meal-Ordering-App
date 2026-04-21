@@ -437,8 +437,6 @@ class _TimeDropdown extends StatelessWidget {
   final String? selected;
   final ValueChanged<String?> onChanged;
 
-  static const _green = Color(0xFF1E4620);
-
   const _TimeDropdown({
     required this.slots,
     required this.selected,
@@ -670,7 +668,6 @@ class _BottomBar extends StatelessWidget {
   final VoidCallback onPressed;
 
   static const _terracotta = Color(0xFFD95F2B);
-  static const _green      = Color(0xFF1E4620);
 
   const _BottomBar({
     required this.subtotal,

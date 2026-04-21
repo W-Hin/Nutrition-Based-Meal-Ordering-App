@@ -5,7 +5,6 @@ import '../../controller/cart_controller.dart';
 import '../../controller/store_controller.dart';
 import 'package:provider/provider.dart';
 import 'nutrition_dialog.dart';
-import '../../controller/store_controller.dart';
 
 class MealCard extends StatelessWidget {
   final Meal meal;

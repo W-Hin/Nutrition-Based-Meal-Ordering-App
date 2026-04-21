@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import '../../controller/auth_controller.dart';
+import '../../utils/password_validator.dart';
+import '../widgets/password_strength_indicator.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -24,6 +26,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _obscurePass        = true;
   bool _obscureConfirmPass = true;
   bool _agreedToTerms      = false;
+  String _passwordValue    = '';  // live value for strength indicator
 
   @override
   void dispose() {
@@ -123,15 +126,14 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 6),
                 _passwordField(
                   ctrl: _passwordCtrl,
-                  hint: 'Min. 6 characters',
+                  hint: 'Min. 8 chars, A-Z, 0-9, symbol',
                   obscure: _obscurePass,
                   onToggle: () => setState(() => _obscurePass = !_obscurePass),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Password is required';
-                    if (v.length < 6) return 'Password must be at least 6 characters';
-                    return null;
-                  },
+                  onChanged: (v) => setState(() => _passwordValue = v),
+                  validator: validatePassword,
                 ),
+                // Live strength indicator
+                PasswordStrengthIndicator(password: _passwordValue),
                 const SizedBox(height: 14),
 
                 // ── Confirm Password ──────────────────────────────────────
@@ -271,12 +273,14 @@ class _RegisterPageState extends State<RegisterPage> {
     required String hint,
     required bool obscure,
     required VoidCallback onToggle,
+    ValueChanged<String>? onChanged,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller:  ctrl,
       obscureText: obscure,
       validator:   validator,
+      onChanged:   onChanged,
       decoration:  _deco(hint: hint, icon: Icons.lock_outline).copyWith(
         suffixIcon: IconButton(
           icon: Icon(

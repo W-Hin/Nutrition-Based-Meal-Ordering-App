@@ -5,7 +5,6 @@ import '../model/payment_model.dart';
 
 class PaymentController extends ChangeNotifier {
   // ── Stripe keys ───────────────────────────────────────────────
-
   static const _secretKey =
       'sk_test_51TMrO1AwDwRCAOhEI0czbU40xYK9Xj6yDvZeQnTaWxmHGSA1TvQ21D2oxxlWZIlhydOkpvaO8xkSKCLDTtimOL4w00qr04ZbXo';
 
@@ -14,7 +13,7 @@ class PaymentController extends ChangeNotifier {
   String? errorMessage;
 
   // ── Form controllers ──────────────────────────────────────────
-  final nameCtrl = TextEditingController();
+  final nameCtrl  = TextEditingController();
   final emailCtrl = TextEditingController();
   final phoneCtrl = TextEditingController();
 
@@ -64,6 +63,45 @@ class PaymentController extends ChangeNotifier {
     return valid;
   }
 
+  // ── Step 1: Create PaymentIntent via Stripe API ───────────────
+  Future<String?> _createPaymentIntent({
+    required int    amountCents,   // amount in smallest currency unit (sen)
+    required String currency,      // e.g. 'myr'
+    required String customerEmail,
+  }) async {
+    try {
+      final dio  = Dio();
+      final data = {
+        'amount':   amountCents.toString(),
+        'currency': currency,
+        'receipt_email': customerEmail,
+        'payment_method_types[]': 'card',
+      };
+
+      final response = await dio.post(
+        'https://api.stripe.com/v1/payment_intents',
+        data: data,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $_secretKey',
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        return response.data['client_secret'] as String?;
+      }
+    } on DioException catch (e) {
+      debugPrint('[PaymentController] DioException: ${e.response?.data}');
+      errorMessage = 'Payment setup failed: ${e.response?.data?['error']?['message'] ?? e.message}';
+    } catch (e) {
+      debugPrint('[PaymentController] createPaymentIntent error: $e');
+      errorMessage = 'An unexpected error occurred. Please try again.';
+    }
+    return null;
+  }
+
   // ── Main payment flow ─────────────────────────────────────────
   Future<bool> processPayment(PaymentModel payment) async {
     if (!validate()) return false;
@@ -73,82 +111,68 @@ class PaymentController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Step 1: Create PaymentIntent via Stripe API
+      // ── Step 1: Create PaymentIntent on Stripe ─────────────────
+      final amountCents = (payment.amount * 100).round(); // RM → sen
       final clientSecret = await _createPaymentIntent(
-        amountInCents: (payment.amount * 100).toInt(),
-        currency: 'myr',
-        customerEmail: payment.userEmail,
+        amountCents:   amountCents,
+        currency:      'myr',
+        customerEmail: emailCtrl.text.trim(),
       );
 
-      // Step 2: Initialize Stripe payment sheet
+      if (clientSecret == null) {
+        status = PaymentStatus.failed;
+        errorMessage ??= 'Could not initialise payment. Please try again.';
+        notifyListeners();
+        return false;
+      }
+
+      // ── Step 2: Show Stripe Payment Sheet ─────────────────────
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: clientSecret,
-          merchantDisplayName: 'NuBurn',
+          merchantDisplayName:       'NuBurn',
           billingDetails: BillingDetails(
-            name: payment.userName,
-            email: payment.userEmail,
-            phone: payment.userPhone,
+            name:  nameCtrl.text.trim(),
+            email: emailCtrl.text.trim(),
+            phone: phoneCtrl.text.trim(),
           ),
-          billingDetailsCollectionConfiguration:
-              const BillingDetailsCollectionConfiguration(
-                name: CollectionMode.always,
-                email: CollectionMode.always,
-                phone: CollectionMode.always,
-              ),
           style: ThemeMode.light,
         ),
       );
 
-      // Step 3: Show Stripe's built-in payment sheet UI
       await Stripe.instance.presentPaymentSheet();
 
+      // ── Step 3: Payment confirmed ──────────────────────────────
       status = PaymentStatus.success;
       notifyListeners();
       return true;
+
     } on StripeException catch (e) {
+      // User cancelled or card declined
       if (e.error.code == FailureCode.Canceled) {
         status = PaymentStatus.idle;
         errorMessage = null;
       } else {
         status = PaymentStatus.failed;
-        errorMessage =
-            e.error.localizedMessage ?? 'Payment failed. Please try again.';
+        errorMessage = e.error.localizedMessage ?? 'Payment failed. Please try again.';
       }
       notifyListeners();
       return false;
+
     } catch (e) {
       status = PaymentStatus.failed;
       errorMessage = 'Something went wrong. Please try again.';
+      debugPrint('[PaymentController] processPayment error: $e');
       notifyListeners();
       return false;
     }
   }
 
-  // ── Create PaymentIntent directly with Stripe API ─────────────
-  Future<String> _createPaymentIntent({
-    required int amountInCents,
-    required String currency,
-    required String customerEmail,
-  }) async {
-    final dio = Dio();
-    final response = await dio.post(
-      'https://api.stripe.com/v1/payment_intents',
-      data: {
-        'amount': amountInCents,
-        'currency': currency,
-        'receipt_email': customerEmail,
-        'automatic_payment_methods[enabled]': true,
-      },
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $_secretKey',
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      ),
-    );
-
-    return response.data['client_secret'] as String;
+  // ── Reset state ───────────────────────────────────────────────
+  void reset() {
+    status       = PaymentStatus.idle;
+    errorMessage = null;
+    notifyListeners();
   }
 
   @override

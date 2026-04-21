@@ -86,30 +86,31 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'NuBurn',
-      scrollBehavior: AppScrollBehavior(),
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E4620)),
-        fontFamily: 'Roboto',
-      ),
-      home: const MainShell(),
-      routes: {
-        '/auth':               (_) => const AuthWrapper(),
-        '/login':              (_) => const LoginPage(),
-        '/register':           (_) => const RegisterPage(),
-        '/terms':              (_) => const TermsPage(),
-        '/onboarding':         (_) => const OnboardingPersonalPage(),
-        '/onboarding/bmi':     (_) => const OnboardingBmiPage(),
-        '/onboarding/address': (_) => const OnboardingAddressPage(),
-        '/home':               (_) => const MainShell(),
-      },
-    );
+  return MaterialApp(
+    debugShowCheckedModeBanner: false,
+    title: 'NuBurn',
+    scrollBehavior: AppScrollBehavior(),
+    theme: ThemeData(
+      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E4620)),
+      fontFamily: 'Roboto',
+    ),
+    home: const MainShell(),
+    routes: {
+      '/auth':              (_) => const AuthWrapper(),
+      '/login':             (_) => const LoginPage(),
+      '/register':          (_) => const RegisterPage(),
+      '/terms':             (_) => const TermsPage(),
+      '/onboarding':        (_) => const OnboardingPersonalPage(),
+      '/onboarding/bmi':    (_) => const OnboardingBmiPage(),
+      '/onboarding/address':(_) => const OnboardingAddressPage(),
+      '/home':              (_) => const MainShell(),
+    },
+  );
   }
 }
 
 // ── Auth Wrapper ──────────────────────────────────────────────────────────────
+/// Checks session → role → profile and routes accordingly.
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
@@ -150,7 +151,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
               return const AdminShell();
             }
             if (!hasProfile) {
-              return const OnboardingBmiPage();
+              return const OnboardingPersonalPage();
             }
             return const MainShell();
           },
@@ -160,7 +161,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
   }
 
   Future<Map<String, dynamic>> _resolveDestination() async {
-    final ctrl       = context.read<AuthController>();
+    final ctrl = context.read<AuthController>();
     final role       = await ctrl.getUserRole() ?? 'user';
     final hasProfile = await ctrl.hasProfile();
     return {'role': role, 'hasProfile': hasProfile};
@@ -184,7 +185,7 @@ class _LoadingScreen extends StatelessWidget {
   }
 }
 
-// ── Main Shell ─────────────────────────────────────────────────────────────────
+// ── Main Shell (customer app with bottom nav) ─────────────────────────────────
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -195,6 +196,32 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
   final _tabNotifier = ValueNotifier<int>(0);
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Widget> pages = [
+      const HomeDashboardPage(),
+      MenuPage(onBack: () => setState(() => _selectedIndex = 0)),
+      MyOrdersPage(tabNotifier: _tabNotifier),
+      const ProfilePage(),
+    ];
+
+    return Scaffold(
+      extendBody: true,
+      body: IndexedStack(index: _selectedIndex, children: pages),
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: (index) {
+          setState(() => _selectedIndex = index);
+          _tabNotifier.value = index;
+        },
+        onCartTapped: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CartPage()),
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -209,32 +236,6 @@ class _MainShellState extends State<MainShell> {
     _tabNotifier.dispose();
     super.dispose();
   }
-
-  @override
-  Widget build(BuildContext context) {
-    final List<Widget> pages = [
-      const HomeDashboardPage(),
-      MenuPage(onBack: () => setState(() => _selectedIndex = 0)),
-      MyOrdersPage(tabNotifier: _tabNotifier),
-      const ProfilePage(),
-    ];
-
-    return Scaffold(
-      // No more top-right FAB — cart lives in the nav bar now
-      body: IndexedStack(index: _selectedIndex, children: pages),
-      bottomNavigationBar: CustomBottomNavBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: (index) {
-          setState(() => _selectedIndex = index);
-          _tabNotifier.value = index;
-        },
-        onCartTapped: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const CartPage()),
-          );
-        },
-      ),
-    );
-  }
 }
+
+
