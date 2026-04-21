@@ -525,6 +525,8 @@ class _SelfCollectCodeCard extends StatelessWidget {
         return 'Order Ready! Waiting to be Collected.';
       case OrderStatus.completed:
         return 'Order Collected!';
+      case OrderStatus.cancelled:
+        return 'Order Cancelled';
     }
   }
 
