@@ -483,7 +483,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       case 'preparing':
         return 'assets/images/cooking_icon.png';
       case 'out_for_delivery':
-        return 'assets/images/delivery_boy.png';
+        return 'assets/images/delivery_boy_icon.png';
       case 'ready_for_collection':
         return isSC
             ? 'assets/images/collect_food_icon.png'
