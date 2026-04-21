@@ -22,21 +22,21 @@ class StoreDetailBottomSheet extends StatelessWidget {
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
+          topLeft:  Radius.circular(20),
           topRight: Radius.circular(20),
         ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Fixed Top Handle
+          // Handle
           Center(
             child: Container(
               margin: const EdgeInsets.symmetric(vertical: 12),
-              width: 40,
+              width:  40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color:        Colors.grey[300],
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -59,13 +59,13 @@ class StoreDetailBottomSheet extends StatelessWidget {
                             borderRadius: BorderRadius.circular(16),
                             child: Image.asset(
                               store.logoUrl,
-                              width: 140,
+                              width:  140,
                               height: 140,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                width: 140,
+                              fit:    BoxFit.contain,
+                              errorBuilder: (_, __, ___) => Container(
+                                width:  140,
                                 height: 140,
-                                color: const Color(0xFFF5F5F0),
+                                color:  const Color(0xFFF5F5F0),
                                 child: const Icon(Icons.store,
                                     color: Color(0xFF1E4620), size: 50),
                               ),
@@ -79,13 +79,13 @@ class StoreDetailBottomSheet extends StatelessWidget {
                                 Text(
                                   store.name,
                                   style: const TextStyle(
-                                    fontSize: 20,
+                                    fontSize:   20,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1E4620),
-                                    height: 1.1,
+                                    color:      Color(0xFF1E4620),
+                                    height:     1.1,
                                   ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
+                                  maxLines:  2,
+                                  overflow:  TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 4),
                                 Row(
@@ -93,6 +93,7 @@ class StoreDetailBottomSheet extends StatelessWidget {
                                     const Icon(Icons.star,
                                         color: Colors.amber, size: 16),
                                     const SizedBox(width: 4),
+                                    // FIX 7: Compute live distance if location is known
                                     Consumer<StoreController>(
                                       builder: (context, storeCtrl, _) {
                                         double? distance;
@@ -107,9 +108,9 @@ class StoreDetailBottomSheet extends StatelessWidget {
                                         return Text(
                                           '${store.rating} • ${distance?.toStringAsFixed(1) ?? store.distanceKm.toStringAsFixed(1)} km',
                                           style: TextStyle(
-                                              color: Colors.grey[700],
+                                              color:      Colors.grey[700],
                                               fontWeight: FontWeight.w600,
-                                              fontSize: 13),
+                                              fontSize:   13),
                                         );
                                       },
                                     ),
@@ -119,27 +120,22 @@ class StoreDetailBottomSheet extends StatelessWidget {
                                 Row(
                                   children: [
                                     Icon(Icons.circle,
-                                        color: store.isOpen
-                                            ? Colors.green
-                                            : Colors.red,
+                                        color: store.isOpen ? Colors.green : Colors.red,
                                         size: 10),
                                     const SizedBox(width: 4),
                                     Text(
                                       store.isOpen ? 'Open' : 'Closed',
                                       style: TextStyle(
-                                        color: store.isOpen
-                                            ? Colors.green
-                                            : Colors.red,
+                                        color:      store.isOpen ? Colors.green : Colors.red,
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 13,
+                                        fontSize:   13,
                                       ),
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
                                       '${store.openTime} - ${store.closeTime}',
                                       style: TextStyle(
-                                          color: Colors.grey[600],
-                                          fontSize: 13),
+                                          color: Colors.grey[600], fontSize: 13),
                                     ),
                                   ],
                                 ),
@@ -151,16 +147,16 @@ class StoreDetailBottomSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
 
-                    // ── Reviews tap row ──────────────────────────────────
+                    // Reviews tap row
                     GestureDetector(
                       onTap: () => _openReviewsPage(context),
                       child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        margin:  const EdgeInsets.symmetric(horizontal: 16),
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color:        const Color(0xFFF5F5F0),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFEEEBDE)),
+                          border:       Border.all(color: const Color(0xFFEEEBDE)),
                         ),
                         child: Row(
                           children: [
@@ -196,7 +192,7 @@ class StoreDetailBottomSheet extends StatelessWidget {
                                               ? Icons.star
                                               : Icons.star_border,
                                           color: Colors.amber,
-                                          size: 14,
+                                          size:  14,
                                         )),
                                       ),
                                     ],
@@ -204,8 +200,7 @@ class StoreDetailBottomSheet extends StatelessWidget {
                                   Text(
                                     '${store.reviewCount} Review${store.reviewCount != 1 ? 's' : ''}',
                                     style: const TextStyle(
-                                        fontSize: 11,
-                                        color: Color(0xFF8A8A8A)),
+                                        fontSize: 11, color: Color(0xFF8A8A8A)),
                                   ),
                                 ],
                               ),
@@ -217,17 +212,17 @@ class StoreDetailBottomSheet extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
+
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Text(
-                        'Set Meals',
-                        style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E4620)),
-                      ),
+                      child: Text('Set Meals',
+                          style: TextStyle(
+                              fontSize:   20,
+                              fontWeight: FontWeight.bold,
+                              color:      Color(0xFF1E4620))),
                     ),
                     const SizedBox(height: 12),
+
                     FutureBuilder<List<Meal>>(
                       future: MealService.fetchMeals(storeId: store.id),
                       builder: (context, snapshot) {
@@ -260,16 +255,15 @@ class StoreDetailBottomSheet extends StatelessWidget {
                         }
                         return ListView.separated(
                           shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          itemCount: meals.length,
+                          physics:    const NeverScrollableScrollPhysics(),
+                          padding:    const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount:  meals.length,
                           separatorBuilder: (_, __) => Divider(
-                            height: 32,
-                            thickness: 1,
-                            color: Colors.grey.withOpacity(0.3),
+                            height: 32, thickness: 1,
+                            color:  Colors.grey.withOpacity(0.3),
                           ),
                           itemBuilder: (context, index) {
-                            final meal = meals[index];
+                            final meal      = meals[index];
                             final isInStock = meal.isAvailable;
                             return Row(
                               children: [
@@ -284,10 +278,9 @@ class StoreDetailBottomSheet extends StatelessWidget {
                                       const SizedBox(height: 4),
                                       Text(meal.description,
                                           style: TextStyle(
-                                              color: Colors.grey[600],
-                                              fontSize: 12),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis),
+                                              color: Colors.grey[600], fontSize: 12),
+                                          maxLines:  2,
+                                          overflow:  TextOverflow.ellipsis),
                                       const SizedBox(height: 8),
                                       Row(
                                         children: [
@@ -305,8 +298,7 @@ class StoreDetailBottomSheet extends StatelessWidget {
                                               color: isInStock
                                                   ? const Color(0xFFE8F5E9)
                                                   : const Color(0xFFFFEBEE),
-                                              borderRadius:
-                                              BorderRadius.circular(20),
+                                              borderRadius: BorderRadius.circular(20),
                                             ),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
@@ -315,21 +307,19 @@ class StoreDetailBottomSheet extends StatelessWidget {
                                                   isInStock
                                                       ? Icons.check_circle
                                                       : Icons.cancel,
-                                                  size: 14,
+                                                  size:  14,
                                                   color: isInStock
                                                       ? Colors.green
                                                       : Colors.red,
                                                 ),
                                                 const SizedBox(width: 4),
                                                 Text(
-                                                  isInStock
-                                                      ? 'In Stock'
-                                                      : 'Sold Out',
+                                                  isInStock ? 'In Stock' : 'Sold Out',
                                                   style: TextStyle(
                                                     color: isInStock
                                                         ? Colors.green[700]
                                                         : Colors.red[700],
-                                                    fontSize: 12,
+                                                    fontSize:   12,
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
@@ -347,19 +337,17 @@ class StoreDetailBottomSheet extends StatelessWidget {
                                   child: meal.imageUrl.startsWith('http')
                                       ? Image.network(
                                     meal.imageUrl,
-                                    width: 100,
+                                    width:  100,
                                     height: 80,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) =>
-                                        _buildErrorImage(),
+                                    fit:    BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => _buildErrorImage(),
                                   )
                                       : Image.asset(
                                     meal.imageUrl,
-                                    width: 100,
+                                    width:  100,
                                     height: 80,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) =>
-                                        _buildErrorImage(),
+                                    fit:    BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => _buildErrorImage(),
                                   ),
                                 ),
                               ],
@@ -375,16 +363,16 @@ class StoreDetailBottomSheet extends StatelessWidget {
             ),
           ),
 
-          // Fixed Bottom Button Section
+          // Fixed Bottom Button
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color:     Colors.black.withOpacity(0.05),
                   blurRadius: 10,
-                  offset: const Offset(0, -5),
+                  offset:    const Offset(0, -5),
                 ),
               ],
             ),
@@ -393,35 +381,25 @@ class StoreDetailBottomSheet extends StatelessWidget {
               children: [
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      final storeCtrl = Provider.of<StoreController>(context, listen: false);
-                      final userPos = storeCtrl.userPosition;
-                      if (userPos != null) {
-                        final distance = LocationService.calculateDistance(
-                          userPos.latitude,
-                          userPos.longitude,
-                          store.latitude,
-                          store.longitude,
-                        );
-                        if (distance > 5000) {
-                          _showFarStoreWarning(context, distance / 1000);
-                          return;
-                        }
-                      }
-                      _completeStoreSelection(context);
+                  child: Consumer<StoreController>(
+                    builder: (context, storeCtrl, _) {
+                      return ElevatedButton.icon(
+                        // FIX 7: Always allow ordering; distance check happens inside
+                        onPressed: () => _handleOrderFromStore(context, storeCtrl),
+                        icon:  const Icon(Icons.shopping_basket),
+                        label: const Text(
+                          'Order from this Store',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFABC270),
+                          foregroundColor: const Color(0xFF1E4620),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15)),
+                        ),
+                      );
                     },
-                    icon: const Icon(Icons.shopping_basket),
-                    label: const Text(
-                      'Order from this Store',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFABC270),
-                      foregroundColor: const Color(0xFF1E4620),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -437,39 +415,37 @@ class StoreDetailBottomSheet extends StatelessWidget {
     );
   }
 
-  // ── Complete store selection: update both StoreController & CartController ─
-  void _completeStoreSelection(BuildContext context) {
-    final storeCtrl = Provider.of<StoreController>(context, listen: false);
-    final cartCtrl  = Provider.of<CartController>(context,  listen: false);
+  // FIX 7: Unified handler that checks distance and shows warning if needed
+  void _handleOrderFromStore(BuildContext context, StoreController storeCtrl) {
+    final userPos = storeCtrl.userPosition;
 
-    // 1. Update which store is selected
-    storeCtrl.selectStore(store);
+    if (userPos != null) {
+      final distanceMeters = LocationService.calculateDistance(
+        userPos.latitude,
+        userPos.longitude,
+        store.latitude,
+        store.longitude,
+      );
+      final distanceKm = distanceMeters / 1000;
 
-    // 2. Switch the cart scope to this store — loads the store-specific cart
-    cartCtrl.setStore(store.id, store.name);
+      if (distanceKm > 5.0) {
+        // FIX 7: Show the warning dialog — if user confirms, proceed
+        _showFarStoreWarning(context, distanceKm, storeCtrl);
+        return;
+      }
+    }
 
-    Navigator.pop(context);        // Close bottom sheet
-    Navigator.pop(context, true);  // Close FindStorePage
+    // Within range (or location unknown) — proceed directly
+    _completeStoreSelection(context, storeCtrl);
   }
 
-  void _openReviewsPage(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => StoreReviewsPage(
-          storeId:   store.id,
-          storeName: store.name,
-        ),
-      ),
-    );
-  }
-
-  void _showFarStoreWarning(BuildContext context, double distanceKm) {
+  // FIX 7: Far-store warning dialog (restored)
+  void _showFarStoreWarning(
+      BuildContext context, double distanceKm, StoreController storeCtrl) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
             Icon(Icons.warning_amber_rounded, color: Colors.orange),
@@ -489,25 +465,46 @@ class StoreDetailBottomSheet extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Go Back',
-                style: TextStyle(
-                    color: Colors.grey, fontWeight: FontWeight.bold)),
+                style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              _completeStoreSelection(context);
+              Navigator.pop(dialogContext);
+              _completeStoreSelection(context, storeCtrl);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1E4620),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             child: const Text('Proceed Anyway'),
           ),
         ],
+      ),
+    );
+  }
+
+  // ── Complete store selection ───────────────────────────────────────────────
+  void _completeStoreSelection(BuildContext context, StoreController storeCtrl) {
+    final cartCtrl = Provider.of<CartController>(context, listen: false);
+
+    storeCtrl.selectStore(store);
+    cartCtrl.setStore(store.id, store.name);
+
+    Navigator.pop(context);        // Close bottom sheet
+    Navigator.pop(context, true);  // Close FindStorePage
+  }
+
+  void _openReviewsPage(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => StoreReviewsPage(
+          storeId:   store.id,
+          storeName: store.name,
+        ),
       ),
     );
   }

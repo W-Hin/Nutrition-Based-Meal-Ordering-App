@@ -21,11 +21,25 @@ class CheckoutPage extends StatelessWidget {
   }
 }
 
-class _CheckoutView extends StatelessWidget {
+class _CheckoutView extends StatefulWidget {
   const _CheckoutView();
 
+  @override
+  State<_CheckoutView> createState() => _CheckoutViewState();
+}
+
+class _CheckoutViewState extends State<_CheckoutView> {
   static const _green = Color(0xFF1E4620);
   static const _bg    = Color(0xFFF5F5F0);
+
+  @override
+  void initState() {
+    super.initState();
+    // FIX 4: Load the user's default address from Supabase
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CheckoutController>().loadDefaultAddress();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,10 +60,10 @@ class _CheckoutView extends StatelessWidget {
         title: const Text(
           'CHECKOUT',
           style: TextStyle(
-            color: _green,
+            color:      _green,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.4,
-            fontSize: 18,
+            fontSize:   18,
           ),
         ),
       ),
@@ -77,7 +91,7 @@ class _CheckoutView extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (_) => PaymentPage(
                     checkoutCtrl: context.read<CheckoutController>(),
-                    deliveryFee: ctrl.deliveryFee,
+                    deliveryFee:  ctrl.deliveryFee,
                   ),
                 ),
               );
@@ -175,14 +189,13 @@ class _DeliveryContent extends StatelessWidget {
         _SectionHeader(icon: Icons.location_on_outlined, title: 'Delivery Address'),
         const SizedBox(height: 8),
         _AddressCard(
-          address: ctrl.deliveryAddress,
+          address:   ctrl.deliveryAddress,
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => EditAddressPage(ctrl: ctrl)),
           ),
-          // FIX 1: Use saved coords from controller instead of hardcoded values
-          mapLat: ctrl.deliveryLat,
-          mapLng: ctrl.deliveryLng,
+          mapLat:   ctrl.deliveryLat,
+          mapLng:   ctrl.deliveryLng,
           mapLabel: ctrl.deliveryAddress.address,
         ),
         const SizedBox(height: 16),
@@ -232,9 +245,9 @@ class _DeliveryContent extends StatelessWidget {
         if (ctrl.deliveryOption == DeliveryOption.orderLater) ...[
           const SizedBox(height: 8),
           _TimeDropdown(
-            slots:       slots,
-            selected:    ctrl.selectedLaterTime,
-            onChanged:   ctrl.setLaterTime,
+            slots:    slots,
+            selected: ctrl.selectedLaterTime,
+            onChanged: ctrl.setLaterTime,
           ),
         ],
 
@@ -255,14 +268,13 @@ class _SelfCollectContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final slots = ctrl.generateTimeSlots();
+    final slots     = ctrl.generateTimeSlots();
     final storeCtrl = context.read<StoreController>();
-    final store = storeCtrl.selectedStore;
-    final lat = store?.latitude ?? 5.4379;
-    final lng = store?.longitude ?? 100.3074;
-    final storeName = store?.name ?? 'NuBurn - Tanjung Burma';
+    final store     = storeCtrl.selectedStore;
+    final lat       = store?.latitude  ?? 5.4379;
+    final lng       = store?.longitude ?? 100.3074;
+    final storeName   = store?.name    ?? 'NuBurn - Tanjung Burma';
     final storeAddress = store?.address ?? '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21, ...';
-    final storePhone = ''; // stores table doesn't have phone — leave blank
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,13 +284,13 @@ class _SelfCollectContent extends StatelessWidget {
         _AddressCard(
           address: AddressModel(
             name:    storeName,
-            phone:   storePhone,
+            phone:   '',
             address: storeAddress,
           ),
           showArrow:     false,
           showSetCustom: false,
-          mapLat: lat,
-          mapLng: lng,
+          mapLat:   lat,
+          mapLng:   lng,
           mapLabel: storeName,
         ),
         const SizedBox(height: 16),
@@ -310,8 +322,8 @@ class _SelfCollectContent extends StatelessWidget {
         if (ctrl.selfCollectOption == DeliveryOption.selfLater) ...[
           const SizedBox(height: 8),
           _TimeDropdown(
-            slots:     slots,
-            selected:  ctrl.selectedSelfLaterTime,
+            slots:    slots,
+            selected: ctrl.selectedSelfLaterTime,
             onChanged: ctrl.setSelfLaterTime,
           ),
         ],
@@ -401,8 +413,7 @@ class _DeliveryOptionTile extends StatelessWidget {
                         color:      const Color(0xFF2C2C2C),
                       )),
                   Text(subtitle,
-                      style: const TextStyle(
-                          fontSize: 11, color: Color(0xFF8A8A8A))),
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF8A8A8A))),
                 ],
               ),
             ),
@@ -468,13 +479,12 @@ class _TimeDropdown extends StatelessWidget {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value:       selected,
-          isExpanded:  true,
+          value:      selected,
+          isExpanded: true,
           hint: const Text('Select a time',
               style: TextStyle(color: Color(0xFFAAAAAA), fontSize: 13)),
           icon: const Icon(Icons.access_time, color: Color(0xFF8A8A8A), size: 18),
-          style: const TextStyle(
-              fontSize: 13, color: Color(0xFF2C2C2C)),
+          style: const TextStyle(fontSize: 13, color: Color(0xFF2C2C2C)),
           items: slots
               .map((s) => DropdownMenuItem(value: s, child: Text(s)))
               .toList(),
@@ -502,8 +512,8 @@ class _SectionHeader extends StatelessWidget {
       Text(title,
           style: const TextStyle(
               fontWeight: FontWeight.w700,
-              fontSize: 14,
-              color: Color(0xFF2C2C2C))),
+              fontSize:   14,
+              color:      Color(0xFF2C2C2C))),
     ],
   );
 }
@@ -524,7 +534,7 @@ class _AddressCard extends StatelessWidget {
   const _AddressCard({
     required this.address,
     this.onTap,
-    this.showArrow    = true,
+    this.showArrow     = true,
     this.showSetCustom = true,
     this.mapLat = 5.4164,
     this.mapLng = 100.3327,
@@ -550,15 +560,17 @@ class _AddressCard extends StatelessWidget {
                 Expanded(
                   child: Row(
                     children: [
-                      Text(address.name,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 13)),
-                      if (address.phone.isNotEmpty) ...[
-                        const Text('  |  ',
-                            style: TextStyle(color: Color(0xFFAAAAAA))),
-                        Text(address.phone,
+                      if (address.name.isNotEmpty) ...[
+                        Text(address.name,
                             style: const TextStyle(
-                                fontSize: 12, color: Color(0xFF6B6B6B))),
+                                fontWeight: FontWeight.w600, fontSize: 13)),
+                        if (address.phone.isNotEmpty) ...[
+                          const Text('  |  ',
+                              style: TextStyle(color: Color(0xFFAAAAAA))),
+                          Text(address.phone,
+                              style: const TextStyle(
+                                  fontSize: 12, color: Color(0xFF6B6B6B))),
+                        ],
                       ],
                     ],
                   ),
@@ -566,12 +578,12 @@ class _AddressCard extends StatelessWidget {
                 if (showSetCustom)
                   const Text('Set Custom Address',
                       style: TextStyle(
-                          color: _green,
-                          fontSize: 11,
+                          color:      _green,
+                          fontSize:   11,
                           fontWeight: FontWeight.w600)),
               ],
             ),
-            const SizedBox(height: 4),
+            if (address.name.isNotEmpty) const SizedBox(height: 4),
             Row(
               children: [
                 Expanded(
@@ -585,7 +597,6 @@ class _AddressCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            // ── Real Map ──────────────────────────────────────────────────
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: SizedBox(
@@ -594,7 +605,7 @@ class _AddressCard extends StatelessWidget {
                   child: FlutterMap(
                     options: MapOptions(
                       initialCenter: LatLng(mapLat, mapLng),
-                      initialZoom: 15.0,
+                      initialZoom:   15.0,
                       interactionOptions: const InteractionOptions(
                         flags: InteractiveFlag.none,
                       ),
@@ -603,20 +614,19 @@ class _AddressCard extends StatelessWidget {
                       TileLayer(
                         urlTemplate:
                         'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-                        subdomains: const ['a', 'b', 'c', 'd'],
-                        userAgentPackageName:
-                        'com.nuburn.nutritionapp.mealshop.v4',
+                        subdomains:          const ['a', 'b', 'c', 'd'],
+                        userAgentPackageName: 'com.nuburn.nutritionapp.mealshop.v4',
                       ),
                       MarkerLayer(
                         markers: [
                           Marker(
                             point: LatLng(mapLat, mapLng),
-                            width: 40,
+                            width:  40,
                             height: 40,
                             child: const Icon(
                               Icons.location_pin,
                               color: Color(0xFFD95F2B),
-                              size: 40,
+                              size:  40,
                             ),
                           ),
                         ],
@@ -687,9 +697,9 @@ class _BottomBar extends StatelessWidget {
         color:     Colors.white,
         boxShadow: [
           BoxShadow(
-              color:  Color(0x18000000),
+              color:      Color(0x18000000),
               blurRadius: 12,
-              offset: Offset(0, -4))
+              offset:     Offset(0, -4))
         ],
       ),
       child: Column(
@@ -702,8 +712,7 @@ class _BottomBar extends StatelessWidget {
                 const Text('Delivery Fee',
                     style: TextStyle(fontSize: 12, color: Color(0xFF8A8A8A))),
                 Text('RM ${deliveryFee % 1 == 0 ? deliveryFee.toInt().toString() : deliveryFee.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                        fontSize: 12, color: Color(0xFF8A8A8A))),
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF8A8A8A))),
               ],
             ),
             const SizedBox(height: 4),
@@ -714,14 +723,13 @@ class _BottomBar extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('Total',
-                      style: TextStyle(
-                          fontSize: 11, color: Color(0xFF8A8A8A))),
+                      style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A))),
                   Text(
                     'RM ${grandTotal % 1 == 0 ? grandTotal.toInt().toString() : grandTotal.toStringAsFixed(2)}',
                     style: const TextStyle(
                         fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                        color: Color(0xFF2C2C2C)),
+                        fontSize:   15,
+                        color:      Color(0xFF2C2C2C)),
                   ),
                 ],
               ),

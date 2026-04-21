@@ -28,9 +28,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   bool    _historyCancelled  = false;
   String? _historyError;
 
-  // ── FIX 2: Live-mode store state ──────────────────────────────────────────
-  // Store data for the LIVE order view, fetched eagerly in initState so it is
-  // available on the very first render without requiring a page re-entry.
+  // ── Live-mode store state ──────────────────────────────────────────────────
   Map<String, dynamic>? _liveStoreRow;
 
   bool get _isHistoryMode => widget.historyOrderId != null;
@@ -44,8 +42,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final ctrl = context.read<OrderController>();
         if (ctrl.dbOrderId != null) _listenToOrderStatus(ctrl);
-
-        // FIX 2: Fetch store for live order immediately
         final storeId = ctrl.currentOrder?.storeId;
         if (storeId != null && storeId.isNotEmpty) {
           _fetchLiveStore(storeId);
@@ -54,7 +50,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     }
   }
 
-  // ── FIX 2: Fetch store for live order ─────────────────────────────────────
   Future<void> _fetchLiveStore(String storeId) async {
     try {
       final row = await supabase
@@ -70,7 +65,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     }
   }
 
-  // ── Load a past order row + its store from Supabase ───────────────────────
   Future<void> _loadHistoryOrder() async {
     setState(() { _historyLoading = true; _historyError = null; });
     try {
@@ -94,14 +88,10 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               .maybeSingle();
           if (storeRow != null) {
             storeMap = Map<String, dynamic>.from(storeRow);
-          } else {
-            debugPrint('[OrderDetails] store not found for store_id=$storeId');
           }
         } catch (e) {
-          debugPrint('[OrderDetails] store fetch error for store_id=$storeId: $e');
+          debugPrint('[OrderDetails] store fetch error: $e');
         }
-      } else {
-        debugPrint('[OrderDetails] store_id is null/empty on this order');
       }
 
       setState(() {
@@ -115,7 +105,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     }
   }
 
-  // ── Cancel a history-mode order ───────────────────────────────────────────
   Future<void> _cancelHistoryOrder() async {
     setState(() { _historyCancelling = true; });
     try {
@@ -202,13 +191,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     final isCancelled   = ctrl.isCancelled;
     final isSelfCollect = order.orderType == OrderType.selfCollect;
 
-    // FIX 2: Use _liveStoreRow when available; fall back to order model values
-    // while the fetch is still in-flight (shows correct data without requiring
-    // the user to exit and re-enter the page).
-    final liveFromName    = (_liveStoreRow?['name']    as String?)?.trim()
-        ?? order.fromName;
-    final liveFromAddress = (_liveStoreRow?['address'] as String?)?.trim()
-        ?? order.fromAddress;
+    final liveFromName    = (_liveStoreRow?['name']    as String?)?.trim() ?? order.fromName;
+    final liveFromAddress = (_liveStoreRow?['address'] as String?)?.trim() ?? order.fromAddress;
 
     return Scaffold(
       backgroundColor: _bg,
@@ -243,7 +227,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 storeAddress: liveFromAddress,
               ),
             ] else ...[
-              // FIX 2: Use live-fetched store name/address
               _InfoSection(title: 'From',
                   lines: [liveFromName, liveFromAddress]),
               const SizedBox(height: 12),
@@ -310,6 +293,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     final items          = List<Map<String, dynamic>>.from(
         row['order_items'] as List? ?? []);
     final subtotal       = (row['subtotal']      as num?)?.toDouble() ?? 0.0;
+    final serviceFee     = (row['service_fee']   as num?)?.toDouble() ?? 0.0;
+    final deliveryFee    = (row['delivery_fee']  as num?)?.toDouble() ?? 0.0;
     final total          = (row['total']         as num?)?.toDouble() ?? 0.0;
     final toName         = row['to_name']        as String? ?? '';
     final toPhone        = row['to_phone']       as String? ?? '';
@@ -317,6 +302,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     final payMethod      = row['payment_method'] as String? ?? 'Credit / Debit Card';
     final orderId        = row['order_id'].toString();
     final collectionCode = row['collection_code'] as String?;
+    final remark         = row['remark']         as String? ?? '';
 
     final fromName    = (_storeRow?['name']    as String?)?.trim() ?? '';
     final fromAddress = (_storeRow?['address'] as String?)?.trim() ?? '';
@@ -392,7 +378,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             _HistoryItemDetailsSection(
               items:         items,
               subtotal:      subtotal,
+              serviceFee:    serviceFee,
+              deliveryFee:   deliveryFee,
               total:         total,
+              remark:        remark,
+              isSelfCollect: isSelfCollect,
               isCancellable: isCancellable,
               isCancelling:  _historyCancelling,
               onCancelTap:   () => _showCancelDialog(onConfirm: _cancelHistoryOrder),
@@ -733,7 +723,7 @@ class _StatusImage extends StatelessWidget {
   }
 }
 
-// ── Status Tracker ─────────────────────────────────────────────────────────────
+// ── Status Tracker (FIX 3: Two-row layout — icon row + label row) ──────────────
 
 class _StatusTracker extends StatelessWidget {
   final OrderStatus status;
@@ -769,24 +759,25 @@ class _StatusTracker extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border:       Border.all(color: const Color(0xFFDDDDD0)),
       ),
-      child: Row(
-        children: List.generate(steps.length * 2 - 1, (i) {
-          if (i.isOdd) {
-            final isCompleted = (i ~/ 2) < activeIndex;
-            return Expanded(
-              child: Container(
-                height: 2,
-                color:  isCompleted ? _green : const Color(0xFFDDDDD0),
-              ),
-            );
-          }
-          final stepIndex   = i ~/ 2;
-          final isCompleted = stepIndex <= activeIndex;
-          final step        = steps[stepIndex];
+      child: Column(
+        children: [
+          // ── Row 1: Icons connected by lines ──────────────────────────
+          Row(
+            children: List.generate(steps.length * 2 - 1, (i) {
+              if (i.isOdd) {
+                final isCompleted = (i ~/ 2) < activeIndex;
+                return Expanded(
+                  child: Container(
+                    height: 2,
+                    color: isCompleted ? _green : const Color(0xFFDDDDD0),
+                  ),
+                );
+              }
+              final stepIndex   = i ~/ 2;
+              final isCompleted = stepIndex <= activeIndex;
+              final step        = steps[stepIndex];
 
-          return Column(
-            children: [
-              Container(
+              return Container(
                 width:  36,
                 height: 36,
                 decoration: BoxDecoration(
@@ -796,20 +787,37 @@ class _StatusTracker extends StatelessWidget {
                 child: Icon(step.icon,
                     size:  18,
                     color: isCompleted ? Colors.white : const Color(0xFFAAAAAA)),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                step.label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize:   9,
-                  fontWeight: isCompleted ? FontWeight.w700 : FontWeight.w400,
-                  color:      isCompleted ? _green : const Color(0xFFAAAAAA),
+              );
+            }),
+          ),
+          const SizedBox(height: 8),
+          // ── Row 2: Labels aligned under each icon ─────────────────────
+          Row(
+            children: List.generate(steps.length * 2 - 1, (i) {
+              if (i.isOdd) {
+                // Spacer to match the connector lines
+                return const Expanded(child: SizedBox());
+              }
+              final stepIndex   = i ~/ 2;
+              final isCompleted = stepIndex <= activeIndex;
+              final step        = steps[stepIndex];
+
+              return SizedBox(
+                width: 36,
+                child: Text(
+                  step.label,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize:   8,
+                    fontWeight: isCompleted ? FontWeight.w700 : FontWeight.w400,
+                    color:      isCompleted ? _green : const Color(0xFFAAAAAA),
+                    height:     1.3,
+                  ),
                 ),
-              ),
-            ],
-          );
-        }),
+              );
+            }),
+          ),
+        ],
       ),
     );
   }
@@ -857,7 +865,7 @@ class _InfoSection extends StatelessWidget {
   }
 }
 
-// ── Live Item Details ──────────────────────────────────────────────────────────
+// ── Live Item Details (FIX 1: includes qty, delivery type & fee) ───────────────
 
 class _LiveItemDetailsSection extends StatelessWidget {
   final OrderController ctrl;
@@ -865,6 +873,7 @@ class _LiveItemDetailsSection extends StatelessWidget {
   final VoidCallback    onCancelTap;
 
   static const _terracotta = Color(0xFFD95F2B);
+  static const _green      = Color(0xFF1E4620);
 
   const _LiveItemDetailsSection({
     required this.ctrl,
@@ -872,8 +881,13 @@ class _LiveItemDetailsSection extends StatelessWidget {
     required this.onCancelTap,
   });
 
+  String _fmt(double v) =>
+      v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(2);
+
   @override
   Widget build(BuildContext context) {
+    final isSelfCollect = order.orderType == OrderType.selfCollect;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -921,47 +935,78 @@ class _LiveItemDetailsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+          // Items — live order uses OrderItemModel (no qty stored, qty=1 per row)
           ...order.items.map((item) => _OrderItemRow(
             name:     item.name,
             addOns:   item.addOns,
             price:    item.price,
+            quantity: 1,
             imageUrl: null,
           )),
           const Divider(height: 20),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                const SizedBox(height: 4),
-                const Text('Service Fee (5%) included *',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A))),
-                const SizedBox(height: 4),
-                Text(
-                  'Total ${order.items.length} item(s): RM ${_fmt(order.total)}',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize:   14,
-                      color:      Color(0xFF2C2C2C)),
-                ),
-              ],
+          // Fee breakdown
+          _FeeRow(label: 'Subtotal', value: 'RM ${_fmt(order.subtotal)}'),
+          const SizedBox(height: 4),
+          _FeeRow(
+              label: 'Service Fee (5%)',
+              value: 'RM ${_fmt(order.serviceFee)}'),
+          if (!isSelfCollect && order.deliveryFee > 0) ...[
+            const SizedBox(height: 4),
+            _FeeRow(
+                label: 'Delivery Fee',
+                value: 'RM ${_fmt(order.deliveryFee)}'),
+          ],
+          // Delivery type label
+          if (!isSelfCollect) ...[
+            const SizedBox(height: 4),
+            _FeeRow(
+              label: 'Delivery Type',
+              value: order.orderType == OrderType.delivery ? 'Delivery' : 'Self Collect',
             ),
+          ],
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Total (${order.items.length} item${order.items.length > 1 ? 's' : ''})',
+                style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize:   14,
+                    color:      Color(0xFF2C2C2C)),
+              ),
+              Text(
+                'RM ${_fmt(order.total)}',
+                style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize:   14,
+                    color:      Color(0xFF2C2C2C)),
+              ),
+            ],
           ),
+          if (order.remark.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Remark: ${order.remark}',
+              style: const TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)),
+            ),
+          ],
         ],
       ),
     );
   }
-
-  String _fmt(double v) =>
-      v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(2);
 }
 
-// ── History Item Details ───────────────────────────────────────────────────────
+// ── History Item Details (FIX 1: includes qty, delivery type & fee) ───────────
 
 class _HistoryItemDetailsSection extends StatelessWidget {
   final List<Map<String, dynamic>> items;
   final double       subtotal;
+  final double       serviceFee;
+  final double       deliveryFee;
   final double       total;
+  final String       remark;
+  final bool         isSelfCollect;
   final bool         isCancellable;
   final bool         isCancelling;
   final VoidCallback onCancelTap;
@@ -971,11 +1016,18 @@ class _HistoryItemDetailsSection extends StatelessWidget {
   const _HistoryItemDetailsSection({
     required this.items,
     required this.subtotal,
+    required this.serviceFee,
+    required this.deliveryFee,
     required this.total,
+    required this.remark,
+    required this.isSelfCollect,
     required this.isCancellable,
     required this.isCancelling,
     required this.onCancelTap,
   });
+
+  String _fmt(double v) =>
+      v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(2);
 
   @override
   Widget build(BuildContext context) {
@@ -1026,53 +1078,101 @@ class _HistoryItemDetailsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          ...items.map((item) => _OrderItemRow(
-            name:     item['name']      as String? ?? '',
-            addOns:   List<String>.from(item['add_ons'] as List? ?? []),
-            price:    (item['price']    as num?)?.toDouble() ?? 0.0,
-            imageUrl: item['image_url'] as String?,
-          )),
+          ...items.map((item) {
+            final qty = (item['quantity'] as num?)?.toInt() ?? 1;
+            return _OrderItemRow(
+              name:     item['name']      as String? ?? '',
+              addOns:   List<String>.from(item['add_ons'] as List? ?? []),
+              price:    (item['price']    as num?)?.toDouble() ?? 0.0,
+              quantity: qty,
+              imageUrl: item['image_url'] as String?,
+            );
+          }),
           const Divider(height: 20),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                const SizedBox(height: 4),
-                const Text('Service Fee (5%) included *',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A))),
-                const SizedBox(height: 4),
-                Text(
-                  'Total ${items.length} item(s): RM ${_fmt(total)}',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize:   14,
-                      color:      Color(0xFF2C2C2C)),
-                ),
-              ],
-            ),
+          // Fee breakdown
+          _FeeRow(label: 'Subtotal', value: 'RM ${_fmt(subtotal)}'),
+          const SizedBox(height: 4),
+          _FeeRow(
+              label: 'Service Fee (5%)',
+              value: 'RM ${_fmt(serviceFee)}'),
+          if (!isSelfCollect && deliveryFee > 0) ...[
+            const SizedBox(height: 4),
+            _FeeRow(
+                label: 'Delivery Fee',
+                value: 'RM ${_fmt(deliveryFee)}'),
+          ],
+          // Delivery type label
+          const SizedBox(height: 4),
+          _FeeRow(
+            label: 'Order Type',
+            value: isSelfCollect ? 'Self Collect' : 'Delivery',
           ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Total (${items.length} item${items.length > 1 ? 's' : ''})',
+                style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize:   14,
+                    color:      Color(0xFF2C2C2C)),
+              ),
+              Text(
+                'RM ${_fmt(total)}',
+                style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize:   14,
+                    color:      Color(0xFF2C2C2C)),
+              ),
+            ],
+          ),
+          if (remark.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Remark: $remark',
+              style: const TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)),
+            ),
+          ],
         ],
       ),
     );
   }
-
-  String _fmt(double v) =>
-      v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(2);
 }
 
-// ── Shared item row ────────────────────────────────────────────────────────────
+class _FeeRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _FeeRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(label,
+          style: const TextStyle(
+              fontSize: 12, color: Color(0xFF6B6B6B))),
+      Text(value,
+          style: const TextStyle(
+              fontSize: 12, color: Color(0xFF2C2C2C))),
+    ],
+  );
+}
+
+// ── Shared item row (FIX 1: shows quantity) ────────────────────────────────────
 
 class _OrderItemRow extends StatelessWidget {
   final String       name;
   final List<String> addOns;
   final double       price;
+  final int          quantity;
   final String?      imageUrl;
 
   const _OrderItemRow({
     required this.name,
     required this.addOns,
     required this.price,
+    required this.quantity,
     this.imageUrl,
   });
 
@@ -1081,9 +1181,10 @@ class _OrderItemRow extends StatelessWidget {
     final half = (addOns.length / 2).ceil();
     final col1 = addOns.isNotEmpty ? addOns.sublist(0, half)            : <String>[];
     final col2 = addOns.length > 1  ? addOns.sublist(half)              : <String>[];
-    final priceStr = price % 1 == 0
-        ? price.toInt().toString()
-        : price.toStringAsFixed(2);
+    final lineTotal = price * quantity;
+    final priceStr = lineTotal % 1 == 0
+        ? lineTotal.toInt().toString()
+        : lineTotal.toStringAsFixed(2);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -1096,11 +1197,34 @@ class _OrderItemRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 13)),
+                // Name + qty badge
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(name,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 13)),
+                    ),
+                    if (quantity > 1)
+                      Container(
+                        margin: const EdgeInsets.only(left: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E4620).withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          'x$quantity',
+                          style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1E4620)),
+                        ),
+                      ),
+                  ],
+                ),
                 const SizedBox(height: 4),
-                // FIX 1: Show "- No Add Ons" when empty
                 if (addOns.isEmpty)
                   const Text(
                     '+ No Add Ons',
@@ -1263,7 +1387,7 @@ class _OrderInfoBox extends StatelessWidget {
                   fontSize:   14,
                   color:      Color(0xFF2C2C2C))),
           const SizedBox(height: 12),
-          _InfoRow(label: 'Order ID',       value: orderId),
+          _InfoRow(label: 'Order ID',       value: '#$orderId'),
           const SizedBox(height: 6),
           _InfoRow(label: 'Order Date',     value: dateStr),
           const SizedBox(height: 6),

@@ -53,17 +53,16 @@ class _PaymentViewState extends State<_PaymentView> {
   static const _green      = Color(0xFF1E4620);
   static const _terracotta = Color(0xFFD95F2B);
   static const _bg         = Color(0xFFF5F5F0);
-  static const _devUserId  = 'fc33ae36-657a-4055-b81e-f6fe3de23278';
 
   bool _prefillLoaded = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _prefillUserInfo());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _prefillUserInfo());
   }
 
+  // FIX 5: Prefill Full Name, Email, and Phone from public.user table
   Future<void> _prefillUserInfo() async {
     if (_prefillLoaded) return;
     _prefillLoaded = true;
@@ -71,44 +70,52 @@ class _PaymentViewState extends State<_PaymentView> {
     final ctrl = context.read<PaymentController>();
 
     try {
-      final uid   = supabase.auth.currentUser?.id ?? _devUserId;
+      final uid   = supabase.auth.currentUser?.id ?? '';
       final email = supabase.auth.currentUser?.email ?? '';
 
+      // Always set email from auth session (most reliable source)
       if (email.isNotEmpty && ctrl.emailCtrl.text.isEmpty) {
         ctrl.emailCtrl.text = email;
       }
 
-      final profileRow = await supabase
-          .from('profiles')
-          .select('full_name, phone')
+      if (uid.isEmpty) return;
+
+      // FIX 5: Read from public.user first — this is where onboarding saves name & phone
+      final userRow = await supabase
+          .from('user')
+          .select('first_name, last_name, phone')
           .eq('user_id', uid)
           .maybeSingle();
 
-      if (profileRow != null) {
-        final name  = (profileRow['full_name'] as String?)?.trim() ?? '';
-        final phone = (profileRow['phone']     as String?)?.trim() ?? '';
-        if (name.isNotEmpty  && ctrl.nameCtrl.text.isEmpty)  ctrl.nameCtrl.text  = name;
-        if (phone.isNotEmpty && ctrl.phoneCtrl.text.isEmpty) ctrl.phoneCtrl.text = phone;
+      if (userRow != null) {
+        final firstName = (userRow['first_name'] as String?)?.trim() ?? '';
+        final lastName  = (userRow['last_name']  as String?)?.trim() ?? '';
+        final phone     = (userRow['phone']       as String?)?.trim() ?? '';
+        final fullName  = [firstName, lastName]
+            .where((s) => s.isNotEmpty)
+            .join(' ');
+
+        if (fullName.isNotEmpty && ctrl.nameCtrl.text.isEmpty) {
+          ctrl.nameCtrl.text = fullName;
+        }
+        if (phone.isNotEmpty && ctrl.phoneCtrl.text.isEmpty) {
+          ctrl.phoneCtrl.text = phone;
+        }
       }
 
-      if ((ctrl.nameCtrl.text.isEmpty || ctrl.phoneCtrl.text.isEmpty) &&
-          mounted) {
-        final userRow = await supabase
-            .from('user')
-            .select('first_name, last_name, phone')
+      // Secondary fallback: profiles table (older schema)
+      if (ctrl.nameCtrl.text.isEmpty || ctrl.phoneCtrl.text.isEmpty) {
+        final profileRow = await supabase
+            .from('profiles')
+            .select('full_name, phone')
             .eq('user_id', uid)
             .maybeSingle();
 
-        if (userRow != null) {
-          final firstName = (userRow['first_name'] as String?)?.trim() ?? '';
-          final lastName  = (userRow['last_name']  as String?)?.trim() ?? '';
-          final fullName  = [firstName, lastName]
-              .where((s) => s.isNotEmpty)
-              .join(' ');
-          final phone = (userRow['phone'] as String?)?.trim() ?? '';
-
-          if (fullName.isNotEmpty && ctrl.nameCtrl.text.isEmpty)  ctrl.nameCtrl.text  = fullName;
-          if (phone.isNotEmpty    && ctrl.phoneCtrl.text.isEmpty) ctrl.phoneCtrl.text = phone;
+        if (profileRow != null) {
+          final name  = (profileRow['full_name'] as String?)?.trim() ?? '';
+          final phone = (profileRow['phone']     as String?)?.trim() ?? '';
+          if (name.isNotEmpty  && ctrl.nameCtrl.text.isEmpty)  ctrl.nameCtrl.text  = name;
+          if (phone.isNotEmpty && ctrl.phoneCtrl.text.isEmpty) ctrl.phoneCtrl.text = phone;
         }
       }
 
@@ -217,13 +224,11 @@ class _PaymentViewState extends State<_PaymentView> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.error_outline,
-                        color: Colors.red, size: 18),
+                    const Icon(Icons.error_outline, color: Colors.red, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(ctrl.errorMessage!,
-                          style: const TextStyle(
-                              color: Colors.red, fontSize: 12)),
+                          style: const TextStyle(color: Colors.red, fontSize: 12)),
                     ),
                   ],
                 ),
@@ -265,13 +270,11 @@ class _PaymentViewState extends State<_PaymentView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: const [
-                Icon(Icons.lock_outline,
-                    size: 13, color: Color(0xFF8A8A8A)),
+                Icon(Icons.lock_outline, size: 13, color: Color(0xFF8A8A8A)),
                 SizedBox(width: 4),
                 Text(
                   'Payment is processed securely by Stripe.',
-                  style:
-                  TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)),
+                  style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)),
                 ),
               ],
             ),
@@ -304,12 +307,11 @@ class _PaymentViewState extends State<_PaymentView> {
       final checkoutCtrl = widget.checkoutCtrl;
       final isDelivery   = checkoutCtrl.activeTab == CheckoutTab.delivery;
 
-      // FIX 2: Resolve real store name + address from StoreController (fetched from Supabase)
-      final storeCtrl = context.read<StoreController>();
-      final store     = storeCtrl.selectedStore;
-      final storeName = store?.name    ?? 'NuBurn - Tanjung Burma';
-      final storeAddr = store?.address ?? '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21';
-      final storeId   = store?.id;
+      final storeCtrl  = context.read<StoreController>();
+      final store      = storeCtrl.selectedStore;
+      final storeName  = store?.name    ?? 'NuBurn - Tanjung Burma';
+      final storeAddr  = store?.address ?? '1-2-32, Medan Kampung Miao 2, Bulit Gelugor 21';
+      final storeId    = store?.id;
 
       final toName    = isDelivery
           ? checkoutCtrl.deliveryAddress.name
@@ -344,7 +346,6 @@ class _PaymentViewState extends State<_PaymentView> {
 
       if (!context.mounted) return;
 
-      // Dynamically refresh the Dashboard so Meal of Today and Calories update!
       context.read<ProfileController>().loadDashboardData();
 
       await _showPaymentSuccessDialog(context, storeName);
@@ -366,8 +367,7 @@ class _PaymentViewState extends State<_PaymentView> {
       barrierDismissible: false,
       builder: (_) => Dialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -404,13 +404,11 @@ class _PaymentViewState extends State<_PaymentView> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
-                  Icon(Icons.check_circle,
-                      color: Color(0xFF1E4620), size: 18),
+                  Icon(Icons.check_circle, color: Color(0xFF1E4620), size: 18),
                   SizedBox(width: 6),
                   Text(
                     'Your payment was successful',
-                    style: TextStyle(
-                        fontSize: 13, color: Color(0xFF1E4620)),
+                    style: TextStyle(fontSize: 13, color: Color(0xFF1E4620)),
                   ),
                 ],
               ),
@@ -420,8 +418,7 @@ class _PaymentViewState extends State<_PaymentView> {
               const Text(
                 'Your order will be prepared shortly.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 12, color: Color(0xFF6B6B6B)),
+                style: TextStyle(fontSize: 12, color: Color(0xFF6B6B6B)),
               ),
               const SizedBox(height: 20),
               SizedBox(
@@ -432,8 +429,7 @@ class _PaymentViewState extends State<_PaymentView> {
                     Navigator.pop(context);
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(
-                          builder: (_) => const OrderDetailsPage()),
+                      MaterialPageRoute(builder: (_) => const OrderDetailsPage()),
                           (route) => route.isFirst,
                     );
                   },
@@ -446,8 +442,7 @@ class _PaymentViewState extends State<_PaymentView> {
                   ),
                   child: const Text(
                     'Track My Order',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 15),
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                   ),
                 ),
               ),
@@ -502,8 +497,7 @@ class _OrderSummaryCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   '$itemCount item${itemCount > 1 ? 's' : ''}',
-                  style: const TextStyle(
-                      fontSize: 12, color: Color(0xFF8A8A8A)),
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF8A8A8A)),
                 ),
               ),
             ],
@@ -548,11 +542,9 @@ class _SummaryRow extends StatelessWidget {
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
       Text(label,
-          style: const TextStyle(
-              fontSize: 13, color: Color(0xFF8A8A8A))),
+          style: const TextStyle(fontSize: 13, color: Color(0xFF8A8A8A))),
       Text('RM ${value.toStringAsFixed(2)}',
-          style: const TextStyle(
-              fontSize: 13, color: Color(0xFF8A8A8A))),
+          style: const TextStyle(fontSize: 13, color: Color(0xFF8A8A8A))),
     ],
   );
 }
@@ -573,18 +565,14 @@ class _PaymentChannelsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Accepted Payment Channels',
-              style: TextStyle(
-                  fontWeight: FontWeight.w700, fontSize: 13)),
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
           const SizedBox(height: 10),
           const Row(
-            children: [
-              _ChannelChip(label: 'Credit / Debit Card'),
-            ],
+            children: [_ChannelChip(label: 'Credit / Debit Card')],
           ),
           const SizedBox(height: 8),
           const Text('Payment is processed securely by Stripe.',
-              style: TextStyle(
-                  fontSize: 11, color: Color(0xFF8A8A8A))),
+              style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A))),
         ],
       ),
     );
@@ -604,8 +592,7 @@ class _ChannelChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(label,
-          style: const TextStyle(
-              fontSize: 11, fontWeight: FontWeight.w600)),
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
     );
   }
 }
@@ -647,10 +634,8 @@ class _FormField extends StatelessWidget {
           style: const TextStyle(fontSize: 13),
           decoration: InputDecoration(
             hintText:   hint,
-            hintStyle:  const TextStyle(
-                color: Color(0xFFAAAAAA), fontSize: 13),
-            prefixIcon: Icon(icon,
-                size: 18, color: const Color(0xFF8A8A8A)),
+            hintStyle:  const TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
+            prefixIcon: Icon(icon, size: 18, color: const Color(0xFF8A8A8A)),
             filled:    true,
             fillColor: errorText != null
                 ? const Color(0xFFFFEEEE)
@@ -668,9 +653,7 @@ class _FormField extends StatelessWidget {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: errorText != null
-                    ? Colors.red
-                    : const Color(0xFF1E4620),
+                color: errorText != null ? Colors.red : const Color(0xFF1E4620),
                 width: 1.5,
               ),
             ),

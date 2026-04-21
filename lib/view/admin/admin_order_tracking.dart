@@ -4,8 +4,6 @@ import '../../service/profile_service.dart';
 
 // ── Status helpers ─────────────────────────────────────────────────────────────
 
-/// Statuses treated as "active / ongoing" in the Track Order tab.
-/// Matches the raw strings stored in Supabase (lowercase / snake_case).
 const _activeStatuses = {
   'submitted',
   'preparing',
@@ -13,7 +11,6 @@ const _activeStatuses = {
   'ready_for_collection',
 };
 
-/// Only completed orders appear in Order History for admins.
 const _historyStatuses = {'completed'};
 
 Color _statusColor(String status) {
@@ -87,19 +84,8 @@ String _formatDate(String? raw) {
   try {
     final d = DateTime.parse(raw).toLocal();
     const months = [
-      '',
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return '${d.day} ${months[d.month]} ${d.year}';
   } catch (_) {
@@ -123,12 +109,15 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
 
   static const _green = Color(0xFF1E4620);
 
-  String _searchQuery = '';
+  String _searchQuery  = '';
+  // FIX 2: Store filter — null = show all stores
+  String? _filterStoreId;
+  List<Map<String, dynamic>> _allStores = [];
 
   List<Map<String, dynamic>> _allOrders = [];
   Map<String, Map<String, dynamic>> _storeCache = {};
-  Map<String, Map<String, dynamic>> _userCache = {};
-  bool _loading = true;
+  Map<String, Map<String, dynamic>> _userCache  = {};
+  bool    _loading = true;
   String? _error;
 
   @override
@@ -145,15 +134,9 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
     super.dispose();
   }
 
-  // ── Fetch all orders from Supabase ─────────────────────────────────────────
   Future<void> _fetchOrders() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() { _loading = true; _error = null; });
     try {
-      // Fetch all orders (active + completed) with their items.
-      // Exclude cancelled — admins don't need to see them here.
       final rows = await supabase
           .from('orders')
           .select('*, order_items(*)')
@@ -162,7 +145,7 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
 
       final orders = List<Map<String, dynamic>>.from(rows);
 
-      // ── Batch fetch stores ──
+      // Batch fetch stores
       final storeIds = orders
           .map((o) => o['store_id'])
           .where((id) => id != null)
@@ -186,7 +169,19 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
         }
       }
 
-      // ── Batch fetch user display names ──
+      // Batch fetch all stores for the filter dropdown (FIX 2)
+      List<Map<String, dynamic>> allStores = [];
+      try {
+        final storeListRows = await supabase
+            .from('stores')
+            .select('id, name')
+            .order('name', ascending: true);
+        allStores = List<Map<String, dynamic>>.from(storeListRows);
+      } catch (e) {
+        debugPrint('[AdminOrders] all stores fetch error: $e');
+      }
+
+      // Batch fetch user names
       final userIds = orders
           .map((o) => o['user_id'])
           .where((id) => id != null)
@@ -196,7 +191,6 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
       Map<String, Map<String, dynamic>> userCache = {};
       if (userIds.isNotEmpty) {
         try {
-          // Try the public `user` table first (has first_name / last_name)
           final userRows = await supabase
               .from('user')
               .select('user_id, first_name, last_name, email, phone')
@@ -211,34 +205,39 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
       }
 
       setState(() {
-        _allOrders = orders;
+        _allOrders  = orders;
         _storeCache = storeCache;
-        _userCache = userCache;
+        _userCache  = userCache;
+        _allStores  = allStores;
       });
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-      });
+      setState(() { _error = e.toString(); });
     } finally {
-      setState(() {
-        _loading = false;
-      });
+      setState(() { _loading = false; });
     }
   }
 
-  // ── Filter helpers ─────────────────────────────────────────────────────────
+  // FIX 2: Filter by store + status + search
   List<Map<String, dynamic>> _filter(Set<String> statusSet) {
     return _allOrders.where((o) {
       final status = (o['status'] as String? ?? '').toLowerCase().trim();
       if (!statusSet.contains(status)) return false;
+
+      // Store filter
+      if (_filterStoreId != null) {
+        final rawId = o['store_id'];
+        if (rawId == null || rawId.toString().trim() != _filterStoreId) {
+          return false;
+        }
+      }
+
       if (_searchQuery.isEmpty) return true;
 
-      final code = (o['collection_code'] as String? ?? '').toLowerCase();
-      final label = _statusLabel(status).toLowerCase();
-      final storeName = _storeName(o).toLowerCase();
+      final code       = (o['collection_code'] as String? ?? '').toLowerCase();
+      final label      = _statusLabel(status).toLowerCase();
+      final storeName  = _storeName(o).toLowerCase();
       final customerName = _customerName(o).toLowerCase();
-      final orderType =
-      _orderTypeLabel(o['order_type'] as String? ?? '').toLowerCase();
+      final orderType  = _orderTypeLabel(o['order_type'] as String? ?? '').toLowerCase();
 
       return code.contains(_searchQuery.toLowerCase()) ||
           label.contains(_searchQuery.toLowerCase()) ||
@@ -262,20 +261,19 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
   String _customerName(Map<String, dynamic> o) {
     final userId = o['user_id']?.toString() ?? '';
     if (userId.isNotEmpty && _userCache.containsKey(userId)) {
-      final u = _userCache[userId]!;
+      final u     = _userCache[userId]!;
       final first = (u['first_name'] as String?)?.trim() ?? '';
-      final last = (u['last_name'] as String?)?.trim() ?? '';
-      final full = '$first $last'.trim();
+      final last  = (u['last_name']  as String?)?.trim() ?? '';
+      final full  = '$first $last'.trim();
       if (full.isNotEmpty) return full;
       return (u['email'] as String?)?.trim() ?? 'Customer';
     }
-    // Fallback to to_name from order
     return (o['to_name'] as String?)?.trim() ?? 'Customer';
   }
 
   @override
   Widget build(BuildContext context) {
-    final activeOrders = _filter(_activeStatuses);
+    final activeOrders  = _filter(_activeStatuses);
     final historyOrders = _filter(_historyStatuses);
 
     return Column(
@@ -285,11 +283,11 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
           color: Colors.white,
           child: TabBar(
             controller: _tabCtrl,
-            labelColor: _green,
+            labelColor:           _green,
             unselectedLabelColor: const Color(0xFF8A8A8A),
-            labelStyle: const TextStyle(fontWeight: FontWeight.w700),
-            indicatorColor: _green,
-            indicatorWeight: 2.5,
+            labelStyle:           const TextStyle(fontWeight: FontWeight.w700),
+            indicatorColor:       _green,
+            indicatorWeight:      2.5,
             tabs: const [
               Tab(text: 'Track Order'),
               Tab(text: 'Order History'),
@@ -297,12 +295,57 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
           ),
         ),
 
-        // ── Search bar ──
+        // ── Store filter + Search bar (FIX 2) ──
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Store Filter
+              const Text(
+                'Filter by Store Branch',
+                style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: Color(0xFF2C2C2C)),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color:        const Color(0xFFEEEBDE),
+                  borderRadius: BorderRadius.circular(10),
+                  border:       Border.all(color: const Color(0xFFDDDACA)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String?>(
+                    value:      _filterStoreId,
+                    isExpanded: true,
+                    icon: const Icon(Icons.keyboard_arrow_down,
+                        color: Color(0xFF2C2C2C), size: 18),
+                    style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF2C2C2C),
+                        fontWeight: FontWeight.w500),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('All Stores'),
+                      ),
+                      ..._allStores.map((s) => DropdownMenuItem<String?>(
+                        value: s['id'] as String?,
+                        child: Text(
+                          s['name'] as String? ?? '',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      )),
+                    ],
+                    onChanged: (v) => setState(() => _filterStoreId = v),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Search
               const Text(
                 'Search by Order Code, Status or Customer',
                 style: TextStyle(
@@ -321,7 +364,7 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
                   const TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
                   suffixIcon:
                   const Icon(Icons.search, color: Color(0xFF8A8A8A)),
-                  filled: true,
+                  filled:    true,
                   fillColor: const Color(0xFFEEEBDE),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -346,18 +389,18 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
             controller: _tabCtrl,
             children: [
               _OrderList(
-                orders: activeOrders,
-                isHistory: false,
-                storeName: _storeName,
+                orders:       activeOrders,
+                isHistory:    false,
+                storeName:    _storeName,
                 customerName: _customerName,
-                onTap: _open,
+                onTap:        _open,
               ),
               _OrderList(
-                orders: historyOrders,
-                isHistory: true,
-                storeName: _storeName,
+                orders:       historyOrders,
+                isHistory:    true,
+                storeName:    _storeName,
                 customerName: _customerName,
-                onTap: _open,
+                onTap:        _open,
               ),
             ],
           ),
@@ -367,7 +410,7 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
   }
 
   void _open(BuildContext context, Map<String, dynamic> order) {
-    final status = (order['status'] as String? ?? '').toLowerCase();
+    final status   = (order['status'] as String? ?? '').toLowerCase();
     final isActive = _activeStatuses.contains(status);
 
     Navigator.push(
@@ -376,14 +419,14 @@ class _AdminOrderTrackingPageState extends State<AdminOrderTrackingPage>
         builder: (_) => isActive
             ? AdminActiveOrderDetailPage(
           orderId: order['order_id'].toString(),
-          userId: order['user_id'].toString(),
+          userId:  order['user_id'].toString(),
         )
             : AdminHistoryOrderDetailPage(
           orderId: order['order_id'].toString(),
-          userId: order['user_id'].toString(),
+          userId:  order['user_id'].toString(),
         ),
       ),
-    ).then((_) => _fetchOrders()); // refresh after returning
+    ).then((_) => _fetchOrders());
   }
 }
 
@@ -413,7 +456,7 @@ class _OrderList extends StatelessWidget {
           children: [
             Icon(
               isHistory ? Icons.history : Icons.receipt_long_outlined,
-              size: 48,
+              size:  48,
               color: const Color(0xFFCCC9B8),
             ),
             const SizedBox(height: 12),
@@ -427,31 +470,29 @@ class _OrderList extends StatelessWidget {
     }
 
     return RefreshIndicator(
-      color: const Color(0xFF1E4620),
+      color:     const Color(0xFF1E4620),
       onRefresh: () async {},
       child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        itemCount: orders.length,
+        padding:          const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        itemCount:        orders.length,
         separatorBuilder: (_, __) => const SizedBox(height: 8),
         itemBuilder: (context, index) {
-          final order = orders[index];
-          final status = (order['status'] as String? ?? '').toLowerCase();
+          final order     = orders[index];
+          final status    = (order['status'] as String? ?? '').toLowerCase();
           final orderType = order['order_type'] as String? ?? '';
-          final code = order['collection_code'] as String? ?? '---';
+          final code      = order['collection_code'] as String? ?? '---';
 
           return GestureDetector(
             onTap: () => onTap(context, order),
             child: Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color:        Colors.white,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFEEEBDE)),
+                border:       Border.all(color: const Color(0xFFEEEBDE)),
               ),
               child: Row(
                 children: [
-                  // Status image thumbnail
                   _StatusImage(status: status, size: 36),
                   const SizedBox(width: 12),
 
@@ -477,6 +518,13 @@ class _OrderList extends StatelessWidget {
                               fontSize: 11,
                               color: Color(0xFF6B6B6B),
                               fontWeight: FontWeight.w500),
+                        ),
+                        Text(
+                          storeName(order),
+                          style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF1E4620),
+                              fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -532,13 +580,13 @@ class _StatusImage extends StatelessWidget {
 
     return Image.asset(
       path,
-      width: size,
+      width:  size,
       height: size,
-      fit: BoxFit.contain,
+      fit:    BoxFit.contain,
       errorBuilder: (_, __, ___) => Icon(
         Icons.receipt_outlined,
         color: _statusColor(status),
-        size: size,
+        size:  size,
       ),
     );
   }
@@ -546,7 +594,6 @@ class _StatusImage extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ACTIVE ORDER DETAIL PAGE
-// Admin can update order status here.
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AdminActiveOrderDetailPage extends StatefulWidget {
@@ -566,17 +613,17 @@ class AdminActiveOrderDetailPage extends StatefulWidget {
 
 class _AdminActiveOrderDetailPageState
     extends State<AdminActiveOrderDetailPage> {
-  static const _green = Color(0xFF1E4620);
+  static const _green      = Color(0xFF1E4620);
   static const _terracotta = Color(0xFFD95F2B);
-  static const _bg = Color(0xFFF5F5F0);
+  static const _bg         = Color(0xFFF5F5F0);
 
   Map<String, dynamic>? _order;
   Map<String, dynamic>? _storeRow;
   Map<String, dynamic>? _userRow;
-  bool _loading = true;
+  bool    _loading  = true;
   String? _error;
   String? _selectedStatus;
-  bool _updating = false;
+  bool    _updating = false;
 
   @override
   void initState() {
@@ -585,10 +632,7 @@ class _AdminActiveOrderDetailPageState
   }
 
   Future<void> _loadOrder() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() { _loading = true; _error = null; });
     try {
       final row = await supabase
           .from('orders')
@@ -598,7 +642,6 @@ class _AdminActiveOrderDetailPageState
 
       final orderMap = Map<String, dynamic>.from(row);
 
-      // Fetch store
       final rawStoreId = orderMap['store_id'];
       Map<String, dynamic>? storeMap;
       if (rawStoreId != null && rawStoreId.toString().trim().isNotEmpty) {
@@ -614,7 +657,6 @@ class _AdminActiveOrderDetailPageState
         }
       }
 
-      // Fetch user
       Map<String, dynamic>? userMap;
       try {
         final u = await supabase
@@ -628,30 +670,24 @@ class _AdminActiveOrderDetailPageState
       }
 
       setState(() {
-        _order = orderMap;
+        _order    = orderMap;
         _storeRow = storeMap;
-        _userRow = userMap;
+        _userRow  = userMap;
       });
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-      });
+      setState(() { _error = e.toString(); });
     } finally {
-      setState(() {
-        _loading = false;
-      });
+      setState(() { _loading = false; });
     }
   }
 
-  /// Next allowed statuses based on current status.
   List<String> get _statusOptions {
     final current = (_order?['status'] as String? ?? '').toLowerCase();
     switch (current) {
       case 'submitted':
         return ['preparing'];
       case 'preparing':
-        final orderType =
-        (_order?['order_type'] as String? ?? '').toLowerCase();
+        final orderType = (_order?['order_type'] as String? ?? '').toLowerCase();
         return (orderType == 'selfcollect' || orderType == 'self_collect')
             ? ['ready_for_collection']
             : ['out_for_delivery'];
@@ -665,16 +701,11 @@ class _AdminActiveOrderDetailPageState
 
   String _statusOptionLabel(String s) {
     switch (s) {
-      case 'preparing':
-        return 'Preparing';
-      case 'out_for_delivery':
-        return 'Out for Delivery';
-      case 'ready_for_collection':
-        return 'Ready for Collection';
-      case 'completed':
-        return 'Completed';
-      default:
-        return s;
+      case 'preparing':            return 'Preparing';
+      case 'out_for_delivery':     return 'Out for Delivery';
+      case 'ready_for_collection': return 'Ready for Collection';
+      case 'completed':            return 'Completed';
+      default:                     return s;
     }
   }
 
@@ -684,47 +715,38 @@ class _AdminActiveOrderDetailPageState
     try {
       final isCancellable = _selectedStatus != 'completed';
       await supabase.from('orders').update({
-        'status': _selectedStatus,
+        'status':        _selectedStatus,
         'is_cancellable': isCancellable,
       }).eq('order_id', int.parse(widget.orderId));
 
-      // ── LOG CALORIES IF COMPLETED ──
       if (_selectedStatus == 'completed' && _order != null) {
-        final cal  = (_order!['total_cal'] as num?)?.toDouble() ?? 0;
-        final pro  = (_order!['total_pro'] as num?)?.toDouble() ?? 0;
+        final cal  = (_order!['total_cal']  as num?)?.toDouble() ?? 0;
+        final pro  = (_order!['total_pro']  as num?)?.toDouble() ?? 0;
         final carb = (_order!['total_carb'] as num?)?.toDouble() ?? 0;
-        final fat  = (_order!['total_fat'] as num?)?.toDouble() ?? 0;
+        final fat  = (_order!['total_fat']  as num?)?.toDouble() ?? 0;
 
         if (cal > 0) {
-          // Temporarily mock ProfileService with the order's user_id because 
-          // the Admin is currently logged in, not the customer!
           await ProfileService.upsertCalorieLogForUser(
-             userId: widget.userId,
-             calories: cal,
-             proteinG: pro,
-             carbsG: carb,
-             fatG: fat,
+            userId:   widget.userId,
+            calories: cal,
+            proteinG: pro,
+            carbsG:   carb,
+            fatG:     fat,
           );
         }
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                'Status updated to "${_statusOptionLabel(_selectedStatus!)}"'),
-            backgroundColor: _green,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content:         Text('Status updated to "${_statusOptionLabel(_selectedStatus!)}"'),
+          backgroundColor: _green,
+        ));
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Failed to update: $e'),
-              backgroundColor: Colors.red),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Failed to update: $e'), backgroundColor: Colors.red));
       }
     } finally {
       if (mounted) setState(() => _updating = false);
@@ -734,8 +756,8 @@ class _AdminActiveOrderDetailPageState
   String _customerDisplayName() {
     if (_userRow != null) {
       final first = (_userRow!['first_name'] as String?)?.trim() ?? '';
-      final last = (_userRow!['last_name'] as String?)?.trim() ?? '';
-      final full = '$first $last'.trim();
+      final last  = (_userRow!['last_name']  as String?)?.trim() ?? '';
+      final full  = '$first $last'.trim();
       if (full.isNotEmpty) return full;
       return (_userRow!['email'] as String?)?.trim() ?? 'Customer';
     }
@@ -748,8 +770,7 @@ class _AdminActiveOrderDetailPageState
       return Scaffold(
         backgroundColor: _bg,
         appBar: _appBar(context, 'Order Details'),
-        body: const Center(
-            child: CircularProgressIndicator(color: Color(0xFF1E4620))),
+        body: const Center(child: CircularProgressIndicator(color: Color(0xFF1E4620))),
       );
     }
 
@@ -761,8 +782,7 @@ class _AdminActiveOrderDetailPageState
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline,
-                  size: 48, color: Color(0xFFCCC9B8)),
+              const Icon(Icons.error_outline, size: 48, color: Color(0xFFCCC9B8)),
               const SizedBox(height: 12),
               const Text('Failed to load order details.'),
               const SizedBox(height: 8),
@@ -778,26 +798,22 @@ class _AdminActiveOrderDetailPageState
       );
     }
 
-    final order = _order!;
-    final status = (order['status'] as String? ?? '').toLowerCase();
-    final orderType = (order['order_type'] as String? ?? '').toLowerCase();
-    final items = List<Map<String, dynamic>>.from(
-        order['order_items'] as List? ?? []);
-    final code = order['collection_code'] as String? ?? '---';
-    final subtotal = (order['subtotal'] as num?)?.toDouble() ?? 0.0;
-    final serviceFee = (order['service_fee'] as num?)?.toDouble() ?? 0.0;
+    final order       = _order!;
+    final status      = (order['status']     as String? ?? '').toLowerCase();
+    final orderType   = (order['order_type'] as String? ?? '').toLowerCase();
+    final items       = List<Map<String, dynamic>>.from(order['order_items'] as List? ?? []);
+    final code        = order['collection_code'] as String? ?? '---';
+    final subtotal    = (order['subtotal']    as num?)?.toDouble() ?? 0.0;
+    final serviceFee  = (order['service_fee'] as num?)?.toDouble() ?? 0.0;
     final deliveryFee = (order['delivery_fee'] as num?)?.toDouble() ?? 0.0;
-    final total = (order['total'] as num?)?.toDouble() ?? 0.0;
-    final toName = order['to_name'] as String? ?? '';
-    final toPhone = order['to_phone'] as String? ?? '';
-    final toAddress = order['to_address'] as String? ?? '';
-    final remark = order['remark'] as String? ?? '';
-    final storeName =
-        (_storeRow?['name'] as String?)?.trim() ?? 'NuBurn';
-    final storeAddress =
-        (_storeRow?['address'] as String?)?.trim() ?? '';
-    final isSelfCollect =
-        orderType == 'selfcollect' || orderType == 'self_collect';
+    final total       = (order['total']       as num?)?.toDouble() ?? 0.0;
+    final toName      = order['to_name']      as String? ?? '';
+    final toPhone     = order['to_phone']     as String? ?? '';
+    final toAddress   = order['to_address']   as String? ?? '';
+    final remark      = order['remark']       as String? ?? '';
+    final storeName   = (_storeRow?['name']   as String?)?.trim() ?? 'NuBurn';
+    final storeAddress = (_storeRow?['address'] as String?)?.trim() ?? '';
+    final isSelfCollect = orderType == 'selfcollect' || orderType == 'self_collect';
 
     return Scaffold(
       backgroundColor: _bg,
@@ -806,7 +822,6 @@ class _AdminActiveOrderDetailPageState
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // ── Code + current status ──
             _DetailCard(
               child: Row(
                 children: [
@@ -816,26 +831,19 @@ class _AdminActiveOrderDetailPageState
                       children: [
                         Text(
                           '${_orderTypeLabel(orderType).toUpperCase()} CODE #$code',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 14),
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          _customerDisplayName(),
-                          style: const TextStyle(
-                              fontSize: 12, color: Color(0xFF6B6B6B)),
-                        ),
+                        Text(_customerDisplayName(),
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF6B6B6B))),
                         const SizedBox(height: 8),
                         const Text('Current Status:',
-                            style: TextStyle(
-                                fontSize: 12, color: Color(0xFF8A8A8A))),
+                            style: TextStyle(fontSize: 12, color: Color(0xFF8A8A8A))),
                         const SizedBox(height: 4),
                         Text(
                           _statusLabel(status),
                           style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                              color: _statusColor(status)),
+                              fontWeight: FontWeight.w700, fontSize: 14, color: _statusColor(status)),
                         ),
                       ],
                     ),
@@ -846,41 +854,34 @@ class _AdminActiveOrderDetailPageState
             ),
             const SizedBox(height: 16),
 
-            // ── Update status ──
             if (_statusOptions.isNotEmpty)
               _DetailCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Update Order Status',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w800, fontSize: 15)),
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                     const SizedBox(height: 12),
                     Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                      spacing: 8, runSpacing: 8,
                       children: _statusOptions.map((s) {
                         final isSelected = _selectedStatus == s;
                         return GestureDetector(
                           onTap: () => setState(() => _selectedStatus = s),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 150),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
-                              color: isSelected ? _terracotta : Colors.white,
-                              border: Border.all(
-                                  color: _terracotta, width: 1.2),
+                              color:        isSelected ? _terracotta : Colors.white,
+                              border:       Border.all(color: _terracotta, width: 1.2),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               _statusOptionLabel(s),
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize:   12,
                                 fontWeight: FontWeight.w600,
-                                color: isSelected
-                                    ? Colors.white
-                                    : _terracotta,
+                                color:      isSelected ? Colors.white : _terracotta,
                               ),
                             ),
                           ),
@@ -889,32 +890,23 @@ class _AdminActiveOrderDetailPageState
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
-                      width: double.infinity,
-                      height: 46,
+                      width: double.infinity, height: 46,
                       child: ElevatedButton(
-                        onPressed: (_selectedStatus == null || _updating)
-                            ? null
-                            : _updateStatus,
+                        onPressed: (_selectedStatus == null || _updating) ? null : _updateStatus,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _green,
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor:
-                          _green.withValues(alpha: 0.4),
+                          backgroundColor:         _green,
+                          foregroundColor:         Colors.white,
+                          disabledBackgroundColor: _green.withValues(alpha: 0.4),
                           elevation: 0,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         child: _updating
                             ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                          width: 18, height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
                             : const Text('UPDATE STATUS',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.0)),
+                            style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.0)),
                       ),
                     ),
                   ],
@@ -922,16 +914,12 @@ class _AdminActiveOrderDetailPageState
               ),
             if (_statusOptions.isNotEmpty) const SizedBox(height: 16),
 
-            // ── Delivery / Collect info ──
             _DetailCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    isSelfCollect ? 'Collect At' : 'Delivery Info',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 15),
-                  ),
+                  Text(isSelfCollect ? 'Collect At' : 'Delivery Info',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                   const SizedBox(height: 10),
                   if (isSelfCollect) ...[
                     _InfoRow(label: 'Store', value: storeName),
@@ -953,26 +941,23 @@ class _AdminActiveOrderDetailPageState
             ),
             const SizedBox(height: 16),
 
-            // ── Item details ──
+            // FIX 1: Item details with qty, delivery type, delivery fee
             _ItemDetailsCard(
-              items: items,
-              subtotal: subtotal,
-              serviceFee: serviceFee,
-              deliveryFee: deliveryFee,
-              total: total,
-              remark: remark,
+              items:        items,
+              subtotal:     subtotal,
+              serviceFee:   serviceFee,
+              deliveryFee:  deliveryFee,
+              total:        total,
+              remark:       remark,
               isSelfCollect: isSelfCollect,
             ),
             const SizedBox(height: 16),
 
-            // ── Order info ──
             _OrderInfoCard(
-              orderId: widget.orderId,
-              orderDate:
-              order['order_date'] as String? ?? order['created_at'] as String?,
-              orderType: _orderTypeLabel(orderType),
-              paymentMethod:
-              order['payment_method'] as String? ?? 'Credit / Debit Card',
+              orderId:        widget.orderId,
+              orderDate:      order['order_date'] as String? ?? order['created_at'] as String?,
+              orderType:      _orderTypeLabel(orderType),
+              paymentMethod:  order['payment_method'] as String? ?? 'Credit / Debit Card',
               collectionCode: code,
             ),
           ],
@@ -984,8 +969,6 @@ class _AdminActiveOrderDetailPageState
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HISTORY ORDER DETAIL PAGE
-// Read-only view for completed orders — mirrors the customer order_details.dart
-// layout but from the admin perspective.
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AdminHistoryOrderDetailPage extends StatefulWidget {
@@ -1006,12 +989,12 @@ class AdminHistoryOrderDetailPage extends StatefulWidget {
 class _AdminHistoryOrderDetailPageState
     extends State<AdminHistoryOrderDetailPage> {
   static const _green = Color(0xFF1E4620);
-  static const _bg = Color(0xFFF5F5F0);
+  static const _bg    = Color(0xFFF5F5F0);
 
   Map<String, dynamic>? _order;
   Map<String, dynamic>? _storeRow;
   Map<String, dynamic>? _userRow;
-  bool _loading = true;
+  bool    _loading = true;
   String? _error;
 
   @override
@@ -1021,10 +1004,7 @@ class _AdminHistoryOrderDetailPageState
   }
 
   Future<void> _loadOrder() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() { _loading = true; _error = null; });
     try {
       final row = await supabase
           .from('orders')
@@ -1062,26 +1042,22 @@ class _AdminHistoryOrderDetailPageState
       }
 
       setState(() {
-        _order = orderMap;
+        _order    = orderMap;
         _storeRow = storeMap;
-        _userRow = userMap;
+        _userRow  = userMap;
       });
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-      });
+      setState(() { _error = e.toString(); });
     } finally {
-      setState(() {
-        _loading = false;
-      });
+      setState(() { _loading = false; });
     }
   }
 
   String _customerDisplayName() {
     if (_userRow != null) {
       final first = (_userRow!['first_name'] as String?)?.trim() ?? '';
-      final last = (_userRow!['last_name'] as String?)?.trim() ?? '';
-      final full = '$first $last'.trim();
+      final last  = (_userRow!['last_name']  as String?)?.trim() ?? '';
+      final full  = '$first $last'.trim();
       if (full.isNotEmpty) return full;
       return (_userRow!['email'] as String?)?.trim() ?? 'Customer';
     }
@@ -1094,8 +1070,7 @@ class _AdminHistoryOrderDetailPageState
       return Scaffold(
         backgroundColor: _bg,
         appBar: _appBar(context, 'Order History Detail'),
-        body: const Center(
-            child: CircularProgressIndicator(color: Color(0xFF1E4620))),
+        body: const Center(child: CircularProgressIndicator(color: Color(0xFF1E4620))),
       );
     }
 
@@ -1107,8 +1082,7 @@ class _AdminHistoryOrderDetailPageState
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline,
-                  size: 48, color: Color(0xFFCCC9B8)),
+              const Icon(Icons.error_outline, size: 48, color: Color(0xFFCCC9B8)),
               const SizedBox(height: 12),
               const Text('Failed to load order details.'),
               const SizedBox(height: 8),
@@ -1124,28 +1098,23 @@ class _AdminHistoryOrderDetailPageState
       );
     }
 
-    final order = _order!;
-    final status = (order['status'] as String? ?? '').toLowerCase();
-    final orderType = (order['order_type'] as String? ?? '').toLowerCase();
-    final items = List<Map<String, dynamic>>.from(
-        order['order_items'] as List? ?? []);
-    final code = order['collection_code'] as String? ?? '---';
-    final subtotal = (order['subtotal'] as num?)?.toDouble() ?? 0.0;
-    final serviceFee = (order['service_fee'] as num?)?.toDouble() ?? 0.0;
+    final order       = _order!;
+    final status      = (order['status']     as String? ?? '').toLowerCase();
+    final orderType   = (order['order_type'] as String? ?? '').toLowerCase();
+    final items       = List<Map<String, dynamic>>.from(order['order_items'] as List? ?? []);
+    final code        = order['collection_code'] as String? ?? '---';
+    final subtotal    = (order['subtotal']    as num?)?.toDouble() ?? 0.0;
+    final serviceFee  = (order['service_fee'] as num?)?.toDouble() ?? 0.0;
     final deliveryFee = (order['delivery_fee'] as num?)?.toDouble() ?? 0.0;
-    final total = (order['total'] as num?)?.toDouble() ?? 0.0;
-    final toName = order['to_name'] as String? ?? '';
-    final toPhone = order['to_phone'] as String? ?? '';
-    final toAddress = order['to_address'] as String? ?? '';
-    final remark = order['remark'] as String? ?? '';
-    final payMethod =
-        order['payment_method'] as String? ?? 'Credit / Debit Card';
-    final storeName =
-        (_storeRow?['name'] as String?)?.trim() ?? 'NuBurn';
-    final storeAddress =
-        (_storeRow?['address'] as String?)?.trim() ?? '';
-    final isSelfCollect =
-        orderType == 'selfcollect' || orderType == 'self_collect';
+    final total       = (order['total']       as num?)?.toDouble() ?? 0.0;
+    final toName      = order['to_name']      as String? ?? '';
+    final toPhone     = order['to_phone']     as String? ?? '';
+    final toAddress   = order['to_address']   as String? ?? '';
+    final remark      = order['remark']       as String? ?? '';
+    final payMethod   = order['payment_method'] as String? ?? 'Credit / Debit Card';
+    final storeName   = (_storeRow?['name']   as String?)?.trim() ?? 'NuBurn';
+    final storeAddress = (_storeRow?['address'] as String?)?.trim() ?? '';
+    final isSelfCollect = orderType == 'selfcollect' || orderType == 'self_collect';
 
     return Scaffold(
       backgroundColor: _bg,
@@ -1154,7 +1123,6 @@ class _AdminHistoryOrderDetailPageState
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // ── Status banner ──
             _DetailCard(
               child: Row(
                 children: [
@@ -1162,24 +1130,15 @@ class _AdminHistoryOrderDetailPageState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Order ${_statusLabel(status)}',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 16),
-                        ),
+                        Text('Order ${_statusLabel(status)}',
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                         const SizedBox(height: 4),
-                        Text(
-                          _customerDisplayName(),
-                          style: const TextStyle(
-                              fontSize: 12, color: Color(0xFF6B6B6B)),
-                        ),
+                        Text(_customerDisplayName(),
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF6B6B6B))),
                         const SizedBox(height: 8),
                         const Text(
                           'This order has been completed successfully.',
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF6B6B6B),
-                              height: 1.5),
+                          style: TextStyle(fontSize: 12, color: Color(0xFF6B6B6B), height: 1.5),
                         ),
                       ],
                     ),
@@ -1191,16 +1150,12 @@ class _AdminHistoryOrderDetailPageState
             ),
             const SizedBox(height: 16),
 
-            // ── Delivery / Collect info ──
             _DetailCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    isSelfCollect ? 'Collected At' : 'Delivered To',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 15),
-                  ),
+                  Text(isSelfCollect ? 'Collected At' : 'Delivered To',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                   const SizedBox(height: 10),
                   if (isSelfCollect) ...[
                     _InfoRow(label: 'Store', value: storeName),
@@ -1222,25 +1177,23 @@ class _AdminHistoryOrderDetailPageState
             ),
             const SizedBox(height: 16),
 
-            // ── Item details ──
+            // FIX 1: Item details with qty, delivery type, delivery fee
             _ItemDetailsCard(
-              items: items,
-              subtotal: subtotal,
-              serviceFee: serviceFee,
-              deliveryFee: deliveryFee,
-              total: total,
-              remark: remark,
+              items:        items,
+              subtotal:     subtotal,
+              serviceFee:   serviceFee,
+              deliveryFee:  deliveryFee,
+              total:        total,
+              remark:       remark,
               isSelfCollect: isSelfCollect,
             ),
             const SizedBox(height: 16),
 
-            // ── Order info ──
             _OrderInfoCard(
-              orderId: widget.orderId,
-              orderDate:
-              order['order_date'] as String? ?? order['created_at'] as String?,
-              orderType: _orderTypeLabel(orderType),
-              paymentMethod: payMethod,
+              orderId:        widget.orderId,
+              orderDate:      order['order_date'] as String? ?? order['created_at'] as String?,
+              orderType:      _orderTypeLabel(orderType),
+              paymentMethod:  payMethod,
               collectionCode: code,
             ),
             const SizedBox(height: 24),
@@ -1251,23 +1204,19 @@ class _AdminHistoryOrderDetailPageState
   }
 }
 
-// ── Shared AppBar builder ──────────────────────────────────────────────────────
+// ── Shared AppBar ──────────────────────────────────────────────────────────────
 
 AppBar _appBar(BuildContext context, String title) => AppBar(
   backgroundColor: const Color(0xFFF5F5F0),
-  elevation: 0,
-  centerTitle: true,
+  elevation:       0,
+  centerTitle:     true,
   leading: IconButton(
-    icon: const Icon(Icons.arrow_back, color: Color(0xFF1E4620)),
+    icon:      const Icon(Icons.arrow_back, color: Color(0xFF1E4620)),
     onPressed: () => Navigator.pop(context),
   ),
-  title: Text(
-    title,
-    style: const TextStyle(
-        color: Color(0xFF1E4620),
-        fontWeight: FontWeight.w800,
-        fontSize: 18),
-  ),
+  title: Text(title,
+      style: const TextStyle(
+          color: Color(0xFF1E4620), fontWeight: FontWeight.w800, fontSize: 18)),
 );
 
 // ── Shared detail card ─────────────────────────────────────────────────────────
@@ -1278,18 +1227,18 @@ class _DetailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    width: double.infinity,
+    width:   double.infinity,
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color:        Colors.white,
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: const Color(0xFFEEEBDE)),
+      border:       Border.all(color: const Color(0xFFEEEBDE)),
     ),
     child: child,
   );
 }
 
-// ── Item Details Card ──────────────────────────────────────────────────────────
+// ── Item Details Card (FIX 1: qty + delivery type + delivery fee) ──────────────
 
 class _ItemDetailsCard extends StatelessWidget {
   final List<Map<String, dynamic>> items;
@@ -1298,7 +1247,7 @@ class _ItemDetailsCard extends StatelessWidget {
   final double deliveryFee;
   final double total;
   final String remark;
-  final bool isSelfCollect;
+  final bool   isSelfCollect;
 
   const _ItemDetailsCard({
     required this.items,
@@ -1320,15 +1269,16 @@ class _ItemDetailsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Item Details',
-              style:
-              TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
           const SizedBox(height: 12),
           ...items.map((item) {
-            final name = item['name'] as String? ?? '';
-            final price = (item['price'] as num?)?.toDouble() ?? 0.0;
-            final addOns =
-            List<String>.from(item['add_ons'] as List? ?? []);
+            final name     = item['name']      as String? ?? '';
+            final price    = (item['price']    as num?)?.toDouble() ?? 0.0;
+            final qty      = (item['quantity'] as num?)?.toInt() ?? 1;
+            final addOns   = List<String>.from(item['add_ons'] as List? ?? []);
             final imageUrl = item['image_url'] as String?;
+            final lineTotal = price * qty;
+
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Row(
@@ -1340,69 +1290,84 @@ class _ItemDetailsCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(name,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13)),
+                        // Name + qty badge
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(name,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600, fontSize: 13)),
+                            ),
+                            if (qty > 1)
+                              Container(
+                                margin: const EdgeInsets.only(left: 6),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1E4620).withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  'x$qty',
+                                  style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF1E4620)),
+                                ),
+                              ),
+                          ],
+                        ),
                         const SizedBox(height: 4),
                         if (addOns.isEmpty)
                           const Text('+ No Add Ons',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  color: Color(0xFF8A8A8A)))
+                              style: TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)))
                         else
                           ...addOns.map((a) => Text('+ $a',
-                              style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Color(0xFF8A8A8A)))),
+                              style: const TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)))),
                       ],
                     ),
                   ),
                   Text(
-                    'RM ${_fmt(price)}',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 13),
+                    'RM ${_fmt(lineTotal)}',
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                   ),
                 ],
               ),
             );
           }),
           const Divider(height: 20),
-          // ── Fee breakdown ──
-          _FeeRow(label: 'Subtotal', value: 'RM ${_fmt(subtotal)}'),
+          // Fee breakdown
+          _FeeRow(label: 'Subtotal',          value: 'RM ${_fmt(subtotal)}'),
           const SizedBox(height: 4),
-          _FeeRow(
-              label: 'Service Fee (5%)',
-              value: 'RM ${_fmt(serviceFee)}'),
+          _FeeRow(label: 'Service Fee (5%)',   value: 'RM ${_fmt(serviceFee)}'),
           if (!isSelfCollect && deliveryFee > 0) ...[
             const SizedBox(height: 4),
-            _FeeRow(
-                label: 'Delivery Fee',
-                value: 'RM ${_fmt(deliveryFee)}'),
+            _FeeRow(label: 'Delivery Fee', value: 'RM ${_fmt(deliveryFee)}'),
           ],
+          // Delivery type
+          const SizedBox(height: 4),
+          _FeeRow(
+            label: 'Order Type',
+            value: isSelfCollect ? 'Self Collect' : 'Delivery',
+          ),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Total (${items.length} item${items.length > 1 ? 's' : ''})',
-                style: const TextStyle(
-                    fontWeight: FontWeight.w800, fontSize: 14),
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
               ),
               Text(
                 'RM ${_fmt(total)}',
-                style: const TextStyle(
-                    fontWeight: FontWeight.w800, fontSize: 14),
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
               ),
             ],
           ),
           if (remark.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(
-              'Remark: $remark',
-              style: const TextStyle(
-                  fontSize: 11, color: Color(0xFF8A8A8A)),
-            ),
+            Text('Remark: $remark',
+                style: const TextStyle(fontSize: 11, color: Color(0xFF8A8A8A))),
           ],
         ],
       ),
@@ -1420,11 +1385,9 @@ class _FeeRow extends StatelessWidget {
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
       Text(label,
-          style: const TextStyle(
-              fontSize: 12, color: Color(0xFF6B6B6B))),
+          style: const TextStyle(fontSize: 12, color: Color(0xFF6B6B6B))),
       Text(value,
-          style: const TextStyle(
-              fontSize: 12, color: Color(0xFF2C2C2C))),
+          style: const TextStyle(fontSize: 12, color: Color(0xFF2C2C2C))),
     ],
   );
 }
@@ -1432,11 +1395,11 @@ class _FeeRow extends StatelessWidget {
 // ── Order Info Card ────────────────────────────────────────────────────────────
 
 class _OrderInfoCard extends StatelessWidget {
-  final String orderId;
+  final String  orderId;
   final String? orderDate;
-  final String orderType;
-  final String paymentMethod;
-  final String collectionCode;
+  final String  orderType;
+  final String  paymentMethod;
+  final String  collectionCode;
 
   const _OrderInfoCard({
     required this.orderId,
@@ -1453,20 +1416,17 @@ class _OrderInfoCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Order Info',
-              style:
-              TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
           const SizedBox(height: 12),
-          _InfoRow(label: 'Order ID', value: '#$orderId'),
+          _InfoRow(label: 'Order ID',         value: '#$orderId'),
           const SizedBox(height: 6),
-          _InfoRow(
-              label: 'Collection Code', value: '#$collectionCode'),
+          _InfoRow(label: 'Collection Code',  value: '#$collectionCode'),
           const SizedBox(height: 6),
-          _InfoRow(
-              label: 'Order Date', value: _formatDate(orderDate)),
+          _InfoRow(label: 'Order Date',        value: _formatDate(orderDate)),
           const SizedBox(height: 6),
-          _InfoRow(label: 'Order Type', value: orderType),
+          _InfoRow(label: 'Order Type',        value: orderType),
           const SizedBox(height: 6),
-          _InfoRow(label: 'Payment', value: paymentMethod),
+          _InfoRow(label: 'Payment',           value: paymentMethod),
         ],
       ),
     );
@@ -1485,16 +1445,13 @@ class _InfoRow extends StatelessWidget {
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
       Text(label,
-          style: const TextStyle(
-              fontSize: 12, color: Color(0xFF6B6B6B))),
+          style: const TextStyle(fontSize: 12, color: Color(0xFF6B6B6B))),
       Flexible(
         child: Text(
           value,
           textAlign: TextAlign.right,
           style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF2C2C2C)),
+              fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF2C2C2C)),
         ),
       ),
     ],
@@ -1510,14 +1467,13 @@ class _AdminFoodThumb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget fallback = Container(
-      width: 60,
+      width:  60,
       height: 60,
       decoration: BoxDecoration(
-        color: const Color(0xFFD9D5C5),
+        color:        const Color(0xFFD9D5C5),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: const Icon(Icons.fastfood_outlined,
-          color: Color(0xFF9E9880), size: 26),
+      child: const Icon(Icons.fastfood_outlined, color: Color(0xFF9E9880), size: 26),
     );
 
     if (imageUrl == null || imageUrl!.isEmpty) return fallback;
@@ -1526,18 +1482,15 @@ class _AdminFoodThumb extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: Image.network(
         imageUrl!,
-        width: 60,
+        width:  60,
         height: 60,
-        fit: BoxFit.cover,
+        fit:    BoxFit.cover,
         loadingBuilder: (_, child, progress) {
           if (progress == null) return child;
           return Container(
-            width: 60,
-            height: 60,
-            color: const Color(0xFFEEEBDE),
+            width: 60, height: 60, color: const Color(0xFFEEEBDE),
             child: const Center(
-              child: CircularProgressIndicator(
-                  strokeWidth: 2, color: Color(0xFF1E4620)),
+              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1E4620)),
             ),
           );
         },
@@ -1550,7 +1503,7 @@ class _AdminFoodThumb extends StatelessWidget {
 // ── Error State ────────────────────────────────────────────────────────────────
 
 class _ErrorState extends StatelessWidget {
-  final String message;
+  final String       message;
   final VoidCallback onRetry;
   const _ErrorState({required this.message, required this.onRetry});
 
@@ -1562,29 +1515,24 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.wifi_off_outlined,
-                size: 48, color: Color(0xFFCCC9B8)),
+            const Icon(Icons.wifi_off_outlined, size: 48, color: Color(0xFFCCC9B8)),
             const SizedBox(height: 12),
             const Text('Failed to load orders.',
-                style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2C2C2C))),
+                style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2C2C2C))),
             const SizedBox(height: 6),
             Text(message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 11, color: Color(0xFF8A8A8A))),
+                style: const TextStyle(fontSize: 11, color: Color(0xFF8A8A8A))),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: onRetry,
-              icon: const Icon(Icons.refresh, size: 16),
+              icon:  const Icon(Icons.refresh, size: 16),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1E4620),
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
           ],

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import '../model/address_model.dart';
+import '../service/supabase_conn.dart';
 
 enum CheckoutTab { delivery, selfCollect }
 enum DeliveryOption { eco, standard, fast, orderLater, pickUpNow, selfLater }
 
 class CheckoutController extends ChangeNotifier {
   CheckoutTab activeTab = CheckoutTab.delivery;
+
+  bool _addressLoaded = false;
 
   void setTab(CheckoutTab tab) {
     activeTab = tab;
@@ -14,18 +17,68 @@ class CheckoutController extends ChangeNotifier {
 
   // ── Address ───────────────────────────────────────────────────
   AddressModel deliveryAddress = AddressModel(
-    name:    'Ali',
-    phone:   '012-345 6789',
-    address: 'A-B-C, Jalan Roti Bakar 6, Taman 7, 11200 Bayan Fah...',
+    name:    '',
+    phone:   '',
+    address: 'Loading address...',
   );
 
-  /// The map coordinates that correspond to [deliveryAddress].
-  /// Updated by EditAddressPage when the user pins a location.
   double deliveryLat = 5.4164;
   double deliveryLng = 100.3327;
 
-  /// Update address AND the matching map coordinates at the same time,
-  /// so checkout.dart's map always reflects the pinned location.
+  /// Loads the user's default address from Supabase.
+  /// Call this once from CheckoutPage initState.
+  Future<void> loadDefaultAddress() async {
+    if (_addressLoaded) return;
+    try {
+      final uid = supabase.auth.currentUser?.id;
+      if (uid == null) return;
+
+      // Fetch default address first, fall back to most recent
+      final rows = await supabase
+          .from('addresses')
+          .select()
+          .eq('user_id', uid)
+          .order('is_default', ascending: false)
+          .order('created_at', ascending: false)
+          .limit(1);
+
+      if (rows == null || (rows as List).isEmpty) {
+        deliveryAddress = AddressModel(
+          name:    '',
+          phone:   '',
+          address: 'No address saved. Please add one.',
+        );
+        notifyListeners();
+        return;
+      }
+
+      final row = rows.first as Map<String, dynamic>;
+
+      // Build a readable address string from parts
+      final street   = (row['street']   as String? ?? '').trim();
+      final city     = (row['city']     as String? ?? '').trim();
+      final state    = (row['state']    as String? ?? '').trim();
+      final postcode = (row['postcode'] as String? ?? '').trim();
+      final parts    = [street, city, state, postcode]
+          .where((p) => p.isNotEmpty)
+          .toList();
+      final fullAddress = parts.isNotEmpty ? parts.join(', ') : 'Address on file';
+
+      deliveryAddress = AddressModel(
+        name:            (row['name']  as String? ?? '').trim(),
+        phone:           (row['phone'] as String? ?? '').trim(),
+        address:         fullAddress,
+        customLabelName: (row['label'] as String? ?? '').trim(),
+      );
+
+      _addressLoaded = true;
+    } catch (e) {
+      debugPrint('[CheckoutController] loadDefaultAddress error: $e');
+    }
+    notifyListeners();
+  }
+
+  /// Update address AND the matching map coordinates at the same time.
   void updateAddress(AddressModel updated, {double? lat, double? lng}) {
     deliveryAddress = updated;
     if (lat != null) deliveryLat = lat;
