@@ -127,9 +127,9 @@ class _DashboardHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   // By setting minExtent = maxExtent, the header becomes completely fixed and non-collapsible.
   @override
-  double get minExtent => _greetingHeight + _tabBarHeight + 32;
+  double get minExtent => _greetingHeight + _tabBarHeight + 60;
   @override
-  double get maxExtent => _greetingHeight + _tabBarHeight + 32;
+  double get maxExtent => _greetingHeight + _tabBarHeight + 60;
 
   @override
   bool shouldRebuild(covariant _DashboardHeaderDelegate old) =>

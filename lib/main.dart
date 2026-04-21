@@ -94,7 +94,7 @@ class MyApp extends StatelessWidget {
       colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E4620)),
       fontFamily: 'Roboto',
     ),
-    home: const MainShell(),
+    home: const AuthWrapper(),
     routes: {
       '/auth':              (_) => const AuthWrapper(),
       '/login':             (_) => const LoginPage(),
