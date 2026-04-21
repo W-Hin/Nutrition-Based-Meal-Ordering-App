@@ -191,10 +191,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
         backgroundColor: _bg,
         elevation:       0,
         centerTitle:     true,
-        leading: IconButton(
-          icon:      const Icon(Icons.arrow_back, color: _green),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
         title: const Text(
           'My Orders',
           style: TextStyle(
@@ -999,9 +996,31 @@ class _ItemRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 13)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(name,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 13)),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(left: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E4620).withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        'x${(item['quantity'] as num?)?.toInt() ?? 1}',
+                        style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E4620)),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 4),
                 // FIX 1: Show "- No Add Ons" when list is empty
                 if (addOns.isEmpty)

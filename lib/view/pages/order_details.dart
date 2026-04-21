@@ -169,6 +169,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         case 'out_for_delivery':
         case 'ready_for_collection': s = OrderStatus.readyOrOutForDelivery; break;
         case 'completed':            s = OrderStatus.completed;             break;
+        case 'cancelled':            s = OrderStatus.cancelled;             break;
       }
       if (s != null) ctrl.updateStatus(s);
     });
@@ -429,6 +430,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       case 'completed':
       case 'delivered':
       case 'retrieved':            return OrderStatus.completed;
+      case 'cancelled':            return OrderStatus.cancelled;
       default:                     return OrderStatus.submitted;
     }
   }
@@ -723,22 +725,14 @@ class _StatusImage extends StatelessWidget {
   }
 }
 
-// ── Status Tracker — FIX 3: wider label slots so text never breaks mid-word ──
+// ── Status Tracker ──────────────────────────────────────────────────────────
 
 class _StatusTracker extends StatelessWidget {
   final OrderStatus status;
   final OrderType   orderType;
 
   static const _green = Color(0xFF1E4620);
-
-  // FIX 3: Each label is given a slot wider than the icon (36 px) so that
-  // multi-word labels like "Order Submitted", "Ready For Collection" and
-  // "Out For Delivery" fit on 1–2 lines without character-level wrapping.
-  // We use 72 px (≈2× icon diameter) as a comfortable minimum. The icon
-  // row still uses the same 36 px circles; labels are centred on those
-  // icons by giving them an equal total width and centering the text.
   static const double _iconSize  = 36.0;
-  static const double _labelWidth = 72.0; // wider slot for labels
 
   const _StatusTracker({required this.status, required this.orderType});
 
@@ -747,8 +741,8 @@ class _StatusTracker extends StatelessWidget {
     final isSC = orderType == OrderType.selfCollect;
 
     final steps = [
-      _Step(icon: Icons.receipt_outlined,     label: 'Order\nSubmitted'),
-      _Step(icon: Icons.soup_kitchen_outlined, label: 'Preparing'),
+      _Step(icon: Icons.receipt_outlined,      label: 'Order\nSubmitted'),
+      _Step(icon: Icons.soup_kitchen_outlined,  label: 'Preparing'),
       _Step(
         icon:  isSC ? Icons.storefront_outlined : Icons.directions_bike_outlined,
         label: isSC ? 'Ready For\nCollection' : 'Out For\nDelivery',
@@ -762,76 +756,82 @@ class _StatusTracker extends StatelessWidget {
     final activeIndex = status.index;
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
       decoration: BoxDecoration(
         color:        Colors.white,
         borderRadius: BorderRadius.circular(12),
         border:       Border.all(color: const Color(0xFFDDDDD0)),
       ),
-      child: Column(
-        children: [
-          // ── Row 1: Icons connected by lines ──────────────────────────
-          Row(
-            children: List.generate(steps.length * 2 - 1, (i) {
-              if (i.isOdd) {
-                final isCompleted = (i ~/ 2) < activeIndex;
-                return Expanded(
-                  child: Container(
-                    height: 2,
-                    color: isCompleted ? _green : const Color(0xFFDDDDD0),
-                  ),
-                );
-              }
-              final stepIndex   = i ~/ 2;
-              final isCompleted = stepIndex <= activeIndex;
-              final step        = steps[stepIndex];
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: List.generate(steps.length, (i) {
+          final isLast      = i == steps.length - 1;
+          final isCompleted = i <= activeIndex;
+          final isProcessing = i == activeIndex;
+          final step        = steps[i];
 
-              return Container(
-                width:  _iconSize,
-                height: _iconSize,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isCompleted ? _green : const Color(0xFFEEEBDE),
+          return Expanded(
+            child: Column(
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Line connectors
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            height: 2,
+                            color: i > 0 && i <= activeIndex
+                                ? _green
+                                : Colors.transparent,
+                          ),
+                        ),
+                        Expanded(
+                          child: Container(
+                            height: 2,
+                            color: !isLast && i < activeIndex
+                                ? _green
+                                : (isLast ? Colors.transparent : const Color(0xFFDDDDD0)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Icon Circle
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width:  _iconSize,
+                      height: _iconSize,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isCompleted ? _green : const Color(0xFFEEEBDE),
+                        boxShadow: isProcessing
+                            ? [BoxShadow(color: _green.withOpacity(0.3), blurRadius: 8, spreadRadius: 2)]
+                            : null,
+                      ),
+                      child: Icon(
+                        step.icon,
+                        size:  18,
+                        color: isCompleted ? Colors.white : const Color(0xFFAAAAAA),
+                      ),
+                    ),
+                  ],
                 ),
-                child: Icon(step.icon,
-                    size:  18,
-                    color: isCompleted ? Colors.white : const Color(0xFFAAAAAA)),
-              );
-            }),
-          ),
-          const SizedBox(height: 6),
-          // ── Row 2: Labels — wider slots centred under each icon ───────
-          // FIX 3: We rebuild the row using the same interleave pattern but
-          // each "label slot" is _labelWidth wide, and the connectors are
-          // Expanded to absorb the extra space. This keeps labels centred
-          // under their icons while giving them enough room to wrap cleanly
-          // across 2 short lines instead of 3–4 character-broken lines.
-          Row(
-            children: List.generate(steps.length * 2 - 1, (i) {
-              if (i.isOdd) {
-                // Flexible spacer matches the Expanded connector above
-                return const Expanded(child: SizedBox());
-              }
-              final stepIndex   = i ~/ 2;
-              final isCompleted = stepIndex <= activeIndex;
-              final step        = steps[stepIndex];
-
-              return SizedBox(
-                width: _labelWidth,
-                child: Text(
+                const SizedBox(height: 10),
+                Text(
                   step.label,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize:   9,
-                    fontWeight: isCompleted ? FontWeight.w700 : FontWeight.w400,
-                    color:      isCompleted ? _green : const Color(0xFFAAAAAA),
-                    height:     1.3,
+                    fontSize:   10,
+                    height:     1.2,
+                    fontWeight: isCompleted ? FontWeight.w700 : FontWeight.w500,
+                    color:      isCompleted ? _green : const Color(0xFF8A8A8A),
                   ),
                 ),
-              );
-            }),
-          ),
-        ],
+              ],
+            ),
+          );
+        }),
       ),
     );
   }
@@ -1216,23 +1216,22 @@ class _OrderItemRow extends StatelessWidget {
                           style: const TextStyle(
                               fontWeight: FontWeight.w600, fontSize: 13)),
                     ),
-                    if (quantity > 1)
-                      Container(
-                        margin: const EdgeInsets.only(left: 6),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E4620).withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          'x$quantity',
-                          style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1E4620)),
-                        ),
+                    Container(
+                      margin: const EdgeInsets.only(left: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E4620).withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      child: Text(
+                        'x$quantity',
+                        style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E4620)),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),

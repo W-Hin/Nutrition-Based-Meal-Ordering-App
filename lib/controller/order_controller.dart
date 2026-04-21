@@ -53,6 +53,7 @@ class OrderController extends ChangeNotifier {
         addOns:   c.addOns,
         price:    c.price,
         quantity: c.quantity,
+        foodId:   c.foodId,
         imageUrl: c.imageUrl,
       )).toList(),
       subtotal:       subtotal,
@@ -198,7 +199,7 @@ class OrderController extends ChangeNotifier {
     isCancelled  = true;
     isCancelling = false;
 
-    currentOrder!.status = OrderStatus.submitted;
+    currentOrder!.status = OrderStatus.cancelled;
     notifyListeners();
   }
 

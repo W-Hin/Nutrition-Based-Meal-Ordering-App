@@ -45,7 +45,8 @@ class OrderService {
           'order_id': int.parse(orderId),
           'name':     item.name,
           'price':    item.price,
-          'quantity': item.quantity,  // FIX 1: persist quantity
+          'quantity': item.quantity,
+          'food_id':  item.foodId,
           'add_ons':  item.addOns.isEmpty ? <String>[] : item.addOns,
           if (item.imageUrl != null && item.imageUrl!.isNotEmpty)
             'image_url': item.imageUrl,
