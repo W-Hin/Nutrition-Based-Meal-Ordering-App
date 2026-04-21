@@ -6,7 +6,7 @@ import '../../service/supabase_conn.dart';
 
 class ReviewPage extends StatefulWidget {
   /// Pass the orderId and storeId when navigating to this page.
-  final String orderId;
+  final int    orderId;
   final String storeId;
   final String storeName;
 

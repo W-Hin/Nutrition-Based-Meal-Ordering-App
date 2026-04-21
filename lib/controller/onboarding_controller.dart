@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../model/profile_model.dart';
 import '../service/profile_service.dart';
-import '../service/address_service.dart';
 import '../service/supabase_conn.dart';
 
 class OnboardingController extends ChangeNotifier {

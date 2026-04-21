@@ -22,7 +22,6 @@ class _AdminShellState extends State<AdminShell> {
   Store? _selectedStoreForMenu;
 
   static const _green      = Color(0xFF1E4620);
-  static const _lightGreen = Color(0xFFB5CC30);
 
   final List<_DrawerItem> _drawerItems = [
     _DrawerItem(icon: Icons.dashboard_outlined,    label: 'Dashboard'),

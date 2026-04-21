@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../controller/auth_controller.dart';
+import '../../../controller/profile_controller.dart';
 import '../../../service/supabase_conn.dart';
 import '../terms_page.dart';
 
@@ -69,13 +70,16 @@ class MorePage extends StatelessWidget {
     );
 
     if (confirm == true && context.mounted) {
+      // Cache refs before async gaps to avoid unsafe BuildContext use
+      final authCtrl = context.read<AuthController>();
+      final nav = Navigator.of(context);
       try {
         // Use Supabase RPC to securely delete the account from auth.users and all related data.
         await supabase.rpc('delete_user_account');
 
-        await context.read<AuthController>().logout();
+        await authCtrl.logout();
         if (context.mounted) {
-          Navigator.pushNamedAndRemoveUntil(context, '/auth', (_) => false);
+          nav.pushNamedAndRemoveUntil('/auth', (_) => false);
         }
       } catch (e) {
         if (context.mounted) {
@@ -85,6 +89,161 @@ class MorePage extends StatelessWidget {
             behavior: SnackBarBehavior.floating,
           ));
         }
+      }
+    }
+  }
+
+  Future<void> _generateDummyData(BuildContext context) async {
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return;
+
+    showDialog(
+      context: context, 
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator(color: _green)),
+    );
+
+    try {
+      // 1. Get a valid store ID
+      final stores = await supabase.from('stores').select('id').limit(1);
+      final storeId = stores.isNotEmpty ? stores.first['id'] : null;
+
+      if (storeId == null) throw Exception("No stores found in database.");
+
+      final now = DateTime.now();
+      
+      final dummyItems = [
+        {'name': 'Grilled Chicken Salad', 'price': 18.5, 'cal': 450, 'pro': 40, 'fat': 15, 'carb': 20, 'icon': 'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/chicken_salad.png'},
+        {'name': 'Salmon Quinoa Bowl', 'price': 24.0, 'cal': 520, 'pro': 35, 'fat': 22, 'carb': 45, 'icon': 'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/salmon_bowl.png'},
+        {'name': 'Vegan Tofu Wrap', 'price': 15.0, 'cal': 380, 'pro': 20, 'fat': 12, 'carb': 50, 'icon': 'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/tofu_wrap.png'},
+        {'name': 'Custom Bowl', 'price': 25.0, 'cal': 600, 'pro': 50, 'fat': 20, 'carb': 55, 'icon': 'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/custom_bowl.png'},
+      ];
+
+      for (int i = 0; i < 30; i++) {
+        // Randomly skip some days so heatmap has gaps, but NEVER skip today (i=0)
+        if (i != 0 && i % 6 == 0) continue;
+
+        // Let's create an order for Lunch (1pm) and maybe Dinner (7pm)
+        final lunchDate = DateTime(now.year, now.month, now.day - i, 13, 0);
+        
+        final dItem = dummyItems[(i * 3) % dummyItems.length];
+
+        // Ensure order_date passes formatting properly
+        final orderRes = await supabase.from('orders').insert({
+          'user_id': uid,
+          'store_id': storeId,
+          'order_type': 'delivery',
+          'status': 'completed',
+          'to_name': 'Test User',
+          'to_address': 'Test Address',
+          'subtotal': dItem['price'],
+          'service_fee': 2.0,
+          'delivery_fee': 5.0,
+          'total': (dItem['price'] as double) + 7.0,
+          'total_cal': dItem['cal'],
+          'total_pro': dItem['pro'],
+          'total_carb': dItem['carb'],
+          'total_fat': dItem['fat'],
+          'payment_method': 'card',
+          'order_date': lunchDate.toIso8601String(),
+          'collection_code': 'DUMMY$i',
+        }).select('order_id').single();
+
+        final orderId = orderRes['order_id'];
+
+        // Insert Order Item
+        await supabase.from('order_items').insert({
+          'order_id': orderId,
+          'name': dItem['name'],
+          'price': dItem['price'],
+          'image_url': dItem['icon'],
+          'add_ons': dItem['name'] == 'Custom Bowl' ? ['Brown Rice x1', 'Chicken Breast x2', 'Lettuce x1', 'Sesame Sauce x1'] : [],
+        });
+
+        // Add to Calorie Log for that day
+        final dateStr = lunchDate.toIso8601String().split('T').first;
+        
+        // Upsert calorie log manually since it is backdated
+        final existing = await supabase
+            .from('calorie_logs')
+            .select('id, total_calories, total_protein_g, total_carbs_g, total_fat_g')
+            .eq('user_id', uid)
+            .eq('log_date', dateStr);
+
+        if (existing.isNotEmpty) {
+          final log = existing.first;
+          await supabase.from('calorie_logs').update({
+            'total_calories': (log['total_calories'] ?? 0) + dItem['cal'],
+            'total_protein_g': (log['total_protein_g'] ?? 0) + dItem['pro'],
+            'total_carbs_g': (log['total_carbs_g'] ?? 0) + dItem['carb'],
+            'total_fat_g': (log['total_fat_g'] ?? 0) + dItem['fat'],
+          }).eq('id', log['id']);
+        } else {
+          await supabase.from('calorie_logs').insert({
+            'user_id': uid,
+            'log_date': dateStr,
+            'total_calories': dItem['cal'],
+            'total_protein_g': dItem['pro'],
+            'total_carbs_g': dItem['carb'],
+            'total_fat_g': dItem['fat'],
+          });
+        }
+      }
+
+      if (context.mounted) {
+        context.read<ProfileController>().loadDashboardData();
+        Navigator.pop(context); // close dialog
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('30 days of Dummy Data successfully generated! Check Dashboard.'),
+            backgroundColor: _green));
+      }
+
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // close dialog
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Error generating dummy data: $e'), backgroundColor: Colors.red));
+      }
+    }
+  }
+
+  Future<void> _clearDummyData(BuildContext context) async {
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return;
+
+    showDialog(
+      context: context, 
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator(color: _green)),
+    );
+
+    try {
+      final dummyOrders = await supabase
+          .from('orders')
+          .select('order_id')
+          .eq('user_id', uid)
+          .like('collection_code', 'DUMMY%');
+
+      for (var order in dummyOrders) {
+        await supabase.from('order_items').delete().eq('order_id', order['order_id']);
+        await supabase.from('orders').delete().eq('order_id', order['order_id']);
+      }
+
+      // Wipe calorie_logs to reset dashboard completely
+      await supabase.from('calorie_logs').delete().eq('user_id', uid);
+
+      if (context.mounted) {
+        context.read<ProfileController>().loadDashboardData();
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Dev Dummy Data cleared successfully. Dashboard reset.'),
+            backgroundColor: _green));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Error clearing dummy data: $e'), backgroundColor: Colors.red));
       }
     }
   }
@@ -106,6 +265,22 @@ class MorePage extends StatelessWidget {
       body: Column(
         children: [
           const SizedBox(height: 8),
+          _menuItem(
+            context,
+            icon: Icons.auto_awesome,
+            label: 'Generate Dev Dummy Data',
+            onTap: () => _generateDummyData(context),
+            iconColor: _orange,
+            labelColor: _orange,
+          ),
+          _menuItem(
+            context,
+            icon: Icons.cleaning_services_rounded,
+            label: 'Clear Dev Dummy Data',
+            onTap: () => _clearDummyData(context),
+            iconColor: _orange,
+            labelColor: _orange,
+          ),
           _menuItem(
             context,
             icon: Icons.article_outlined,

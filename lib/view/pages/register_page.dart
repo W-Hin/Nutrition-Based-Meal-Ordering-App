@@ -111,13 +111,11 @@ class _RegisterPageState extends State<RegisterPage> {
                   icon: Icons.email_outlined,
                   type: TextInputType.emailAddress,
                   validator: (v) {
-                    if (v!.isEmpty) return 'Email is required';
+                    if (v == null || v.isEmpty) return 'Email is required';
                     if (!v.contains('@')) return 'Enter a valid email';
                     return null;
                   },
                 ),
-                const SizedBox(height: 14),
-
                 const SizedBox(height: 14),
 
                 // ── Password ──────────────────────────────────────────────
@@ -129,7 +127,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   obscure: _obscurePass,
                   onToggle: () => setState(() => _obscurePass = !_obscurePass),
                   validator: (v) {
-                    if (v!.isEmpty) return 'Password is required';
+                    if (v == null || v.isEmpty) return 'Password is required';
                     if (v.length < 6) return 'Password must be at least 6 characters';
                     return null;
                   },
@@ -145,7 +143,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   obscure: _obscureConfirmPass,
                   onToggle: () => setState(() => _obscureConfirmPass = !_obscureConfirmPass),
                   validator: (v) {
-                    if (v!.isEmpty) return 'Please confirm your password';
+                    if (v == null || v.isEmpty) return 'Please confirm your password';
                     if (v != _passwordCtrl.text) return 'Passwords do not match';
                     return null;
                   },

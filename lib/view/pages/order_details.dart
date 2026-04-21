@@ -310,8 +310,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     final items          = List<Map<String, dynamic>>.from(
         row['order_items'] as List? ?? []);
     final subtotal       = (row['subtotal']      as num?)?.toDouble() ?? 0.0;
-    final svcFee         = (row['service_fee']   as num?)?.toDouble() ?? 0.0;
-    final delFee         = (row['delivery_fee']  as num?)?.toDouble() ?? 0.0;
     final total          = (row['total']         as num?)?.toDouble() ?? 0.0;
     final toName         = row['to_name']        as String? ?? '';
     final toPhone        = row['to_phone']       as String? ?? '';

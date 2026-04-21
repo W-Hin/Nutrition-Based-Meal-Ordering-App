@@ -92,17 +92,21 @@ class _OnboardingPersonalPageState extends State<OnboardingPersonalPage> {
     // Calculate default BMI/goals since they skipped
     ctrl.calculateBmiAndCalories();
 
+    // Cache messenger before async gap
+    final messenger = ScaffoldMessenger.of(context);
+
     // MUST SAVE to database, otherwise they'll be stuck in the onboarding loop forever
     final profileSaved = await ctrl.saveProfile();
     final addressSaved = await ctrl.saveAddress();
 
-    if (!profileSaved || !addressSaved || !mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+    if (!profileSaved || !addressSaved) {
+      messenger.showSnackBar(const SnackBar(
         content: Text('Error saving profile. Please try again.'),
         backgroundColor: Colors.red,
       ));
       return;
     }
+    if (!mounted) return;
 
     final proceed = await showDialog<bool>(
       context: context,

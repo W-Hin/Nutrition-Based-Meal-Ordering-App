@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../service/supabase_conn.dart';
+import '../../service/profile_service.dart';
 
 // ── Status helpers ─────────────────────────────────────────────────────────────
 
@@ -686,6 +687,26 @@ class _AdminActiveOrderDetailPageState
         'status': _selectedStatus,
         'is_cancellable': isCancellable,
       }).eq('order_id', int.parse(widget.orderId));
+
+      // ── LOG CALORIES IF COMPLETED ──
+      if (_selectedStatus == 'completed' && _order != null) {
+        final cal  = (_order!['total_cal'] as num?)?.toDouble() ?? 0;
+        final pro  = (_order!['total_pro'] as num?)?.toDouble() ?? 0;
+        final carb = (_order!['total_carb'] as num?)?.toDouble() ?? 0;
+        final fat  = (_order!['total_fat'] as num?)?.toDouble() ?? 0;
+
+        if (cal > 0) {
+          // Temporarily mock ProfileService with the order's user_id because 
+          // the Admin is currently logged in, not the customer!
+          await ProfileService.upsertCalorieLogForUser(
+             userId: widget.userId,
+             calories: cal,
+             proteinG: pro,
+             carbsG: carb,
+             fatG: fat,
+          );
+        }
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

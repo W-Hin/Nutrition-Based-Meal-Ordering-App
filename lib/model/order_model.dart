@@ -21,6 +21,10 @@ class OrderModel {
   final double subtotal;
   final double serviceFee;
   final double deliveryFee;
+  final double totalCal;
+  final double totalPro;
+  final double totalCarb;
+  final double totalFat;
   final OrderType orderType;
   final String remark;
   final String? collectionCode; // ← 3-digit random code for self-collect orders
@@ -40,6 +44,10 @@ class OrderModel {
     required this.subtotal,
     required this.serviceFee,
     required this.deliveryFee,
+    this.totalCal = 0,
+    this.totalPro = 0,
+    this.totalCarb = 0,
+    this.totalFat = 0,
     required this.orderType,
     this.remark = '',
     this.collectionCode,

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../controller/review_controller.dart';
+import '../../model/review_model.dart';
 import '../../service/supabase_conn.dart';
 import 'order_details.dart';
+import 'review_write_page.dart';
 
 // ── Status helpers ─────────────────────────────────────────────────────────────
 
@@ -104,8 +108,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
   Future<void> _fetchOrders() async {
     setState(() { _loading = true; _error = null; });
     try {
-      final uid = supabase.auth.currentUser?.id
-          ?? 'fc33ae36-657a-4055-b81e-f6fe3de23278';
+      final uid = supabase.auth.currentUser?.id ?? '';
 
       final rows = await supabase
           .from('orders')
@@ -292,13 +295,16 @@ class _MyOrdersPageState extends State<MyOrdersPage>
         padding:     const EdgeInsets.all(16),
         itemCount:   orders.length,
         itemBuilder: (context, i) {
-          final order  = orders[i];
-          final id     = order['order_id'];
-          final status = (order['status'] as String? ?? '').toLowerCase();
+          final order   = orders[i];
+          final id      = order['order_id'];
+          final orderId = (id as num?)?.toInt() ?? 0;
+          final status  = (order['status'] as String? ?? '').toLowerCase();
+          final storeId = (order['store_id'] as String?)?.trim() ?? '';
 
           return _OrderCard(
             order:      order,
-            storeName:  _storeName(order),   // FIX 3: pass resolved name
+            storeName:  _storeName(order),
+            storeId:    storeId,
             isExpanded: _expandedIds.contains(id),
             showRate:   showRate &&
                 (status == 'completed' ||
@@ -309,6 +315,12 @@ class _MyOrdersPageState extends State<MyOrdersPage>
                   ? _expandedIds.remove(id)
                   : _expandedIds.add(id);
             }),
+            onRate: () => _showRateDialog(
+              context,
+              orderId:   orderId,
+              storeId:   storeId,
+              storeName: _storeName(order),
+            ),
             onTap: () {
               Navigator.push(
                 context,
@@ -324,27 +336,431 @@ class _MyOrdersPageState extends State<MyOrdersPage>
       ),
     );
   }
-}
+
+  /// Shows the quick-rate dialog. Checks if order is already reviewed.
+  Future<void> _showRateDialog(
+    BuildContext context, {
+    required int    orderId,
+    required String storeId,
+    required String storeName,
+  }) async {
+    final ctrl      = context.read<ReviewController>();
+    final navigator = Navigator.of(context);
+
+    // Check if already reviewed
+    final existing = await ctrl.getOrderReview(orderId);
+
+    if (!context.mounted) return;
+
+    // If already reviewed → premium "Already Reviewed" dialog
+    if (existing != null) {
+      await showDialog(
+        context: context,
+        builder: (ctx) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Gradient header
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 28),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF1E4620), Color(0xFF2E6B30)],
+                    begin:  Alignment.topLeft,
+                    end:    Alignment.bottomRight,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    const Icon(Icons.verified_rounded,
+                        color: Colors.white70, size: 36),
+                    const SizedBox(height: 8),
+                    const Text('Review Submitted',
+                        style: TextStyle(
+                            color:      Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize:   17)),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (i) => Icon(
+                        i < existing.rating
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
+                        color: Colors.amber.shade400, size: 32,
+                      )),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    if (existing.comment.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color:        const Color(0xFFF3F2EC),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          existing.comment,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              color: Color(0xFF555555),
+                              fontSize: 13,
+                              height: 1.5),
+                        ),
+                      ),
+                    const SizedBox(height: 16),
+                    Row(children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF6B6B6B),
+                            side: const BorderSide(color: Color(0xFFDDDDDD)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                          ),
+                          child: const Text('Close',
+                              style: TextStyle(fontWeight: FontWeight.w700)),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            Navigator.pop(ctx);
+                            final edited = await navigator.push<bool>(
+                              MaterialPageRoute(
+                                builder: (_) => ReviewWritePage(
+                                  orderId:   orderId,
+                                  storeId:   storeId,
+                                  storeName: storeName,
+                                  existing:  existing,
+                                ),
+                              ),
+                            );
+                            if (edited == true) _fetchOrders();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1E4620),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                          ),
+                          child: const Text('Edit Review',
+                              style: TextStyle(fontWeight: FontWeight.w700)),
+                        ),
+                      ),
+                    ]),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      return;
+    }
+
+    // Not reviewed yet → show quick-rate dialog
+    int selectedRating = 0;
+    final commentCtrl  = TextEditingController();
+    bool submitting    = false;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Gradient header ────────────────────────────────────────
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF1E4620), Color(0xFF2E6B30)],
+                    begin:  Alignment.topLeft,
+                    end:    Alignment.bottomRight,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    const Icon(Icons.fastfood_rounded,
+                        color: Colors.white70, size: 32),
+                    const SizedBox(height: 8),
+                    const Text('How was your meal?',
+                        style: TextStyle(
+                            color:      Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize:   17)),
+                    const SizedBox(height: 4),
+                    Text(storeName,
+                        style: const TextStyle(
+                            color:    Colors.white60,
+                            fontSize: 12),
+                        overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 16),
+                    // Stars
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (i) {
+                        final star   = i + 1;
+                        final filled = star <= selectedRating;
+                        return GestureDetector(
+                          onTap: () => setLocal(() => selectedRating = star),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            curve:    Curves.easeOutBack,
+                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                            transform: filled
+                                ? (Matrix4.identity()..scale(1.2))
+                                : Matrix4.identity(),
+                            child: Icon(
+                              filled
+                                  ? Icons.star_rounded
+                                  : Icons.star_outline_rounded,
+                              color: filled
+                                  ? Colors.amber.shade400
+                                  : Colors.white30,
+                              size: 40,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                    if (selectedRating > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            ['', 'Terrible 😞', 'Poor 😕', 'Okay 😐', 'Good 😊', 'Excellent! 🤩'][selectedRating],
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              // ── Body ────────────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    // Comment field
+                    Container(
+                      decoration: BoxDecoration(
+                        color:        const Color(0xFFF3F2EC),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: TextField(
+                        controller: commentCtrl,
+                        maxLines:   3,
+                        style: const TextStyle(fontSize: 13),
+                        decoration: const InputDecoration(
+                          hintText: 'Share your experience… (optional)',
+                          hintStyle: TextStyle(
+                              color: Color(0xFFBBBBBB), fontSize: 12),
+                          border:         InputBorder.none,
+                          contentPadding: EdgeInsets.all(14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Post button
+                    SizedBox(
+                      width: double.infinity,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFD95B2B), Color(0xFFE8732A)],
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color:      const Color(0xFFD95B2B).withValues(alpha: 0.35),
+                              blurRadius: 14,
+                              offset:     const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: submitting ? null : () async {
+                            if (selectedRating == 0) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                                content: const Row(children: [
+                                  Icon(Icons.star_border_rounded,
+                                      color: Colors.amber, size: 16),
+                                  SizedBox(width: 8),
+                                  Text('Tap a star to rate first!'),
+                                ]),
+                                backgroundColor: const Color(0xFF333333),
+                                behavior:        SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                              ));
+                              return;
+                            }
+                            if (storeId.isEmpty || orderId == 0) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+                                content: Text('Unable to submit: missing order info.'),
+                                behavior: SnackBarBehavior.floating,
+                              ));
+                              return;
+                            }
+                            setLocal(() => submitting = true);
+                            final uid = supabase.auth.currentUser?.id ?? '';
+                            bool ok = false;
+                            if (uid.isNotEmpty) {
+                              ok = await ctrl.submitReview(ReviewModel(
+                                userId:  uid,
+                                storeId: storeId,
+                                orderId: orderId,
+                                rating:  selectedRating,
+                                comment: commentCtrl.text.trim(),
+                              ));
+                            }
+                            if (ctx.mounted) setLocal(() => submitting = false);
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            if (ok && context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: const Row(children: [
+                                  Icon(Icons.check_circle_outline,
+                                      color: Colors.white, size: 16),
+                                  SizedBox(width: 8),
+                                  Text('Review submitted!'),
+                                ]),
+                                backgroundColor: const Color(0xFF1E4620),
+                                behavior:        SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                              ));
+                              _fetchOrders();
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            shadowColor:     Colors.transparent,
+                            elevation:       0,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14)),
+                          ),
+                          child: submitting
+                              ? const SizedBox(
+                                  width: 18, height: 18,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: Colors.white))
+                              : const Text('Post Review',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize:   14,
+                                      letterSpacing: 0.3)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Write a full review
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          final result = await navigator.push<bool>(
+                            MaterialPageRoute(
+                              builder: (_) => ReviewWritePage(
+                                orderId:   orderId,
+                                storeId:   storeId,
+                                storeName: storeName,
+                              ),
+                            ),
+                          );
+                          if (result == true) _fetchOrders();
+                        },
+                        icon: const Icon(Icons.edit_note_rounded, size: 17),
+                        label: const Text('Write a Detailed Review',
+                            style: TextStyle(fontWeight: FontWeight.w700)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF1E4620),
+                          side: const BorderSide(color: Color(0xFF1E4620), width: 1.5),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Maybe Later',
+                          style: TextStyle(
+                              color:      Color(0xFFAAAAAA),
+                              fontWeight: FontWeight.w600,
+                              fontSize:   12)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    commentCtrl.dispose();
+  }
+} // end _MyOrdersPageState
 
 // ── Order Card ─────────────────────────────────────────────────────────────────
 
 class _OrderCard extends StatelessWidget {
   final Map<String, dynamic> order;
-  final String       storeName;   // FIX 3: accept resolved store name
+  final String       storeName;
+  final String       storeId;
   final bool         isExpanded;
   final bool         showRate;
   final VoidCallback onExpand;
   final VoidCallback onTap;
+  final VoidCallback onRate;
 
   static const _terracotta = Color(0xFFD95F2B);
 
   const _OrderCard({
     required this.order,
     required this.storeName,
+    required this.storeId,
     required this.isExpanded,
     required this.showRate,
     required this.onExpand,
     required this.onTap,
+    required this.onRate,
   });
 
   @override
@@ -523,9 +939,7 @@ class _OrderCard extends StatelessWidget {
                   const Spacer(),
                   if (showRate)
                     GestureDetector(
-                      onTap: () {
-                        // TODO: open rating dialog
-                      },
+                      onTap: onRate,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 5),

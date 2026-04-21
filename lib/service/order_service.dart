@@ -3,10 +3,7 @@ import '../model/order_model.dart';
 import 'supabase_conn.dart';
 
 class OrderService {
-  static const _devUserId = 'fc33ae36-657a-4055-b81e-f6fe3de23278';
-
-  String get _uid =>
-      supabase.auth.currentUser?.id ?? _devUserId;
+  String get _uid => supabase.auth.currentUser?.id ?? '';
 
   // ── Place order → returns the real DB order_id ──────────────
   Future<String> placeOrder(OrderModel order) async {
@@ -25,6 +22,10 @@ class OrderService {
       'service_fee':      order.serviceFee,
       'delivery_fee':     order.deliveryFee,
       'total':            order.total,
+      'total_cal':        order.totalCal,
+      'total_pro':        order.totalPro,
+      'total_carb':       order.totalCarb,
+      'total_fat':        order.totalFat,
       'payment_method':   order.paymentMethod,
       'remark':           order.remark.isEmpty ? null : order.remark,
       'is_cancellable':   true,

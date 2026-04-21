@@ -15,6 +15,13 @@ class ProfileController extends ChangeNotifier {
   List<Map<String, dynamic>> monthlyHistory = [];
   DateTime selectedMonth = DateTime.now();
 
+  // Order-based dashboard data
+  List<Map<String, dynamic>> todayOrders     = [];
+  Map<String, dynamic>       weeklyOrderStats  = {'count': 0, 'spend': 0.0};
+  Map<String, dynamic>       monthlyOrderStats = {'count': 0, 'spend': 0.0};
+  List<Map<String, dynamic>> topWeeklyItems  = [];
+  List<Map<String, dynamic>> topMonthlyItems = [];
+
   // ── Load Profile ──────────────────────────────────────────────────────────
   Future<void> loadProfile() async {
     isLoading = true;
@@ -56,7 +63,10 @@ class ProfileController extends ChangeNotifier {
         _loadTodayLog(),
         _loadWeeklyHistory(),
         _loadMonthlyHistory(),
-        loadUserName(),           // loads first_name/last_name from public.user
+        _loadTodayOrders(),
+        _loadWeeklyOrderStats(),
+        _loadMonthlyOrderStats(),
+        loadUserName(),
       ]);
     } finally {
       isLoading = false;
@@ -64,20 +74,27 @@ class ProfileController extends ChangeNotifier {
     }
   }
 
-  Future<void> _loadProfile() async {
-    profile ??= await _profileService.fetchProfile();
+  Future<void> _loadProfile()         async { profile   ??= await _profileService.fetchProfile(); }
+  Future<void> _loadTodayLog()         async { todayLog   = await _profileService.fetchTodayLog(); }
+  Future<void> _loadWeeklyHistory()    async { weeklyHistory  = await _profileService.fetchWeeklyHistory(); }
+  Future<void> _loadMonthlyHistory()   async { monthlyHistory = await _profileService.fetchMonthlyHistory(targetMonth: selectedMonth); }
+  Future<void> _loadTodayOrders()      async { todayOrders    = await _profileService.fetchTodayOrders(); }
+
+  Future<void> _loadWeeklyOrderStats() async {
+    weeklyOrderStats = await _profileService.fetchWeeklyOrderStats();
+    final now    = DateTime.now();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final start  = DateTime(monday.year, monday.month, monday.day).toUtc().toIso8601String();
+    final end    = DateTime(now.year, now.month, now.day + 1).toUtc().toIso8601String();
+    topWeeklyItems = await _profileService.fetchTopOrderedItems(startDate: start, endDate: end);
   }
 
-  Future<void> _loadTodayLog() async {
-    todayLog = await _profileService.fetchTodayLog();
-  }
-
-  Future<void> _loadWeeklyHistory() async {
-    weeklyHistory = await _profileService.fetchWeeklyHistory();
-  }
-
-  Future<void> _loadMonthlyHistory() async {
-    monthlyHistory = await _profileService.fetchMonthlyHistory(targetMonth: selectedMonth);
+  Future<void> _loadMonthlyOrderStats() async {
+    monthlyOrderStats = await _profileService.fetchMonthlyOrderStats(targetMonth: selectedMonth);
+    final m     = selectedMonth;
+    final start = DateTime(m.year, m.month, 1).toUtc().toIso8601String();
+    final end   = DateTime(m.year, m.month + 1, 1).toUtc().toIso8601String();
+    topMonthlyItems = await _profileService.fetchTopOrderedItems(startDate: start, endDate: end, limit: 5);
   }
 
   // ── Month Selection ───────────────────────────────────────────────────────
@@ -86,7 +103,7 @@ class ProfileController extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
     try {
-      await _loadMonthlyHistory();
+      await Future.wait([_loadMonthlyHistory(), _loadMonthlyOrderStats()]);
     } finally {
       isLoading = false;
       notifyListeners();
@@ -99,15 +116,22 @@ class ProfileController extends ChangeNotifier {
   double get todayCarbs     => (todayLog?['total_carbs_g']   as num?)?.toDouble() ?? 0;
   double get todayFat       => (todayLog?['total_fat_g']     as num?)?.toDouble() ?? 0;
 
-  double get calorieGoal  => profile?.dailyCalorieGoal ?? 2000;
-  double get proteinGoal  => profile?.proteinGoalG ?? 50;
-  double get carbsGoal    => profile?.carbsGoalG ?? 250;
-  double get fatGoal      => profile?.fatGoalG ?? 56;
+  double get calorieGoal    => profile?.dailyCalorieGoal ?? 2000;
+  double get proteinGoal    => profile?.proteinGoalG ?? 50;
+  double get carbsGoal      => profile?.carbsGoalG ?? 250;
+  double get fatGoal        => profile?.fatGoalG ?? 56;
 
   double get calorieProgress => calorieGoal > 0 ? (todayCalories / calorieGoal).clamp(0, 1) : 0;
   double get proteinProgress => proteinGoal > 0 ? (todayProtein  / proteinGoal).clamp(0, 1) : 0;
   double get carbsProgress   => carbsGoal   > 0 ? (todayCarbs    / carbsGoal).clamp(0, 1)   : 0;
   double get fatProgress     => fatGoal     > 0 ? (todayFat      / fatGoal).clamp(0, 1)     : 0;
+
+  // Order stats getters
+  int    get weeklyOrderCount  => (weeklyOrderStats['count']  as int?)    ?? 0;
+  double get weeklySpend       => (weeklyOrderStats['spend']  as num?)?.toDouble() ?? 0;
+  int    get monthlyOrderCount => (monthlyOrderStats['count'] as int?)    ?? 0;
+  double get monthlySpend      => (monthlyOrderStats['spend'] as num?)?.toDouble() ?? 0;
+
 
   // ── User display name (from public.user, not profiles) ───────────────────
   // Name lives in public.user, not profiles — loaded separately.

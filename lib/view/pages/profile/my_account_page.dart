@@ -123,12 +123,44 @@ class _MyAccountPageState extends State<MyAccountPage> {
       }).eq('user_id', uid);
       await ctrl.loadUserName(); // refresh cache
 
-      // 2. Recalculate BMI
+      // 2. Recalculate BMI and Macros
       final hCm    = double.tryParse(_heightCtrl.text);
       final wKg    = double.tryParse(_weightCtrl.text);
       final newBmi = (hCm != null && wKg != null && hCm > 0)
           ? wKg / ((hCm / 100) * (hCm / 100))
           : profile?.bmi;
+
+      double? newCalGoal = profile?.dailyCalorieGoal;
+      double? newProGoal = profile?.proteinGoalG;
+      double? newCarbGoal = profile?.carbsGoalG;
+      double? newFatGoal = profile?.fatGoalG;
+
+      if (hCm != null && wKg != null && profile != null) {
+        final age = _dob != null ? (DateTime.now().difference(_dob!).inDays / 365).floor() : 25;
+        final g = _gender ?? profile.gender ?? 'Male';
+        
+        double bmr;
+        if (g == 'Male') {
+          bmr = 88.362 + (13.397 * wKg) + (4.799 * hCm) - (5.677 * age);
+        } else {
+          bmr = 447.593 + (9.247 * wKg) + (3.098 * hCm) - (4.330 * age);
+        }
+        
+        double multiplier = 1.2;
+        if (profile.dailyCalorieGoal != null && profile.weightKg != null && profile.heightCm != null) {
+          final oldAge = profile.dateOfBirth != null ? (DateTime.now().difference(profile.dateOfBirth!).inDays / 365).floor() : 25;
+          final oldG = profile.gender ?? 'Male';
+          double oldBmr = (oldG == 'Male') 
+              ? 88.362 + (13.397 * profile.weightKg!) + (4.799 * profile.heightCm!) - (5.677 * oldAge)
+              : 447.593 + (9.247 * profile.weightKg!) + (3.098 * profile.heightCm!) - (4.330 * oldAge);
+          if (oldBmr > 0) multiplier = profile.dailyCalorieGoal! / oldBmr;
+        }
+
+        newCalGoal = bmr * multiplier;
+        newProGoal = newCalGoal * 0.25 / 4;
+        newCarbGoal = newCalGoal * 0.50 / 4;
+        newFatGoal = newCalGoal * 0.25 / 9;
+      }
 
       // 3. Update profiles
       await ctrl.updateProfile(ProfileModel(
@@ -139,10 +171,10 @@ class _MyAccountPageState extends State<MyAccountPage> {
         heightCm:         hCm ?? profile?.heightCm,
         weightKg:         wKg ?? profile?.weightKg,
         bmi:              newBmi,
-        dailyCalorieGoal: profile?.dailyCalorieGoal,
-        proteinGoalG:     profile?.proteinGoalG,
-        carbsGoalG:       profile?.carbsGoalG,
-        fatGoalG:         profile?.fatGoalG,
+        dailyCalorieGoal: newCalGoal,
+        proteinGoalG:     newProGoal,
+        carbsGoalG:       newCarbGoal,
+        fatGoalG:         newFatGoal,
       ));
 
       if (mounted) {

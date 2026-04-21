@@ -905,10 +905,17 @@ class _BottomSummary extends StatelessWidget {
                     bowl.selectedVeggies.forEach((k, v) => details.add('${k.name} x$v'));
                     if (bowl.selectedSauce != null) details.add('Sauce: ${bowl.selectedSauce!.name}');
 
+                    final totals = bowl.totalNutrition;
                     cart.addItem(CartItem(
                       name: 'Custom Bowl',
                       price: bowl.totalPrice,
                       addOns: details,
+                      customDetails: {
+                        'calories': bowl.totalCalories,
+                        'protein': totals['Protein'],
+                        'carbs': totals['Carbs'],
+                        'fats': totals['Fats'],
+                      },
                       imageUrl: 'https://cjsxgpiahswppkyackpk.supabase.co/storage/v1/object/public/meal-images/meals/custom_bowl.png',
                       quantity: 1,
                     ));
