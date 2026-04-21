@@ -6,6 +6,7 @@ import '../../controller/cart_controller.dart';
 import '../../model/meal_model.dart';
 import '../../service/meal_service.dart';
 import '../../service/location_service.dart';
+import '../pages/store_reviews_page.dart';
 
 class StoreDetailBottomSheet extends StatelessWidget {
   final Store store;
@@ -40,7 +41,7 @@ class StoreDetailBottomSheet extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Scrollable Content
           Expanded(
             child: Scrollbar(
@@ -86,11 +87,11 @@ class StoreDetailBottomSheet extends StatelessWidget {
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    const Icon(Icons.location_on,
-                                        color: Color(0xFFABC270), size: 14),
+                                    const Icon(Icons.star,
+                                        color: Colors.amber, size: 16),
                                     const SizedBox(width: 4),
                                     Consumer<StoreController>(
                                       builder: (context, storeCtrl, _) {
@@ -104,10 +105,10 @@ class StoreDetailBottomSheet extends StatelessWidget {
                                           ) / 1000;
                                         }
                                         return Text(
-                                          '${distance?.toStringAsFixed(1) ?? store.distanceKm.toStringAsFixed(1)} km away',
+                                          '${store.rating} • ${distance?.toStringAsFixed(1) ?? store.distanceKm.toStringAsFixed(1)} km',
                                           style: TextStyle(
-                                              color: Colors.grey[600],
-                                              fontWeight: FontWeight.w500,
+                                              color: Colors.grey[700],
+                                              fontWeight: FontWeight.w600,
                                               fontSize: 13),
                                         );
                                       },
@@ -148,8 +149,73 @@ class StoreDetailBottomSheet extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    _buildRatingRow(context),
+                    const SizedBox(height: 16),
+
+                    // ── Reviews tap row ──────────────────────────────────
+                    GestureDetector(
+                      onTap: () => _openReviewsPage(context),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color:        const Color(0xFFF5F5F0),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFEEEBDE)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width:  36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color:        const Color(0xFF1E4620).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.star_rounded,
+                                  color: Color(0xFF1E4620), size: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        store.rating.toStringAsFixed(1),
+                                        style: const TextStyle(
+                                          fontSize:   20,
+                                          fontWeight: FontWeight.w900,
+                                          color:      Color(0xFF2D2D2D),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Row(
+                                        children: List.generate(5, (i) => Icon(
+                                          i < store.rating.round()
+                                              ? Icons.star
+                                              : Icons.star_border,
+                                          color: Colors.amber,
+                                          size: 14,
+                                        )),
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    '${store.reviewCount} Review${store.reviewCount != 1 ? 's' : ''}',
+                                    style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFF8A8A8A)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right,
+                                color: Color(0xFF8A8A8A), size: 22),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 20),
@@ -240,7 +306,7 @@ class StoreDetailBottomSheet extends StatelessWidget {
                                                   ? const Color(0xFFE8F5E9)
                                                   : const Color(0xFFFFEBEE),
                                               borderRadius:
-                                                  BorderRadius.circular(20),
+                                              BorderRadius.circular(20),
                                             ),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
@@ -280,21 +346,21 @@ class StoreDetailBottomSheet extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(12),
                                   child: meal.imageUrl.startsWith('http')
                                       ? Image.network(
-                                          meal.imageUrl,
-                                          width: 100,
-                                          height: 80,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) =>
-                                              _buildErrorImage(),
-                                        )
+                                    meal.imageUrl,
+                                    width: 100,
+                                    height: 80,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) =>
+                                        _buildErrorImage(),
+                                  )
                                       : Image.asset(
-                                          meal.imageUrl,
-                                          width: 100,
-                                          height: 80,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) =>
-                                              _buildErrorImage(),
-                                        ),
+                                    meal.imageUrl,
+                                    width: 100,
+                                    height: 80,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) =>
+                                        _buildErrorImage(),
+                                  ),
                                 ),
                               ],
                             );
@@ -308,7 +374,8 @@ class StoreDetailBottomSheet extends StatelessWidget {
               ),
             ),
           ),
-          
+
+          // Fixed Bottom Button Section
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             decoration: BoxDecoration(
@@ -370,6 +437,7 @@ class StoreDetailBottomSheet extends StatelessWidget {
     );
   }
 
+  // ── Complete store selection: update both StoreController & CartController ─
   void _completeStoreSelection(BuildContext context) {
     final storeCtrl = Provider.of<StoreController>(context, listen: false);
     final cartCtrl  = Provider.of<CartController>(context,  listen: false);
@@ -384,86 +452,13 @@ class StoreDetailBottomSheet extends StatelessWidget {
     Navigator.pop(context, true);  // Close FindStorePage
   }
 
-  Widget _buildRatingRow(BuildContext context) {
-    // Generate a fixed-looking review count based on store name (for design preview)
-    final reviewCount = (store.name.length * 7) % 100 + 42;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: InkWell(
-        onTap: () {
-          // TODO: Link to your rating page here
-          // Example: Navigator.push(context, MaterialPageRoute(builder: (_) => RatingPage(storeId: store.id)));
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey[50], // Very subtle background
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey[200]!),
-          ),
-          child: Row(
-            children: [
-              // Blue Star Icon Container
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFE3F2FD), // Light blue background
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.star_rounded,
-                    color: Colors.blue, size: 24),
-              ),
-              const SizedBox(width: 16),
-              
-              // Rating Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          store.rating.toStringAsFixed(1),
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2D2D2D),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // Visual Stars
-                        Row(
-                          children: List.generate(5, (index) {
-                            return Icon(
-                              index < store.rating.floor() 
-                                  ? Icons.star_rounded 
-                                  : Icons.star_outline_rounded,
-                              color: Colors.amber,
-                              size: 18,
-                            );
-                          }),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '$reviewCount Reviews',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              // Chevron Arrow
-              Icon(Icons.chevron_right_rounded, color: Colors.grey[400]),
-            ],
-          ),
+  void _openReviewsPage(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => StoreReviewsPage(
+          storeId:   store.id,
+          storeName: store.name,
         ),
       ),
     );
