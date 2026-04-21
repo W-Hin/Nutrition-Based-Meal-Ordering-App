@@ -96,6 +96,8 @@ create table public.order_items (
   name text null,
   price numeric null,
   add_ons text[] null default '{}'::text[],
+  image_url text null,
+  quantity integer not null default 1,
   constraint order_items_pkey primary key (order_item_id),
   constraint order_items_food_id_fkey foreign KEY (food_id) references menu_items (food_id),
   constraint order_items_order_id_fkey foreign KEY (order_id) references orders (order_id)
