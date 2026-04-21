@@ -27,8 +27,6 @@ class BowlController extends ChangeNotifier {
   final List<String> steps = ['Base', 'Protein', 'Veggies', 'Sauce'];
   final List<String> stepTitles = ['Choose Base', 'Choose Proteins', 'Choose Veggies', 'Choose Sauce'];
 
-  // Categorized lists
-  // Categorized lists (Includes out-of-stock items, sorted to bottom)
   List<Ingredient> get bases => _getSortedCategory(IngredientType.base);
   List<Ingredient> get proteins => _getSortedCategory(IngredientType.protein);
   List<Ingredient> get veggiesList => _getSortedCategory(IngredientType.veggies);

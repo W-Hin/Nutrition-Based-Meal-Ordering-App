@@ -112,8 +112,7 @@ class Ingredient {
     }
   }
 
-  // Helper for nutrition display
-  // Getter to return only non-zero nutrition data
+  // Helper
   Map<String, String> get nutritionData {
     final data = <String, String>{};
     if (calories > 0) data['Calories'] = '${calories.toStringAsFixed(0)} cal';

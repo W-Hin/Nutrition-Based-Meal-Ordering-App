@@ -5,7 +5,7 @@ import '../model/ingredient_model.dart';
 class IngredientService {
   static final _supabase = Supabase.instance.client;
 
-  /// Fetch available ingredients for customers (Optionally filtered by store)
+  /// Fetch available ingredients
   static Future<List<Ingredient>> fetchIngredients({String? storeId}) async {
     try {
       var query = _supabase.from('ingredients').select();

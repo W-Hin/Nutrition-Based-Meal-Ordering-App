@@ -72,8 +72,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
   @override
   void initState() {
     super.initState();
-    
-    // Initialize category selections map with all categories as false
+
     for (var cat in _categories) {
       _categorySelections[cat] = false;
     }
@@ -417,8 +416,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     );
   }
 
-  // Step 1: Basic Information
-
+  // Basic Information
   Widget _buildStep1BasicInfo() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -459,8 +457,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     );
   }
 
-  // Step 2: Nutrition Information
-
+  // Nutrition Information
   Widget _buildStep2Nutrition() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -519,8 +516,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     );
   }
 
-  // Step 3: Dietary Information
-
+  // Dietary Information
   Widget _buildStep3Dietary() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),

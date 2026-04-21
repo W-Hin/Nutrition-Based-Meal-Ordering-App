@@ -1,5 +1,5 @@
 class Meal {
-  final String? id; // Supabase UUID
+  final String? id;
   final String name;
   final double price;
   final String description;
@@ -47,8 +47,7 @@ class Meal {
     this.storeId,
   });
 
-  // Getter for backward compatibility if needed, though better to use fields
-  // Getter to return only non-zero nutrition data
+  // return only non-zero
   Map<String, String> get nutritionData {
     final data = <String, String>{};
     if (calories > 0)    data['Calories']    = '${calories.toStringAsFixed(0)} cal';

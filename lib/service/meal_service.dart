@@ -24,7 +24,7 @@ class MealService {
     }
   }
 
-  /// Fetch menu items from Supabase (Optionally filtered by store)
+  /// Fetch menu items from Supabase
   static Future<List<Meal>> fetchMeals({String? storeId}) async {
     try {
       var query = supabase.from(_tableName).select();
@@ -92,7 +92,7 @@ class MealService {
     }
   }
 
-  /// toggle for availability (Out of Stock feature)
+  /// toggle for availability
   static Future<void> updateAvailability(String id, bool isAvailable) async {
     try {
       await supabase

@@ -54,11 +54,11 @@ class StoreController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Fetch current position (triggers permission popup)
+      // Fetch current position (triggers permission popup)
       final position = await LocationService.getCurrentLocation();
       _userPosition = position;
       
-      // 2. Ensure stores are loaded
+      // Ensure stores are loaded
       if (_stores.isEmpty) {
         await loadStores();
       }

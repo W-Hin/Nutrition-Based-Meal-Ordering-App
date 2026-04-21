@@ -14,12 +14,12 @@ class FoodMenuController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   List<Meal> get meals => _allMeals;
 
-  /// Fetch meals for a specific store. 
+  /// Fetch meals for a specific store.
   /// If storeId is null, it refreshes the last fetched store.
   Future<void> fetchMeals({String? storeId}) async {
     final targetStoreId = storeId ?? _lastFetchedStoreId;
 
-    // Prevent redundant fetches only if we are browsing (storeId != null) and the ID hasn't changed.
+    // Prevent redundant fetches
     if (storeId != null && storeId == _lastFetchedStoreId && _allMeals.isNotEmpty) return;
     
     _lastFetchedStoreId = targetStoreId;

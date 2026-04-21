@@ -7,8 +7,8 @@ class Store {
   final int    reviewCount;
   final double latitude;
   final double longitude;
-  final String openTime;   // Format "HH:mm"
-  final String closeTime;  // Format "HH:mm"
+  final String openTime;
+  final String closeTime;
   final double distanceKm;
 
   Store({
